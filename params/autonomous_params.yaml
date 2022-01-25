@@ -1,0 +1,24 @@
+goal_range: 2.0
+
+angle_min: -60
+angle_max: 60
+angle_increment: 1
+span_angle: 10
+goal_risk_range: 30
+
+kp_angle : 0.45
+ki_angle : 0.01 # max 0.05?
+kd_angle : 0.1
+
+# kp_distance : 40
+# ki_distance : 40
+# kd_distance : 40
+
+servo_middle: 93
+servo_left_max: 118 #93+25
+servo_right_max: 68 #93-25
+
+thruster_max : 1850
+thruster_min : 1600
+
+# all temp value!
