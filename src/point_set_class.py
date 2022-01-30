@@ -42,4 +42,4 @@ class Point_Set:
         return ( p - self.projection(p)).dist_from_origin()
 
     def dist_begin_to_end(self):
-        return sqrt(pow(self.begin.x - self.end.x, 2), pow(self.begin.y - self.end.y, 2))
+        return sqrt(pow(self.begin.x - self.end.x, 2) + pow(self.begin.y - self.end.y, 2))

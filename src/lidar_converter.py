@@ -7,6 +7,8 @@ from point_class import * # point_class.py
 from point_set_class import *
 from sensor_msgs.msg import LaserScan, PointCloud
 from geometry_msgs.msg import Point32
+from visualization_msgs.msg import Marker
+
 from tricat221.msg import Obstacle, ObstacleList
 
 
@@ -14,11 +16,11 @@ class Lidar_Converter:
     def __init__(self):
         # sub, pub 개체
         rospy.Subscriber("/scan", LaserScan, self.lidar_raw_callback)
-        self.obstacle_pub = rospy.Publisher("/obstacles", ObstacleList, queue_size=10)
-        # self.input_points_pub = rospy.Publisher("/rviz/input_points", PointCloud, queue_size=1) #토픽 잘 나가는지 확인하기
-        # self.filtered_points_pub = rospy.Publisher("/rviz/filtered_points", PointCloud, queue_size=1) #토픽 잘 나가는지 확인하기
-        # self.point_sets_pub = rospy.Publisher("/rviz/point_sets", PointCloud, queue_size=1) #토픽 잘 나가는지 확인하기
-        # self.ob_particles_pub = rospy.Publisher("/rviz/ob_particles_point", PointCloud, queue_size=1) #토픽 잘 나가는지 확인하기
+        self.obstacle_pub = rospy.Publisher("/obstacles", ObstacleList, queue_size=10) # TODO queue_size가 publish 속도에 영향 주는지 연구!
+        self.marker1_pub = rospy.Publisher("/marker1", Marker, queue_size=10)
+        self.marker2_pub = rospy.Publisher("/marker2", Marker, queue_size=10)
+        self.marker3_pub = rospy.Publisher("/marker3", Marker, queue_size=10)
+        self.marker4_pub = rospy.Publisher("/marker4", Marker, queue_size=10)
 
         # 파라미터 임포트
         self.max_gap_in_set = rospy.get_param("max_gap_in_set")
@@ -55,8 +57,10 @@ class Lidar_Converter:
 
         self.classify_groups()
         self.publish_obstacles()
-        self.publish_rviz()
-        # self.calc_angle_risk() ##### 여기서부터는 자율운항 쪽으로
+        self.publish_rviz1()
+        self.publish_rviz2()
+        self.publish_rviz3()
+        self.publish_rviz4()
 
     def group_points(self):
         point_set = Point_Set()
@@ -79,7 +83,10 @@ class Lidar_Converter:
                 point_set.append_point(p)
         self.point_sets_list.append(point_set) # 마지막 set 리스트에 빼먹지 않고 추가해줌
 
-        ##### 중복으로 들어간 첫 번째 점 제거함
+        ##### 중복으로 들어간 첫 번째 점 제거함 / TODO IndexError: list index out of range
+        # print(self.point_sets_list[0].begin)
+        # print(self.point_sets_list[0])
+        # print(self.point_sets_list[0].point_set[1])
         self.point_sets_list[0].begin = self.point_sets_list[0].point_set[1]
         self.point_sets_list[0].set_size -= 1
         # TODO min_point_set_size 처리...?
@@ -139,7 +146,7 @@ class Lidar_Converter:
         wall_particle = Point_Set()
         wall_particle.append_point(ps.begin)
 
-        for p in ps:
+        for p in ps.point_set:
             if p.dist_btw_points(wall_particle.begin) > self.min_wall_particle_length:
                 # self.obstacles.append(wall_particle)
 
@@ -150,10 +157,6 @@ class Lidar_Converter:
                 # wall_particle.append_point(p)
             wall_particle.append_point(p)
         self.obstacles.append(wall_particle) #마지막 파티클까지 잊지 않고 넣어줌
-
-    #### 각도 위험도 구하는 것은 자율운항 본 스크립트에 넣읍시다.
-    # def calc_angle_risk(self):
-    #     for a in range(self.angle_min, self.angle_max, self.angle_increment)
 
     def publish_obstacles(self):
         ob_list = ObstacleList()
@@ -172,32 +175,91 @@ class Lidar_Converter:
         
         self.obstacle_pub.publish(ob_list)
 
-    def publish_rviz(self):
-        input_points = PointCloud()
-        input_points.header.frame_id = 'world'
+    def publish_rviz1(self): #input_points가 잘 받아지고 변환 잘 되었는지 확인용
+        input_points = Marker()
+        input_points.header.frame_id = "/input_point_frame"
         input_points.header.stamp = rospy.Time.now()
+        input_points.ns = "points"
+        input_points.action = 0 #ADD
+        input_points.pose.orientation.w = 1.0 #???
+        input_points.id = 0
+        input_points.type = 9 #POINTS
+        input_points.scale.x = 0.2
+        input_points.scale.y = 0.2
+        input_points.color.r = 1.0 # Red
+        input_points.color.a = 1.0 # 투명도 0
         for p in self.input_points:
             point = Point32()
             point.x = p.x
             point.y = p.y
             input_points.points.append(point)
+        self.marker1_pub.publish(input_points)
 
-        filtered_points = PointCloud()
-        filtered_points.header.frame_id = 'world'
+    def publish_rviz2(self): #input_points 중 따로 노는 점을 제거한 후 확인용
+        filtered_points = Marker()
+        filtered_points.header.frame_id = "/filtered_point_frame"
         filtered_points.header.stamp = rospy.Time.now()
+        filtered_points.ns = "points"
+        filtered_points.action = 0 #ADD
+        filtered_points.pose.orientation.w = 1.0 #???
+        filtered_points.id = 1
+        filtered_points.type = 9 #POINTS
+        filtered_points.scale.x = 0.2
+        filtered_points.scale.y = 0.2
+        filtered_points.color.g = 1.0 # Green
+        filtered_points.color.a = 1.0 # 투명도 0
         for ps in self.point_sets_list:
-            for p in ps:
+            for p in ps.point_set:
                 point = Point32()
                 point.x = p.x
                 point.y = p.y
                 filtered_points.points.append(point)
-        
+        self.marker2_pub.publish(filtered_points)
 
-        
-        self.input_points_pub = rospy.Publisher("/rviz/input_points", PointCloud, queue_size=1) #토픽 잘 나가는지 확인하기
-        self.filtered_points_pub = rospy.Publisher("/rviz/filtered_points", PointCloud, queue_size=1) #토픽 잘 나가는지 확인하기
-        self.point_sets_pub = rospy.Publisher("/rviz/point_sets", PointCloud, queue_size=1) #토픽 잘 나가는지 확인하기
-        self.ob_particles_pub = rospy.Publisher("/rviz/ob_particles_point", PointCloud, queue_size=1) #토픽 잘 나가는지 확인하기
+    def publish_rviz3(self): #각 point_set을 확인용
+        point_set = Marker()
+        point_set.header.frame_id = "/point_set_frame"
+        point_set.header.stamp = rospy.Time.now()
+        point_set.ns = "lines"
+        point_set.action = 0 #ADD
+        point_set.pose.orientation.w = 1.0 #???
+        point_set.id = 2
+        point_set.type = 5 #LINE_LIST
+        point_set.scale.x = 0.1
+        point_set.color.b = 1.0 # Blue
+        point_set.color.a = 1.0 # 투명도 0
+        for ps in self.point_sets_list:
+            point = Point32()
+            point.x = ps.begin.x
+            point.y = ps.begin.y
+            point_set.points.append(point)
+            point.x = ps.end.x
+            point.y = ps.end.y
+            point_set.points.append(point)
+        self.marker3_pub.publish(point_set)
+
+    def publish_rviz4(self): #벽까지 다 구분된 파티클 확인용
+        obstacle = Marker()
+        obstacle.header.frame_id = "/obstacle_frame"
+        obstacle.header.stamp = rospy.Time.now()
+        obstacle.ns = "lines"
+        obstacle.action = 0 #ADD
+        obstacle.pose.orientation.w = 1.0 #???
+        obstacle.id = 2
+        obstacle.type = 5 #LINE_LIST
+        obstacle.scale.x = 1 #0.1
+        obstacle.color.r = 1.0 # Yellow
+        obstacle.color.g = 1.0 # Yellow
+        obstacle.color.a = 1.0 # 투명도 0
+        for ob in self.obstacles:
+            point = Point32()
+            point.x = ob.begin.x
+            point.y = ob.begin.y
+            obstacle.points.append(point)
+            point.x = ob.end.x
+            point.y = ob.end.y
+            obstacle.points.append(point)
+        self.marker4_pub.publish(obstacle)
 
 
 def main():
