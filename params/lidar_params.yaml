@@ -1,5 +1,5 @@
 max_gap_in_set: 0.1 # meter
-min_point_set_size: 3
+min_point_set_size: 30
 max_dist_to_ps_line: 0.1 # meter
 min_wall_length: 0.3 # meter
 min_wall_particle_length: 0.3 # meter

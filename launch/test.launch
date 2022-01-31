@@ -2,7 +2,7 @@
 
 <launch>
 <!--211Node-->
-	<node pkg="tricat221" type="lidar_converter.py" name="obstacles" respawn="true"/>
+	<node pkg="tricat221" type="lidar_converter.py" name="obstacles" respawn="true" output="screen"/>
 	<!--<node pkg="i-tricat221"  type="gnss_converter.py" name="" respawn="true"/>
 	<node pkg="i-tricat221"  type="heading_calculator.py" name="Compass" respawn="true"/>
 	<node pkg="i-tricat221"  type="hopping_tour.py" name="" respawn="true" output="screen"/>-->
