@@ -8,7 +8,7 @@ import pymap3d as pm
 from std_msgs.msg import UInt16, Float64
 from geometry_msgs.msg import Point, Vector3
 from tricat221.msg import Obstacle, ObstacleList
-from visualization_msgs.msg import Marker
+from visualization_msgs.msg import Marker, MarkerArray
 
 import gnss_converter as gc # src/gnss_converter.py
 import point_class as pc # src/point_class.py
@@ -21,10 +21,11 @@ class Autonomous:
         rospy.Subscriber("/enu_position", Point, self.boat_position_callback)
         rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback)
 
-        self.servo_pub = rospy.Publisher("/Servo", UInt16, queue_size=10)
+        self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=10) # TODO 아두이노 쪽에서 S 수정하기
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=10)
 
-        self.marker = rospy.Publisher("/rviz_mark", Marker, queue_size=10)
+        self.marker_pub = rospy.Publisher("/rviz_mark", Marker, queue_size=10)
+        self.marker_array_pub = rospy.Publisher("/rviz_mark_array", MarkerArray, queue_size=10)
 
         ## 파라미터 및 변수
         self.goal_x, self.goal_y = gc.enu_convert(rospy.get_param("autonomous_goal"))
@@ -220,11 +221,7 @@ class Autonomous:
         self.cnt = 0
 
     def view_rviz(self):
-        # Arrow
-        # Position/Orientation: Pivot point is around the tip of its tail. Identity orientation points it along the +X axis. scale.x is the arrow length, scale.y is the arrow width and scale.z is the arrow height. 
-        # Start/End Points: You can also specify a start/end point for the arrow, using the points member. If you put points into the points member, it will assume you want to do things this way.
-        #                   The point at index 0 is assumed to be the start point, and the point at index 1 is assumed to be the end.
-        #                   scale.x is the shaft diameter, and scale.y is the head diameter. If scale.z is not zero, it specifies the head length. 
+        marker_array = MarkerArray()
 
         heading_arrow = Marker()
         heading_arrow.frame_id = "/mframe"
@@ -246,7 +243,7 @@ class Autonomous:
         heading.x = 1 * math.cos(self.psi) + self.boat_x #TODO 화살표 크기 조정할 것.
         heading.y = 1 * math.sin(self.psi) + self.boat_y
         heading_arrow.points.append(heading) # 화살표 끝점
-        self.marker.publish(heading_arrow)
+        # self.marker_pub.publish(heading_arrow)
 
         psi_desire_arrow = Marker()
         psi_desire_arrow.frame_id = "/mframe"
@@ -269,7 +266,7 @@ class Autonomous:
         psi_desire.x = 1 * math.cos(self.psi_desire) + self.boat_x #TODO 화살표 크기 조정할 것.
         psi_desire.y = 1 * math.sin(self.psi_desire) + self.boat_y
         psi_desire_arrow.points.append(psi_desire) # 화살표 끝점
-        self.marker.publish(psi_desire_arrow)
+        # self.marker_pub.publish(psi_desire_arrow)
 
         boat = Marker()
         boat.header.frame_id = "/mframe"
@@ -286,8 +283,12 @@ class Autonomous:
         boat_position.x = self.boat_x
         boat_position.y = self.boat_y
         boat.points.append(boat_position)
+        # self.marker_pub.publish(boat)
 
-        self.marker.publish(boat)
+        marker_array.append(heading_arrow)
+        marker_array.append(psi_desire_arrow)
+        marker_array.append(boat)
+        self.marker_array_pub.publish(marker_array)
 
 def main():
     rospy.init_node('Autonomous', anonymous=False)
