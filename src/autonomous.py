@@ -6,8 +6,9 @@ import math
 import pymap3d as pm
 
 from std_msgs.msg import UInt16, Float64
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, Vector3
 from tricat221.msg import Obstacle, ObstacleList
+from visualization_msgs.msg import Marker
 
 import gnss_converter as gc # src/gnss_converter.py
 import point_class as pc # src/point_class.py
@@ -22,6 +23,8 @@ class Autonomous:
 
         self.servo_pub = rospy.Publisher("/Servo", UInt16, queue_size=10)
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=10)
+
+        self.marker = rospy.Publisher("/rviz_mark", Marker, queue_size=10)
 
         ## 파라미터 및 변수
         self.goal_x, self.goal_y = gc.enu_convert(rospy.get_param("autonomous_goal"))
@@ -169,6 +172,7 @@ class Autonomous:
     def calc_psi_desire(self):
                           # 가장 위험도 낮은 각도의 인덱스
         self.psi_desire = self.angle_risk.index(min(self.angle_risk)) * self.angle_increment + self.angle_min # TODO 계산식 맞는지 확인할 것
+        self.error_angle = self.psi_desire - self.psi
 
     def error_angle_PID(self):
         cp_angle = self.kp_angle * self.error_angle # TODO : 부호 확인하기
@@ -215,6 +219,76 @@ class Autonomous:
 
         self.cnt = 0
 
+    def view_rviz(self):
+        # Arrow
+        # Position/Orientation: Pivot point is around the tip of its tail. Identity orientation points it along the +X axis. scale.x is the arrow length, scale.y is the arrow width and scale.z is the arrow height. 
+        # Start/End Points: You can also specify a start/end point for the arrow, using the points member. If you put points into the points member, it will assume you want to do things this way.
+        #                   The point at index 0 is assumed to be the start point, and the point at index 1 is assumed to be the end.
+        #                   scale.x is the shaft diameter, and scale.y is the head diameter. If scale.z is not zero, it specifies the head length. 
+
+        heading_arrow = Marker()
+        heading_arrow.frame_id = "/mframe"
+        heading_arrow.header.stamp = rospy.Time.now()
+        heading_arrow.ns = "arrow"
+        heading_arrow.action = 0 #ADD
+        heading_arrow.id = 4
+        heading_arrow.type = 0 #LINE_LIST
+        heading_arrow.pose.orientation.y = 0 # TODO ????
+        heading_arrow.pose.orientation.w = 1 # TODO ????
+        heading_arrow.scale = Vector3(3,2,1)
+        heading_arrow.color.r = 0.5 # purple
+        heading_arrow.color.b = 0.5 # purple
+        heading_arrow.color.a = 1.0 # 투명도 0
+        heading = Point()
+        heading.x = self.boat_x
+        heading.y = self.boat_y
+        heading_arrow.points.append(heading) #화살표 시작점
+        heading.x = 1 * math.cos(self.psi) + self.boat_x #TODO 화살표 크기 조정할 것.
+        heading.y = 1 * math.sin(self.psi) + self.boat_y
+        heading_arrow.points.append(heading) # 화살표 끝점
+        self.marker.publish(heading_arrow)
+
+        psi_desire_arrow = Marker()
+        psi_desire_arrow.frame_id = "/mframe"
+        psi_desire_arrow.header.stamp = rospy.Time.now()
+        psi_desire_arrow.ns = "arrow"
+        psi_desire_arrow.action = 0 #ADD
+        psi_desire_arrow.id = 5
+        psi_desire_arrow.type = 0 #LINE_LIST
+        psi_desire_arrow.pose.orientation.y = 0 # TODO ????
+        psi_desire_arrow.pose.orientation.w = 1 # TODO ????
+        psi_desire_arrow.scale = Vector3(3,2,1)
+        psi_desire_arrow.color.r = 1.0 # pink
+        psi_desire_arrow.color.g = 0.4 # pink
+        psi_desire_arrow.color.b = 0.7 # pink
+        psi_desire_arrow.color.a = 1.0 # 투명도 0
+        psi_desire = Point()
+        psi_desire.x = self.boat_x
+        psi_desire.y = self.boat_y
+        psi_desire_arrow.points.append(psi_desire) #화살표 시작점
+        psi_desire.x = 1 * math.cos(self.psi_desire) + self.boat_x #TODO 화살표 크기 조정할 것.
+        psi_desire.y = 1 * math.sin(self.psi_desire) + self.boat_y
+        psi_desire_arrow.points.append(psi_desire) # 화살표 끝점
+        self.marker.publish(psi_desire_arrow)
+
+        boat = Marker()
+        boat.header.frame_id = "/mframe"
+        boat.header.stamp = rospy.Time.now()
+        boat.ns = "point"
+        boat.action = 0 #ADD
+        boat.id = 6
+        boat.type = 8 #LINE_LIST
+        boat.scale.x = 0.2 #0.1
+        boat.color.r = 1.0 # Yellow
+        boat.color.g = 1.0 # Yellow
+        boat.color.a = 1.0 # 투명도 0
+        boat_position = Point()
+        boat_position.x = self.boat_x
+        boat_position.y = self.boat_y
+        boat.points.append(boat_position)
+
+        self.marker.publish(boat)
+
 def main():
     rospy.init_node('Autonomous', anonymous=False)
 
@@ -232,6 +306,7 @@ def main():
             autonomous.calc_angle_risk()
             autonomous.control_publish()
         autonomous.print_state()
+        autonomous.view_rviz()
         rate.sleep()
 
     rospy.spin()
