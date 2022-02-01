@@ -28,7 +28,7 @@ class Lidar_Converter:
         self.max_dist_to_ps_line = rospy.get_param("max_dist_to_ps_line")
         self.min_wall_length = rospy.get_param("min_wall_length")
         self.min_wall_particle_length = rospy.get_param("min_wall_particle_length")
-        self.min_input_points_size = 3 # TODO rospy.get_param("min_input_points_size")
+        self.min_input_points_size = rospy.get_param("min_input_points_size")
 
         # 변수
         self.lidar_header_stamp = 0
@@ -65,9 +65,9 @@ class Lidar_Converter:
         self.classify_groups()
 
         self.publish_obstacles()
-        # self.publish_rviz1()
+        self.publish_rviz1()
         self.publish_rviz2()
-        self.publish_rviz3()
+        # self.publish_rviz3()
         # self.publish_rviz4()
 
     def group_points(self):

@@ -14,7 +14,7 @@ import point_class as pc # src/point_class.py
 
 
 class Autonomous:
-    def __init__(self) -> None:
+    def __init__(self):
         ## sub, pub
         rospy.Subscriber("/heading", Float64, self.heading_callback)
         rospy.Subscriber("/enu_position", Point, self.boat_position_callback)

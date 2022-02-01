@@ -6,6 +6,10 @@ angle_increment: 1
 span_angle: 10
 goal_risk_range: 30
 
+ob_exist_coefficient: 3
+ob_near_coefficient: 2
+goal_orient_coefficient: 1
+
 kp_angle : 0.45
 ki_angle : 0.01 # max 0.05?
 kd_angle : 0.1
