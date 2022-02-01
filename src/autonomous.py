@@ -34,6 +34,9 @@ class Autonomous:
         self.angle_risk = [0 for ang in range(self.angle_min, self.angle_max + self.angle_increment, self.angle_increment)]
             # 목표각 탐색 범위임. TODO : 수정 필요할 수도!
         self.goal_risk_range = rospy.get_param("goal_risk_range")
+        self.ob_exist_coefficient = rospy.get_param("ob_exist_coefficient")
+        self.ob_near_coefficient = rospy.get_param("ob_near_coefficient")
+        self.goal_orient_coefficient = rospy.get_param("goal_orient_coefficient")
 
         self.error_sum_angle = 0
         self.kp_angle = rospy.get_param("kp_angle")
@@ -137,34 +140,35 @@ class Autonomous:
                 print("Error!")
             else:
                 for idx in range(start_ang_idx, end_ang_idx, self.angle_increment):
-                    self.angle_risk[idx] += 1 # TODO 잘 작동하는지 확인할 것, 계수 곱해서 넣을까?
+                    self.angle_risk[idx] += 1*self.ob_exist_coefficient  # TODO 잘 작동하는지 확인할 것
 
             dist = middle.pc.dist_btw_points2(self.boat_x, self.boat_y) # 모듈 사용 잘 되나 확인
             dist_to_obstacles.append([dist, middle_ang_idx])
         
         dist_to_obstacles.sort() # 거리를 오름차순 정렬. 가장 가까운 장애물부터.
         for d in dist_to_obstacles:
-            self.angle_risk[d[1]] += 1 # TODO 잘 작동하는지 확인할 것, 계수 곱해서 넣을까?
+            self.angle_risk[d[1]] += 1*self.ob_near_coefficient # TODO 잘 작동하는지 확인할 것
 
     def calc_goal_risk(self):
         if self.angle_min <= self.psi_goal <= self.angle_max: # 목표각 탐색 범위 안에 목표점이 존재함
             for idx in range(len(self.angle_risk)):
-                # TODO 반복 계산 막기 위해 아예 변수로 선언할까? -> temp = abs(self.psi - a)
-                if abs(self.psi - a) <= self.goal_risk_range:
+                ang = idx * self.angle_increment + self.angle_min
+                delta_ang = abs(self.psi - ang) # TODO 값 확인하기
+                if delta_ang <= self.goal_risk_range:
                     continue
-                elif abs(self.psi - a) <= (self.goal_risk_range * 2):
-                    self.angle_risk[idx] += 1
-                elif abs(self.psi - a) <= (self.goal_risk_range * 3):
-                    self.angle_risk[idx] += 2
+                elif delta_ang <= (self.goal_risk_range * 2):
+                    self.angle_risk[idx] += 1*self.goal_orient_coefficient
+                elif delta_ang <= (self.goal_risk_range * 3):
+                    self.angle_risk[idx] += 2*self.goal_orient_coefficient
                 else:
-                    self.angle_risk[idx] += 3
+                    self.angle_risk[idx] += 3*self.goal_orient_coefficient
         else:
             # TODO 각도 후보군의 min/max 각도 벗어난 상황은 어떻게 처리할지?
             pass
 
     def calc_psi_desire(self):
-        self.angle_risk.index(min(self.angle_risk)) # 가장 위험도 낮은 각도의 인덱스
-        self.psi_desire # TODO 계산식 들어가야 함
+                          # 가장 위험도 낮은 각도의 인덱스
+        self.psi_desire = self.angle_risk.index(min(self.angle_risk)) * self.angle_increment + self.angle_min # TODO 계산식 맞는지 확인할 것
 
     def error_angle_PID(self):
         cp_angle = self.kp_angle * self.error_angle # TODO : 부호 확인하기
