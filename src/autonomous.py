@@ -6,6 +6,7 @@ import math
 import pymap3d as pm
 
 from std_msgs.msg import UInt16, Float64
+from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Point, Vector3
 from tricat221.msg import Obstacle, ObstacleList
 from visualization_msgs.msg import Marker, MarkerArray
@@ -20,6 +21,7 @@ class Autonomous:
         rospy.Subscriber("/heading", Float64, self.heading_callback)
         rospy.Subscriber("/enu_position", Point, self.boat_position_callback)
         rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback)
+        rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback)
 
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=10) # TODO 아두이노 쪽에서 S 수정하기
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=10)
@@ -57,6 +59,8 @@ class Autonomous:
         self.boat_x = 0
         self.boat_y = 0
 
+        self.yaw_rate = 0 # z축 각속도 [degree/s]
+
         self.psi = 0
         self.psi_desire = 0
         self.psi_goal = 0 # TODO 이름을 angle_to_goal로 할까 직관적으로?
@@ -64,7 +68,7 @@ class Autonomous:
 
         self.obstacle = [] # 한 요소가 [begin.x, begin.y, end.x, end.y]로 되어 있음 -> TODO Point 형으로 다시 바꿀까?
 
-        self.distance_to_goal = 0
+        self.distance_to_goal = 100000 #TODO 괜찮을지 확인. 처음부터 0으로 넣는다면 gps 받아오기 전부터 finished됨
         self.calc_distance_to_goal()
 
         self.error_angle = 0
@@ -74,6 +78,9 @@ class Autonomous:
     # IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수
     def heading_callback(self, msg):
         self.psi = msg.data # [degree]
+
+    def yaw_rate_callback(self, msg):
+        self.yaw_rate = math.degrees(msg.angular_velocity.z) # [rad/s] -> [degree/s]
     
     # GPS로 측정한 배의 ENU 변환 좌표 콜백함수
     def boat_position_callback(self, msg):
@@ -224,9 +231,9 @@ class Autonomous:
         marker_array = MarkerArray()
 
         heading_arrow = Marker()
-        heading_arrow.frame_id = "/mframe"
+        heading_arrow.header.frame_id = "/mframe"
         heading_arrow.header.stamp = rospy.Time.now()
-        heading_arrow.ns = "arrow"
+        heading_arrow.ns = "heading"
         heading_arrow.action = 0 #ADD
         heading_arrow.id = 4
         heading_arrow.type = 0 #LINE_LIST
@@ -246,9 +253,9 @@ class Autonomous:
         # self.marker_pub.publish(heading_arrow)
 
         psi_desire_arrow = Marker()
-        psi_desire_arrow.frame_id = "/mframe"
+        psi_desire_arrow.header.frame_id = "/mframe"
         psi_desire_arrow.header.stamp = rospy.Time.now()
-        psi_desire_arrow.ns = "arrow"
+        psi_desire_arrow.ns = "psi_desire"
         psi_desire_arrow.action = 0 #ADD
         psi_desire_arrow.id = 5
         psi_desire_arrow.type = 0 #LINE_LIST
@@ -271,23 +278,25 @@ class Autonomous:
         boat = Marker()
         boat.header.frame_id = "/mframe"
         boat.header.stamp = rospy.Time.now()
-        boat.ns = "point"
+        boat.ns = "boat"
         boat.action = 0 #ADD
         boat.id = 6
-        boat.type = 8 #LINE_LIST
+        boat.type = 8 #POINTS
         boat.scale.x = 0.2 #0.1
-        boat.color.r = 1.0 # Yellow
-        boat.color.g = 1.0 # Yellow
+        boat.scale.y = 0.2 #0.1
+        boat.color.r = 1.0 # Red
         boat.color.a = 1.0 # 투명도 0
         boat_position = Point()
         boat_position.x = self.boat_x
         boat_position.y = self.boat_y
+        boat_position.z = 0
         boat.points.append(boat_position)
         # self.marker_pub.publish(boat)
 
-        marker_array.append(heading_arrow)
-        marker_array.append(psi_desire_arrow)
-        marker_array.append(boat)
+        marker_array.markers.append(heading_arrow)
+        marker_array.markers.append(psi_desire_arrow)
+        marker_array.markers.append(boat)
+
         self.marker_array_pub.publish(marker_array)
 
 def main():
@@ -297,15 +306,19 @@ def main():
     rate = rospy.Rate(10)
 
     while not rospy.is_shutdown():
-        if autonomous.arrival_check(): # 최종 목적지에 도착함
-            autonomous.servo_pub.publish(autonomous.servo_middle)
-            autonomous.thruster_pub.publish() # TODO: 정지값 넣어주기
-            print("-"*20)
-            print("Finished!")
-            return
-        else:
-            autonomous.calc_angle_risk()
-            autonomous.control_publish()
+        autonomous.calc_angle_risk()
+        autonomous.control_publish()
+
+
+        # if autonomous.arrival_check(): # 최종 목적지에 도착함
+        #     autonomous.servo_pub.publish(autonomous.servo_middle)
+        #     autonomous.thruster_pub.publish() # TODO: 정지값 넣어주기
+        #     print("-"*20)
+        #     print("Finished!")
+        #     return
+        # else:
+        #     autonomous.calc_angle_risk()
+        #     autonomous.control_publish()
         autonomous.print_state()
         autonomous.view_rviz()
         rate.sleep()

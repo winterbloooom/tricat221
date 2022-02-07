@@ -19,7 +19,7 @@ def enu_convert(gnss):
     return e, n
 
 def main():
-    rospy.init_node('gnss_converter', anonymous=False)
+    rospy.init_node('gnss_converter', anonymous=True)
 
     rospy.Subscriber("/ublox_gps/fix", NavSatFix, gps_fix_callback)
     pub = rospy.Publisher('enu_position', Point, queue_size=10)
