@@ -26,7 +26,7 @@ class Point:
     def __mul__(self, c):
         return Point(self.x*c, self.y*c)
 
-    def __truediv__(self, d):
+    def __div__(self, d): #__truediv__
         return Point(self.x / d, self.y / d) if d!=0 else Point(0, 0)
 
     def __eq__(self, p2):

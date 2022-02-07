@@ -26,8 +26,7 @@ class Autonomous:
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=10) # TODO 아두이노 쪽에서 S 수정하기
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=10)
 
-        self.marker_pub = rospy.Publisher("/rviz_mark", Marker, queue_size=10)
-        self.marker_array_pub = rospy.Publisher("/rviz_mark_array", MarkerArray, queue_size=10)
+        self.marker_array_pub = rospy.Publisher("/rviz_mark_array", MarkerArray, queue_size=100)
 
         ## 파라미터 및 변수
         self.goal_x, self.goal_y = gc.enu_convert(rospy.get_param("autonomous_goal"))
@@ -66,7 +65,7 @@ class Autonomous:
         self.psi_goal = 0 # TODO 이름을 angle_to_goal로 할까 직관적으로?
         self.calc_angle_to_goal()
 
-        self.obstacle = [] # 한 요소가 [begin.x, begin.y, end.x, end.y]로 되어 있음 -> TODO Point 형으로 다시 바꿀까?
+        self.obstacle = [] # 한 요소가 [begin.x, begin.y, end.x, end.y]로 되어 있음 -> TODO Point 형으로 다시 바꿀까? // 아니야!! msg 타입 확인해!!
 
         self.distance_to_goal = 100000 #TODO 괜찮을지 확인. 처음부터 0으로 넣는다면 gps 받아오기 전부터 finished됨
         self.calc_distance_to_goal()
@@ -88,7 +87,7 @@ class Autonomous:
         self.boat_y = msg.y
 
     def obstacle_callback(self, msg):
-        self.obsatcle = msg.obstacle
+        self.obstacle = msg.obstacle #[msg.obstacle.begin.x, msg.obstacle.begin.y, msg.obstacle.end.x, msg.obstacle.end.y]
         # self.calc_angle_risk() # TODO 이 함수를 여기 위치시키는 게 맞을까? 일단 main에서 호출함
 
     def calc_distance_to_goal(self):
@@ -122,13 +121,13 @@ class Autonomous:
             | sin(a)   cos(a) | | y | | y' |
             """
             # TODO msg, 계산 잘 들어가는지 확인
-            begin = pc.Point()
-            begin.x = ob[0] * math.cos(self.psi) - ob[1] * math.sin(self.psi)
-            begin.y = ob[0] * math.sin(self.psi) + ob[1] * math.cos(self.psi)
+            begin = pc.Point.empty_point()
+            begin.x = ob.begin.x * math.cos(self.psi) - ob.begin.x * math.sin(self.psi)
+            begin.y = ob.begin.y * math.sin(self.psi) + ob.begin.y * math.cos(self.psi)
 
-            end = pc.Point()
-            end.x = ob[2] * math.cos(self.psi) - ob[3] * math.sin(self.psi)
-            end.y = ob[2] * math.sin(self.psi) + ob[3] * math.cos(self.psi)
+            end = pc.Point.empty_point()
+            end.x = ob.end.x * math.cos(self.psi) - ob.end.x * math.sin(self.psi)
+            end.y = ob.end.y * math.sin(self.psi) + ob.end.y * math.cos(self.psi)
 
             middle = (begin + end) / 2
 
@@ -153,7 +152,7 @@ class Autonomous:
                 for idx in range(start_ang_idx, end_ang_idx, self.angle_increment):
                     self.angle_risk[idx] += 1*self.ob_exist_coefficient  # TODO 잘 작동하는지 확인할 것
 
-            dist = middle.pc.dist_btw_points2(self.boat_x, self.boat_y) # 모듈 사용 잘 되나 확인
+            dist = middle.dist_btw_points2(self.boat_x, self.boat_y) # 모듈 사용 잘 되나 확인
             dist_to_obstacles.append([dist, middle_ang_idx])
         
         dist_to_obstacles.sort() # 거리를 오름차순 정렬. 가장 가까운 장애물부터.
@@ -231,7 +230,7 @@ class Autonomous:
         marker_array = MarkerArray()
 
         heading_arrow = Marker()
-        heading_arrow.header.frame_id = "/mframe"
+        heading_arrow.header.frame_id = "/map"
         heading_arrow.header.stamp = rospy.Time.now()
         heading_arrow.ns = "heading"
         heading_arrow.action = 0 #ADD
@@ -250,10 +249,9 @@ class Autonomous:
         heading.x = 1 * math.cos(self.psi) + self.boat_x #TODO 화살표 크기 조정할 것.
         heading.y = 1 * math.sin(self.psi) + self.boat_y
         heading_arrow.points.append(heading) # 화살표 끝점
-        # self.marker_pub.publish(heading_arrow)
 
         psi_desire_arrow = Marker()
-        psi_desire_arrow.header.frame_id = "/mframe"
+        psi_desire_arrow.header.frame_id = "/map"
         psi_desire_arrow.header.stamp = rospy.Time.now()
         psi_desire_arrow.ns = "psi_desire"
         psi_desire_arrow.action = 0 #ADD
@@ -273,10 +271,9 @@ class Autonomous:
         psi_desire.x = 1 * math.cos(self.psi_desire) + self.boat_x #TODO 화살표 크기 조정할 것.
         psi_desire.y = 1 * math.sin(self.psi_desire) + self.boat_y
         psi_desire_arrow.points.append(psi_desire) # 화살표 끝점
-        # self.marker_pub.publish(psi_desire_arrow)
 
         boat = Marker()
-        boat.header.frame_id = "/mframe"
+        boat.header.frame_id = "/map"
         boat.header.stamp = rospy.Time.now()
         boat.ns = "boat"
         boat.action = 0 #ADD
@@ -291,16 +288,40 @@ class Autonomous:
         boat_position.y = self.boat_y
         boat_position.z = 0
         boat.points.append(boat_position)
-        # self.marker_pub.publish(boat)
+
+        obstacle = Marker() # 장애물 확인용
+        obstacle.header.frame_id = "/map"
+        obstacle.header.stamp = rospy.Time.now()
+        obstacle.ns = "obstacles"
+        obstacle.action = 0 #ADD
+        obstacle.pose.orientation.w = 1.0 #???
+        obstacle.id = 7
+        obstacle.type = 5 #LINE_LIST
+        obstacle.scale.x = 0.05
+        obstacle.color.r = 1.0 # Yellow
+        obstacle.color.g = 1.0 # Yellow
+        obstacle.color.a = 1.0 # 투명도 0
+        for ob in self.obstacle:
+            begin = Point()
+            begin.x = self.boat_x + ob.begin.x * math.cos(self.psi) - ob.begin.x * math.sin(self.psi)
+            begin.y = self.boat_y + ob.begin.y * math.sin(self.psi) + ob.begin.y * math.cos(self.psi)
+            begin.z = 0
+            obstacle.points.append(begin)
+            end = Point()
+            end.x = self.boat_x + ob.end.x * math.cos(self.psi) - ob.end.x * math.sin(self.psi)
+            end.y = self.boat_y + ob.end.y * math.sin(self.psi) + ob.end.y * math.cos(self.psi)
+            end.z = 0
+            obstacle.points.append(end)
 
         marker_array.markers.append(heading_arrow)
         marker_array.markers.append(psi_desire_arrow)
         marker_array.markers.append(boat)
+        marker_array.markers.append(obstacle)
 
         self.marker_array_pub.publish(marker_array)
 
 def main():
-    rospy.init_node('Autonomous', anonymous=False)
+    rospy.init_node('autonomous', anonymous=False)
 
     autonomous = Autonomous()
     rate = rospy.Rate(10)
@@ -309,7 +330,7 @@ def main():
         autonomous.calc_angle_risk()
         autonomous.control_publish()
 
-
+        # TODO if, else 문 주석 해제한 버전으로 쓰면 처음부터 Finished가 나옴. 왜 그럴까?
         # if autonomous.arrival_check(): # 최종 목적지에 도착함
         #     autonomous.servo_pub.publish(autonomous.servo_middle)
         #     autonomous.thruster_pub.publish() # TODO: 정지값 넣어주기
@@ -319,6 +340,7 @@ def main():
         # else:
         #     autonomous.calc_angle_risk()
         #     autonomous.control_publish()
+
         autonomous.print_state()
         autonomous.view_rviz()
         rate.sleep()
