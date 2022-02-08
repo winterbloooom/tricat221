@@ -236,9 +236,8 @@ class Autonomous:
         heading_arrow.action = 0 #ADD
         heading_arrow.id = 4
         heading_arrow.type = 0 #LINE_LIST
-        heading_arrow.pose.orientation.y = 0 # TODO ????
-        heading_arrow.pose.orientation.w = 1 # TODO ????
-        heading_arrow.scale = Vector3(3,2,1)
+        heading_arrow.pose.orientation.w = 1 # 쿼터니언 에러 방지용
+        heading_arrow.scale = Vector3(0.2,0.4,0)
         heading_arrow.color.r = 0.5 # purple
         heading_arrow.color.b = 0.5 # purple
         heading_arrow.color.a = 1.0 # 투명도 0
@@ -246,8 +245,9 @@ class Autonomous:
         heading.x = self.boat_x
         heading.y = self.boat_y
         heading_arrow.points.append(heading) #화살표 시작점
-        heading.x = 1 * math.cos(self.psi) + self.boat_x #TODO 화살표 크기 조정할 것.
-        heading.y = 1 * math.sin(self.psi) + self.boat_y
+        heading = Point()
+        heading.x = 2 * math.cos(self.psi) + self.boat_x #TODO 화살표 크기=2
+        heading.y = 2 * math.sin(self.psi) + self.boat_y
         heading_arrow.points.append(heading) # 화살표 끝점
 
         psi_desire_arrow = Marker()
@@ -257,9 +257,8 @@ class Autonomous:
         psi_desire_arrow.action = 0 #ADD
         psi_desire_arrow.id = 5
         psi_desire_arrow.type = 0 #LINE_LIST
-        psi_desire_arrow.pose.orientation.y = 0 # TODO ????
-        psi_desire_arrow.pose.orientation.w = 1 # TODO ????
-        psi_desire_arrow.scale = Vector3(3,2,1)
+        psi_desire_arrow.pose.orientation.w = 1
+        psi_desire_arrow.scale = Vector3(0.2,0.4,0)
         psi_desire_arrow.color.r = 1.0 # pink
         psi_desire_arrow.color.g = 0.4 # pink
         psi_desire_arrow.color.b = 0.7 # pink
@@ -268,8 +267,9 @@ class Autonomous:
         psi_desire.x = self.boat_x
         psi_desire.y = self.boat_y
         psi_desire_arrow.points.append(psi_desire) #화살표 시작점
-        psi_desire.x = 1 * math.cos(self.psi_desire) + self.boat_x #TODO 화살표 크기 조정할 것.
-        psi_desire.y = 1 * math.sin(self.psi_desire) + self.boat_y
+        psi_desire = Point()
+        psi_desire.x = 2 * math.cos(self.psi_desire) + self.boat_x
+        psi_desire.y = 2 * math.sin(self.psi_desire) + self.boat_y
         psi_desire_arrow.points.append(psi_desire) # 화살표 끝점
 
         boat = Marker()
