@@ -233,6 +233,7 @@ class Autonomous:
         heading_arrow.header.frame_id = "/map"
         heading_arrow.header.stamp = rospy.Time.now()
         heading_arrow.ns = "heading"
+        heading_arrow.text = "heading"
         heading_arrow.action = 0 #ADD
         heading_arrow.id = 4
         heading_arrow.type = 0 #LINE_LIST
@@ -254,6 +255,7 @@ class Autonomous:
         psi_desire_arrow.header.frame_id = "/map"
         psi_desire_arrow.header.stamp = rospy.Time.now()
         psi_desire_arrow.ns = "psi_desire"
+        psi_desire.text = "psi_desire"
         psi_desire_arrow.action = 0 #ADD
         psi_desire_arrow.id = 5
         psi_desire_arrow.type = 0 #LINE_LIST
