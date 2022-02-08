@@ -35,7 +35,7 @@
 <!--Arduino-->
 	<!--<node pkg="tricat_211" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>-->
 
-<!--RQT graph-->
-	<!--<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>
-	<node name="rviz" pkg="rviz" type="rviz"/>-->
+<!--Visualization-->
+	<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>
+	<node name="rviz" pkg="rviz" type="rviz"/>
 </launch>
