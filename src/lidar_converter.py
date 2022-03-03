@@ -15,9 +15,9 @@ from tricat221.msg import Obstacle, ObstacleList
 class Lidar_Converter:
     def __init__(self):
         # sub, pub 개체
-        rospy.Subscriber("/scan", LaserScan, self.lidar_raw_callback)
-        self.obstacle_pub = rospy.Publisher("/obstacles", ObstacleList, queue_size=100) # TODO queue_size가 publish 속도에 영향 주는지 연구!
-        self.marker_array_pub = rospy.Publisher("/rviz_visual", MarkerArray, queue_size=100)
+        rospy.Subscriber("/scan", LaserScan, self.lidar_raw_callback, queue_size=1)
+        self.obstacle_pub = rospy.Publisher("/obstacles", ObstacleList, queue_size=10) # TODO queue_size가 publish 속도에 영향 주는지 연구!
+        self.marker_array_pub = rospy.Publisher("/rviz_visual", MarkerArray, queue_size=10)
 
         # 파라미터 임포트
         self.max_gap_in_set = rospy.get_param("max_gap_in_set")

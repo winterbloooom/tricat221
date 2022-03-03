@@ -18,20 +18,20 @@ import point_class as pc # src/point_class.py
 class Autonomous:
     def __init__(self):
         ## sub, pub
-        rospy.Subscriber("/heading", Float64, self.heading_callback)
-        rospy.Subscriber("/enu_position", Point, self.boat_position_callback)
-        rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback)
-        rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback)
+        rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
+        rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
+        rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback, queue_size=1)
+        rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
 
-        self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=10) # TODO 아두이노 쪽에서 S 수정하기
-        self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=10)
+        self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0) # TODO 아두이노 쪽에서 S 수정하기
+        self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
 
-        self.marker_array_pub = rospy.Publisher("/rviz_mark_array", MarkerArray, queue_size=100)
-        self.goal_pub = rospy.Publisher("/rviz_goal", Marker, queue_size=10)
-        self.trajectory_pub = rospy.Publisher("/rviz_trajectory", Marker, queue_size=10)
+        self.marker_array_pub = rospy.Publisher("/rviz_mark_array", MarkerArray, queue_size=0)
+        self.goal_pub = rospy.Publisher("/rviz_goal", Marker, queue_size=0)
+        self.trajectory_pub = rospy.Publisher("/rviz_trajectory", Marker, queue_size=0)
 
         ## 파라미터 및 변수
-        self.goal_x, self.goal_y = 3, 3 #gc.enu_convert(rospy.get_param("autonomous_goal"))
+        self.goal_x, self.goal_y = 0, 0 #gc.enu_convert(rospy.get_param("autonomous_goal"))
         self.goal_range = rospy.get_param("goal_range")
 
         goal = Marker()
@@ -165,12 +165,12 @@ class Autonomous:
             """
             # TODO msg, 계산 잘 들어가는지 확인
             begin = pc.Point.empty_point()
-            begin.x = ob.begin.x * math.cos(self.psi) - ob.begin.x * math.sin(self.psi)
-            begin.y = ob.begin.y * math.sin(self.psi) + ob.begin.y * math.cos(self.psi)
+            begin.x = ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.x * math.sin(math.radians(self.psi))
+            begin.y = ob.begin.y * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
 
             end = pc.Point.empty_point()
-            end.x = ob.end.x * math.cos(self.psi) - ob.end.x * math.sin(self.psi)
-            end.y = ob.end.y * math.sin(self.psi) + ob.end.y * math.cos(self.psi)
+            end.x = ob.end.x * math.cos(math.radians(self.psi)) - ob.end.x * math.sin(math.radians(self.psi))
+            end.y = ob.end.y * math.sin(math.radians(self.psi)) + ob.end.y * math.cos(math.radians(self.psi))
 
             middle = (begin + end) / 2
 
@@ -313,8 +313,8 @@ class Autonomous:
         heading.y = self.boat_y
         heading_arrow.points.append(heading) #화살표 시작점
         heading = Point()
-        heading.x = 2 * math.cos(self.psi) + self.boat_x #TODO 화살표 크기=2
-        heading.y = 2 * math.sin(self.psi) + self.boat_y
+        heading.x = 2 * math.cos(math.radians(self.psi)) + self.boat_x #TODO 화살표 크기=2
+        heading.y = 2 * math.sin(math.radians(self.psi)) + self.boat_y
         heading_arrow.points.append(heading) # 화살표 끝점
 
         psi_desire_arrow = Marker()
@@ -335,8 +335,8 @@ class Autonomous:
         psi_desire.y = self.boat_y
         psi_desire_arrow.points.append(psi_desire) #화살표 시작점
         psi_desire = Point()
-        psi_desire.x = 2 * math.cos(self.psi_desire) + self.boat_x
-        psi_desire.y = 2 * math.sin(self.psi_desire) + self.boat_y
+        psi_desire.x = 2 * math.cos(math.radians(self.psi_desire)) + self.boat_x
+        psi_desire.y = 2 * math.sin(math.radians(self.psi_desire)) + self.boat_y
         psi_desire_arrow.points.append(psi_desire) # 화살표 끝점
 
         boat = Marker()
@@ -370,15 +370,15 @@ class Autonomous:
         obstacle.color.a = 1.0 # 투명도 0
         for ob in self.obstacle:
             begin = Point()
-            begin.x = self.boat_x + ob.begin.x * math.cos(self.psi) - ob.begin.x * math.sin(self.psi)
-            begin.y = self.boat_y + ob.begin.y * math.sin(self.psi) + ob.begin.y * math.cos(self.psi)
+            begin.x = self.boat_x + ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.x * math.sin(math.radians(self.psi))
+            begin.y = self.boat_y + ob.begin.y * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
             # begin.x = self.boat_x + ob.begin.x # for test
             # begin.y = self.boat_y + ob.begin.y
             begin.z = 0
             obstacle.points.append(begin)
             end = Point()
-            end.x = self.boat_x + ob.end.x * math.cos(self.psi) - ob.end.x * math.sin(self.psi)
-            end.y = self.boat_y + ob.end.y * math.sin(self.psi) + ob.end.y * math.cos(self.psi)
+            end.x = self.boat_x + ob.end.x * math.cos(math.radians(self.psi)) - ob.end.x * math.sin(math.radians(self.psi))
+            end.y = self.boat_y + ob.end.y * math.sin(math.radians(self.psi)) + ob.end.y * math.cos(math.radians(self.psi))
             # end.x = self.boat_x + ob.end.x
             # end.y = self.boat_y + ob.end.y
             end.z = 0
@@ -400,8 +400,10 @@ class Autonomous:
         p.y = self.boat_y
         detecting_start.points.append(p) #화살표 시작점
         p = Point()
-        p.x = 3 * math.cos(self.angle_min) + self.boat_x
-        p.y = 3 * math.sin(self.angle_min) + self.boat_y
+        p.x = 3 * math.cos(math.radians(0)) + self.boat_x
+        p.y = 3 * math.sin(math.radians(0)) + self.boat_y
+        # p.x = 3 * math.cos(self.angle_min) + self.boat_x
+        # p.y = 3 * math.sin(self.angle_min) + self.boat_y
         detecting_start.points.append(p) # 화살표 끝점
 
         marker_array.markers.append(heading_arrow)
@@ -425,8 +427,10 @@ class Autonomous:
         p.y = self.boat_y
         detecting_end.points.append(p) #화살표 시작점
         p = Point()
-        p.x = 3 * math.cos(self.angle_max) + self.boat_x
-        p.y = 3 * math.sin(self.angle_max) + self.boat_y
+        p.x = 3 * math.cos(math.radians(180)) + self.boat_x
+        p.y = 3 * math.sin(math.radians(180)) + self.boat_y
+        # p.x = 3 * math.cos(self.angle_max) + self.boat_x
+        # p.y = 3 * math.sin(self.angle_max) + self.boat_y
         detecting_end.points.append(p) # 화살표 끝점
 
         marker_array.markers.append(heading_arrow)
@@ -446,19 +450,19 @@ def main():
     rate = rospy.Rate(10)
 
     while not rospy.is_shutdown():
-        # autonomous.calc_angle_risk()
-        # autonomous.control_publish()
+        autonomous.calc_angle_risk()
+        autonomous.control_publish()
 
-        # TODO if, else 문 주석 해제한 버전으로 쓰면 처음부터 Finished가 나옴. 왜 그럴까?
-        if autonomous.arrival_check(): # 최종 목적지에 도착함
-            autonomous.servo_pub.publish(autonomous.servo_middle)
-            autonomous.thruster_pub.publish(0) # TODO: 정지값 넣어주기
-            print("-"*20)
-            print("Finished!")
-            return
-        else:
-            autonomous.calc_angle_risk()
-            autonomous.control_publish()
+        # # TODO if, else 문 주석 해제한 버전으로 쓰면 처음부터 Finished가 나옴. 왜 그럴까?
+        # if autonomous.arrival_check(): # 최종 목적지에 도착함
+        #     autonomous.servo_pub.publish(autonomous.servo_middle)
+        #     autonomous.thruster_pub.publish(0) # TODO: 정지값 넣어주기
+        #     print("-"*20)
+        #     print("Finished!")
+        #     return
+        # else:
+        #     autonomous.calc_angle_risk()
+        #     autonomous.control_publish()
 
         autonomous.print_state()
         autonomous.view_rviz()

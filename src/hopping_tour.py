@@ -14,12 +14,12 @@ from sensor_msgs.msg import Imu
 
 class Hopping:
     def __init__(self):
-        rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback)
-        rospy.Subscriber("/heading", Float64, self.heading_callback)
-        rospy.Subscriber("/enu_position", Point, self.boat_position_callback)
+        rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
+        rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
+        rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
 
-        self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=10)
-        self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=10)
+        self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0)
+        self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
 
         ## 변수 초기화
         ### waypoint 좌표(x, y) 리스트
