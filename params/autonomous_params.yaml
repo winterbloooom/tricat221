@@ -1,7 +1,7 @@
 goal_range: 1.5
 
-angle_min: -20
-angle_max: 20
+angle_min: -40
+angle_max: 40
 angle_increment: 1
 span_angle: 10
 goal_risk_range: 30

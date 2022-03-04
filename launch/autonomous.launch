@@ -6,6 +6,8 @@
 	<node pkg="tricat221" type="autonomous.py" name="autonomous" respawn="true" output="screen"/>
 	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter" respawn="true"/>
 	<!--<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true"/>-->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting1.rviz" />
+	<!--rosrun rviz rviz -d `rospack find tricat221`/rviz/rviz_setting1.rviz-->
 
 <!--PARAMETER-->
 	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
@@ -37,5 +39,5 @@
 
 <!--Visualization-->
 	<!--<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>-->
-	<node name="rviz" pkg="rviz" type="rviz"/>
+	<!--<node name="rviz" pkg="rviz" type="rviz"/>-->
 </launch>
