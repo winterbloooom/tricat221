@@ -6,7 +6,7 @@ from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point, Vector3
 
 class RvizMarker:
-    def __init__(self, name, marker_id, marker_type, scale, r, g, b):
+    def __init__(self, name, marker_id, marker_type, p_scale=0.1, a_x_scale=0.2, a_y_scale=0.4, r=0, g=0, b=0):
         self.marker = Marker()
 
         # 고정값
@@ -23,9 +23,9 @@ class RvizMarker:
         self.marker.color.r, self.marker.color.g, self.marker.color.b = r, g, b
 
         if marker_type == 0: #arrow
-            self.marker.scale = Vector3(0.2, 0.4, 0)
+            self.marker.scale = Vector3(a_x_scale, a_y_scale, 0)
         else:
-            self.marker.scale = Vector3(scale, scale, 0)
+            self.marker.scale = Vector3(p_scale, p_scale, 0)
 
     def append_marker_point(self, x, y):
         self.marker.points.append(Point(x, y, 0))

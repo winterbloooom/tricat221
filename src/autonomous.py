@@ -39,7 +39,7 @@ class Autonomous:
         self.goal_range = rospy.get_param("goal_range")
 
         ### rviz module test
-        self.rviz_goal = rv.RvizMarker("goal", 11, 8, 0.2, 0, 0, 1)
+        self.rviz_goal = rv.RvizMarker("goal", 11, 8, p_sclae=0.2, b=1)
         self.rviz_goal.append_marker_point(self.goal_x, self.goal_y)
         
         self.angle_min = rospy.get_param("angle_min") # 목표 각도 후보 최솟값
@@ -85,7 +85,7 @@ class Autonomous:
 
         self.cnt = 0 # print 출력 속도 조절 위한 타이머
 
-        self.rviz_traj = rv.RvizMarker("traj", 8, 8, 0.1, 0, 1, 0)
+        self.rviz_traj = rv.RvizMarker("traj", 8, 8, p_scale=0.1, g=1)
         self.rviz_traj.append_marker_point(self.boat_x, self.boat_y)
         
 
@@ -272,20 +272,20 @@ class Autonomous:
         rviz_points_arr = MarkerArray()
         rviz_ang_arr = MarkerArray()
 
-        heading = rv.RvizMarker("heading", 4, 0, 0, 0.5, 0, 0.5)
+        heading = rv.RvizMarker("heading", 4, 0, a_x_scale=0.2, a_y_scale=0.4, g=0.55, b=0.55)
         heading.append_marker_point(self.boat_x, self.boat_y)
         heading.append_marker_point(2 * math.cos(math.radians(self.psi)) + self.boat_x,\
                                     2 * math.sin(math.radians(self.psi)) + self.boat_y)
 
-        psi_desire = rv.RvizMarker("psi_d", 5, 0, 0, 1, 0.4, 0.7)
+        psi_desire = rv.RvizMarker("psi_d", 5, 0, a_x_scale=0.2, a_y_scale=0.4, r=0.39, g=0.58, b=0.93)
         psi_desire.append_marker_point(self.boat_x, self.boat_y)
         psi_desire.append_marker_point(2 * math.cos(math.radians(self.psi_desire)) + self.boat_x,\
                                     2 * math.sin(math.radians(self.psi_desire)) + self.boat_y)
 
-        boat = rv.RvizMarker("boat", 6, 8, 0.2, 1, 0, 0)
+        boat = rv.RvizMarker("boat", 6, 8, p_scale=0.2, r=1)
         boat.append_marker_point(self.boat_x, self.boat_y)
 
-        ob_mark = rv.RvizMarker("obstacles", 7, 5, 0.05, 1, 1, 0)
+        ob_mark = rv.RvizMarker("obstacles", 7, 5, p_scale=0.05, r=1, g=1, 0)
         for ob in self.obstacle:
             begin_x = self.boat_x + ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.x * math.sin(math.radians(self.psi))
             begin_y = self.boat_y + ob.begin.y * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
@@ -294,12 +294,12 @@ class Autonomous:
             ob_mark.append_marker_point(begin_x, begin_y)
             ob_mark.append_marker_point(end_x, end_y)
 
-        detect_start = rv.RvizMarker("detect_start", 9, 5, 0.03, 0.5, 0, 0)
+        detect_start = rv.RvizMarker("detect_start", 9, 5, p_scale=0.03, r=0.5)
         detect_start.append_marker_point(self.boat_x, self.boat_y)
         detect_start.append_marker_point(3 * math.cos(math.radians(self.angle_min)) + self.boat_x,\
                                     3 * math.sin(math.radians(self.angle_min)) + self.boat_y)
 
-        detect_end = rv.RvizMarker("detect_end", 10, 5, 0.03, 0, 0.5, 0)
+        detect_end = rv.RvizMarker("detect_end", 10, 5, p_scale=0.03, g=0.5)
         detect_end.append_marker_point(self.boat_x, self.boat_y)
         detect_end.append_marker_point(3 * math.cos(math.radians(self.angle_max)) + self.boat_x,\
                                     3 * math.sin(math.radians(self.angle_max)) + self.boat_y)
