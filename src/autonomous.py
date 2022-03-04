@@ -19,10 +19,10 @@ import rviz_viewer as rv
 class Autonomous:
     def __init__(self):
         ## sub, pub
-        rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
-        rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
-        rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback, queue_size=1)
-        rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
+        heading_sub = rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
+        enu_pos_sub = rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
+        obstacle_sub = rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback, queue_size=1)
+        yaw_rate_sub = rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
 
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0) # TODO 아두이노 쪽에서 S 수정하기
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
@@ -317,11 +317,38 @@ class Autonomous:
         rviz_ang_arr.markers.append(detect_end.marker)
         self.rviz_angles_pub.publish(rviz_ang_arr)
 
+    
+    def is_all_connected(self):
+        not_connected = []
+        if heading_sub.get_num_connections() == 0:
+            not_connected.append("headingCalculator")
+
+        if enu_pos_sub.get_num_connections() == 0
+            not_connected.append("gnssConverter")
+
+        if obstacle_sub.get_num_connections() == 0:
+            not_connected.append("lidarConverter")
+            
+        if yaw_rate_sub.get_num_connections() == 0:
+            not_connected.append("imu")
+
+        if len(not_connected)==0:
+            return False
+        else:
+            print("\n\n----------...NOT CONNECTED YET...----------")
+            print(not_connected)
+            print("\n\n")
+            rospy.sleep(0.1)
+
+
 def main():
     rospy.init_node('autonomous', anonymous=False)
 
     autonomous = Autonomous()
     rate = rospy.Rate(10)
+
+    while autonomous.is_all_connected():
+        pass
 
     while not rospy.is_shutdown():
         # autonomous.calc_angle_risk()
