@@ -32,29 +32,16 @@ class Autonomous:
         self.rviz_points_pub = rospy.Publisher("/points_rviz", MarkerArray, queue_size=0)   # 현재 배 위치, 장애물 위치
         ### 변하지 않는 값, 누적값 rviz pub
         self.rviz_goal_pub = rospy.Publisher("/goal_rviz", Marker, queue_size=0)    # 목표점
-        self.rviz_trajectory_pub = rospy.Publisher("/trajectory_rviz", Marker, queue_size=0)    # 지나온 경로
+        self.rviz_traj_pub = rospy.Publisher("/traj_rviz", Marker, queue_size=0)    # 지나온 경로\
 
         ## 파라미터 및 변수
         self.goal_x, self.goal_y = 3, 5 #gc.enu_convert(rospy.get_param("autonomous_goal"))
         self.goal_range = rospy.get_param("goal_range")
 
-        # self.rviz_goal = Marker()
-        # self.rviz_goal.header.frame_id = "/map"
-        # self.rviz_goal.header.stamp = rospy.Time.now()
-        # self.rviz_goal.ns = "goal"
-        # self.rviz_goal.action = 0 #ADD
-        # self.rviz_goal.id = 11
-        # self.rviz_goal.type = 8 #POINTS
-        # self.rviz_goal.scale.x, self.rviz_goal.scale.y = 0.2, 0.2
-        # self.rviz_goal.color.b = 1.0 
-        # self.rviz_goal.color.a = 1.0 # 투명도 0
-        # self.rviz_goal.points.append(Point(self.goal_x, self.goal_y, 0))
-
         ### rviz module test
         self.rviz_goal = rv.RvizMarker("goal", 11, 8, 0.2, 0, 0, 1)
         self.rviz_goal.append_marker_point(self.goal_x, self.goal_y)
         
-
         self.angle_min = rospy.get_param("angle_min") # 목표 각도 후보 최솟값
         self.angle_max = rospy.get_param("angle_max") # 목표 각도 후보 최댓값
         self.angle_increment = rospy.get_param("angle_increment") # 각도 계산할 단위각
@@ -98,18 +85,9 @@ class Autonomous:
 
         self.cnt = 0 # print 출력 속도 조절 위한 타이머
 
-        self.trajectoryPoint = Marker() # Rviz 상에 표시할 경로
-        self.trajectoryPoint.header.frame_id = "/map"
-        self.trajectoryPoint.header.stamp = rospy.Time.now()
-        self.trajectoryPoint.ns = "boat"
-        self.trajectoryPoint.action = 0 #ADD
-        self.trajectoryPoint.id = 8
-        self.trajectoryPoint.type = 8 #POINTS
-        self.trajectoryPoint.scale.x = 0.1
-        self.trajectoryPoint.scale.y = 0.1 #0.1
-        self.trajectoryPoint.color.g = 1.0 # green
-        self.trajectoryPoint.color.a = 1.0 # 투명도 0
-
+        self.rviz_traj = rv.RvizMarker("traj", 8, 8, 0.1, 0, 1, 0)
+        self.rviz_traj.append_marker_point(self.boat_x, self.boat_y)
+        
 
     # IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수
     def heading_callback(self, msg):
@@ -128,7 +106,6 @@ class Autonomous:
 
     def obstacle_callback(self, msg):
         self.obstacle = msg.obstacle #[msg.obstacle.begin.x, msg.obstacle.begin.y, msg.obstacle.end.x, msg.obstacle.end.y]
-        # self.calc_angle_risk() # TODO 이 함수를 여기 위치시키는 게 맞을까? 일단 main에서 호출함
 
 
     def calc_distance_to_goal(self):
@@ -267,8 +244,7 @@ class Autonomous:
         # self.u_thruster = self.distance_PID()
 
         self.trajectory.append([self.boat_x, self.boat_y]) # 현재 위치(지나온 경로의 하나가 될 점) 업데이트 # TODO 이거 왜 배열로 담아??(저장 이유?)
-        
-        self.trajectoryPoint.points.append(Point(self.boat_x, self.boat_y, 0))
+        self.rviz_traj.append_marker_point(self.boat_x, self.boat_y)
 
         self.servo_pub.publish(self.u_servo)
         self.thruster_pub.publish() # TODO thruster도 PID 할 필요 없다면 굳이 여기 위치시킬 필요 있나?
@@ -293,159 +269,52 @@ class Autonomous:
 
 
     def view_rviz(self):
-        # marker_array = MarkerArray()
         rviz_points_arr = MarkerArray()
         rviz_ang_arr = MarkerArray()
 
+        heading = rv.RvizMarker("heading", 4, 0, 0, 0.5, 0, 0.5)
+        heading.append_marker_point(self.boat_x, self.boat_y)
+        heading.append_marker_point(2 * math.cos(math.radians(self.psi)) + self.boat_x,\
+                                    2 * math.sin(math.radians(self.psi)) + self.boat_y)
 
-        heading_arrow = Marker()
-        heading_arrow.header.frame_id = "/map"
-        heading_arrow.header.stamp = rospy.Time.now()
-        heading_arrow.ns = "heading"
-        heading_arrow.action = 0 #ADD
-        heading_arrow.id = 4
-        heading_arrow.type = 0 #LINE_LIST
-        heading_arrow.pose.orientation.w = 1 # 쿼터니언 에러 방지용
-        heading_arrow.scale = Vector3(0.2,0.4,0)
-        heading_arrow.color.r = 0.5 # purple
-        heading_arrow.color.b = 0.5 # purple
-        heading_arrow.color.a = 1.0 # 투명도 0
-        # heading = Point()
-        # heading.x = self.boat_x
-        # heading.y = self.boat_y
-        # heading_arrow.points.append(heading) 
-        heading_arrow.points.append(Point(self.boat_x, self.boat_y, 0))#화살표 시작점
-        # heading = Point()
-        # heading.x = 2 * math.cos(math.radians(self.psi)) + self.boat_x 
-        # heading.y = 2 * math.sin(math.radians(self.psi)) + self.boat_y
-        # heading_arrow.points.append(heading)
-        heading_arrow.points.append(Point(2 * math.cos(math.radians(self.psi)) + self.boat_x,\
-                                        2 * math.sin(math.radians(self.psi)) + self.boat_y, 0)) # 화살표 끝점, TODO 화살표 크기=2
+        psi_desire = rv.RvizMarker("psi_d", 5, 0, 0, 1, 0.4, 0.7)
+        psi_desire.append_marker_point(self.boat_x, self.boat_y)
+        psi_desire.append_marker_point(2 * math.cos(math.radians(self.psi_desire)) + self.boat_x,\
+                                    2 * math.sin(math.radians(self.psi_desire)) + self.boat_y)
 
-        psi_desire_arrow = Marker()
-        psi_desire_arrow.header.frame_id = "/map"
-        psi_desire_arrow.header.stamp = rospy.Time.now()
-        psi_desire_arrow.ns = "psi_desire"
-        psi_desire_arrow.action = 0 #ADD
-        psi_desire_arrow.id = 5
-        psi_desire_arrow.type = 0 #LINE_LIST
-        psi_desire_arrow.pose.orientation.w = 1
-        psi_desire_arrow.scale = Vector3(0.2,0.4,0)
-        # psi_desire_arrow.color.r = 1.0 # pink
-        # psi_desire_arrow.color.g = 0.4 # pink
-        psi_desire_arrow.color.b = 0.7 # pink
-        psi_desire_arrow.color.a = 1.0 # 투명도 0
-        # psi_desire = Point()
-        # psi_desire.x = self.boat_x
-        # psi_desire.y = self.boat_y
-        # psi_desire_arrow.points.append(psi_desire) #화살표 시작점
-        psi_desire_arrow.points.append(Point(self.boat_x, self.boat_y, 0))#화살표 시작점
-        # psi_desire = Point()
-        # psi_desire.x = 2 * math.cos(math.radians(self.psi_desire)) + self.boat_x
-        # psi_desire.y = 2 * math.sin(math.radians(self.psi_desire)) + self.boat_y
-        # psi_desire_arrow.points.append(psi_desire) # 화살표 끝점
-        psi_desire_arrow.points.append(Point(2 * math.cos(math.radians(self.psi_desire)) + self.boat_x,\
-                                2 * math.sin(math.radians(self.psi_desire)) + self.boat_y, 0)) # 화살표 끝점, TODO 화살표 크기=2
+        boat = rv.RvizMarker("boat", 6, 8, 0.2, 1, 0, 0)
+        boat.append_marker_point(self.boat_x, self.boat_y)
 
-        boat = Marker()
-        boat.header.frame_id = "/map"
-        boat.header.stamp = rospy.Time.now()
-        boat.ns = "boat"
-        boat.action = 0 #ADD
-        boat.id = 6
-        boat.type = 8 #POINTS
-        boat.scale.x = 0.2 #0.1
-        boat.scale.y = 0.2 #0.1
-        boat.color.r = 1.0 # Red
-        boat.color.a = 1.0 # 투명도 0
-        # boat_position = Point()
-        # boat_position.x = self.boat_x
-        # boat_position.y = self.boat_y
-        # boat_position.z = 0
-        # boat.points.append(boat_position)
-        boat.points.append(Point(self.boat_x, self.boat_y, 0))
-
-        obstacle = Marker() # 장애물 확인용
-        obstacle.header.frame_id = "/map"
-        obstacle.header.stamp = rospy.Time.now()
-        obstacle.ns = "obstacles"
-        obstacle.action = 0 #ADD
-        obstacle.pose.orientation.w = 1.0 #???
-        obstacle.id = 7
-        obstacle.type = 5 #LINE_LIST
-        obstacle.scale.x = 0.05
-        obstacle.color.r, obstacle.color.g, obstacle.color.b = 1.0, 1.0, 0# Yellow
-        obstacle.color.a = 1.0 # 투명도 0
+        ob_mark = rv.RvizMarker("obstacles", 7, 5, 0.05, 1, 1, 0)
         for ob in self.obstacle:
-            begin = Point()
-            begin.x = self.boat_x + ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.x * math.sin(math.radians(self.psi))
-            begin.y = self.boat_y + ob.begin.y * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
-            begin.z = 0
-            obstacle.points.append(begin)
-            end = Point()
-            end.x = self.boat_x + ob.end.x * math.cos(math.radians(self.psi)) - ob.end.x * math.sin(math.radians(self.psi))
-            end.y = self.boat_y + ob.end.y * math.sin(math.radians(self.psi)) + ob.end.y * math.cos(math.radians(self.psi))
-            end.z = 0
-            obstacle.points.append(end)
+            begin_x = self.boat_x + ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.x * math.sin(math.radians(self.psi))
+            begin_y = self.boat_y + ob.begin.y * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
+            end_x = self.boat_x + ob.end.x * math.cos(math.radians(self.psi)) - ob.end.x * math.sin(math.radians(self.psi))
+            end_y = self.boat_y + ob.end.y * math.sin(math.radians(self.psi)) + ob.end.y * math.cos(math.radians(self.psi))
+            ob_mark.append_marker_point(begin_x, begin_y)
+            ob_mark.append_marker_point(end_x, end_y)
 
-        detecting_start = Marker()
-        detecting_start.header.frame_id = "/map"
-        detecting_start.header.stamp = rospy.Time.now()
-        detecting_start.ns = "detect_start"
-        detecting_start.action = 0 #ADD
-        detecting_start.pose.orientation.w = 1.0
-        detecting_start.id = 9
-        detecting_start.type = 5 #LINE_LIST
-        detecting_start.scale.x = 0.03
-        detecting_start.color.r = 0.5
-        detecting_start.color.a = 1.0 # 투명도 0
-        # p = Point()
-        # p.x = self.boat_x
-        # p.y = self.boat_y
-        # detecting_start.points.append(p) #화살표 시작점
-        detecting_start.points.append(Point(self.boat_x, self.boat_y, 0))
-        # p = Point()
-        # p.x = 3 * math.cos(math.radians(self.angle_min)) + self.boat_x
-        # p.y = 3 * math.sin(math.radians(self.angle_min)) + self.boat_y
-        # detecting_start.points.append(p) # 화살표 끝점
-        detecting_start.points.append(Point(3 * math.cos(math.radians(self.angle_min)) + self.boat_x,\
-                                            3 * math.sin(math.radians(self.angle_min)) + self.boat_y, 0)) # 화살표 크기=3
+        detect_start = rv.RvizMarker("detect_start", 9, 5, 0.03, 0.5, 0, 0)
+        detect_start.append_marker_point(self.boat_x, self.boat_y)
+        detect_start.append_marker_point(3 * math.cos(math.radians(self.angle_min)) + self.boat_x,\
+                                    3 * math.sin(math.radians(self.angle_min)) + self.boat_y)
 
-        detecting_end = Marker()
-        detecting_end.header.frame_id = "/map"
-        detecting_end.header.stamp = rospy.Time.now()
-        detecting_end.ns = "detecting_end"
-        detecting_end.action = 0 #ADD
-        detecting_end.pose.orientation.w = 1.0
-        detecting_end.id = 10
-        detecting_end.type = 5 #LINE_LIST
-        detecting_end.scale.x = 0.03
-        detecting_end.color.g = 0.5
-        detecting_end.color.a = 1.0 # 투명도 0
-        # p = Point()
-        # p.x = self.boat_x
-        # p.y = self.boat_y
-        # detecting_end.points.append(p) #화살표 시작점
-        detecting_end.points.append(Point(self.boat_x, self.boat_y, 0))
-        # p = Point()
-        # p.x = 3 * math.cos(math.radians(self.angle_max)) + self.boat_x
-        # p.y = 3 * math.sin(math.radians(self.angle_max)) + self.boat_y
-        # detecting_end.points.append(p) # 화살표 끝점
-        detecting_end.points.append(Point(3 * math.cos(math.radians(self.angle_max)) + self.boat_x,\
-                                        3 * math.sin(math.radians(self.angle_max)) + self.boat_y, 0)) # 화살표 크기=3
-        
+        detect_end = rv.RvizMarker("detect_end", 10, 5, 0.03, 0, 0.5, 0)
+        detect_end.append_marker_point(self.boat_x, self.boat_y)
+        detect_end.append_marker_point(3 * math.cos(math.radians(self.angle_max)) + self.boat_x,\
+                                    3 * math.sin(math.radians(self.angle_max)) + self.boat_y)
+  
+        self.rviz_traj_pub.publish(self.rviz_traj.marker)
+        self.rviz_goal_pub.publish(self.rviz_goal.marker)
 
-        self.rviz_trajectory_pub.publish(self.trajectoryPoint)
-        self.rviz_goal_pub.publish(self.rviz_goal.return_marker())
-
-        rviz_points_arr.markers.append(boat)
-        rviz_points_arr.markers.append(obstacle)
+        rviz_points_arr.markers.append(boat.marker)
+        rviz_points_arr.markers.append(ob_mark.marker)
         self.rviz_points_pub.publish(rviz_points_arr)
         
-        rviz_ang_arr.markers.append(heading_arrow)
-        rviz_ang_arr.markers.append(psi_desire_arrow)
-        rviz_ang_arr.markers.append(detecting_start)
-        rviz_ang_arr.markers.append(detecting_end)
+        rviz_ang_arr.markers.append(heading.marker)
+        rviz_ang_arr.markers.append(psi_desire.marker)
+        rviz_ang_arr.markers.append(detect_start.marker)
+        rviz_ang_arr.markers.append(detect_end.marker)
         self.rviz_angles_pub.publish(rviz_ang_arr)
 
 def main():
@@ -458,7 +327,8 @@ def main():
         # autonomous.calc_angle_risk()
         # autonomous.control_publish()
 
-        # # TODO if, else 문 주석 해제한 버전으로 쓰면 처음부터 Finished가 나옴. 왜 그럴까? 목표점을 0, 0으로 해뒀으니까 바보야...
+        # TODO if, else 문 주석 해제한 버전으로 쓰면 처음부터 Finished가 나옴. 왜 그럴까? 
+        # ---->목표점을 0, 0으로 해뒀으니까 바보야...
         if autonomous.arrival_check(): # 최종 목적지에 도착함
             autonomous.servo_pub.publish(autonomous.servo_middle)
             autonomous.thruster_pub.publish(0) # TODO: 정지값 넣어주기
