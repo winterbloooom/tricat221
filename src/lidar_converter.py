@@ -165,8 +165,8 @@ class Lidar_Converter:
     def publish_obstacles(self):
         ob_list = ObstacleList()
         
-        ob_list.lidar_header.stamp = self.lidar_header_stamp
-        ob_list.lidar_header.frame_id = self.lidar_header_frameid
+        # ob_list.lidar_header.stamp = self.lidar_header_stamp
+        # ob_list.lidar_header.frame_id = self.lidar_header_frameid
 
         for ob in self.obstacles:
             obstacle = Obstacle()

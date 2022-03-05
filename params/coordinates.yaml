@@ -1,7 +1,7 @@
 # origin_latitude: 37.448036360748645
 # origin_longitude: 126.65343386101154
 # origin_altitude: 53.0
-origin: [37.453391491530795, 126.65984835295069, 45.0] #temp value
+origin: [37.451113, 126.656208, 45.0] #temp value
 
 waypoints: [
 [35.0695357, 128.5789378, 45.0],
@@ -10,4 +10,4 @@ waypoints: [
 [35.0693755, 128.5789723, 45.0]
 ] #temp value
 
-autonomous_goal: [37.453314837879766, 126.65998514560421, 45.0] #temp value
+autonomous_goal: [37.4511531, 126.6560461, 45.0] #temp value

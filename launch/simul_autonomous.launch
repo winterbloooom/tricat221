@@ -1,7 +1,7 @@
 <launch>
 	<!--<node pkg="tricat221" type="fake_sensor_controller.py" name="F_Controller" output="screen"/>-->
 
-	<!--<node pkg="tricat221" type="fake_lidar_converter.py" name="F_lidarConverter"/>-->
+	<node pkg="tricat221" type="fake_scan.py" name="F_scan"/>
 	<node pkg="tricat221"  type="fake_gnss_converter.py" name="F_gnssConverter"/>
 	<node pkg="tricat221"  type="fake_heading_calculator.py" name="F_headingCalculator"/>
 

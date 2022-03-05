@@ -35,8 +35,8 @@ class Autonomous:
         self.rviz_traj_pub = rospy.Publisher("/traj_rviz", Marker, queue_size=0)    # 지나온 경로\
 
         ## 파라미터 및 변수
-        # self.goal_x, self.goal_y = 3, 5 #gc.enu_convert(rospy.get_param("autonomous_goal"))
-        self.goal_x, self.goal_y = rospy.get_param('~goal_x'), rospy.get_param('~goal_y')
+        self.goal_x, self.goal_y = gc.enu_convert(rospy.get_param("autonomous_goal"))
+        # self.goal_x, self.goal_y = rospy.get_param('~goal_x'), rospy.get_param('~goal_y')
         self.goal_range = rospy.get_param("goal_range")
 
         ### rviz module test

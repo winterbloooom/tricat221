@@ -1,14 +1,14 @@
 goal_range: 1.5
 
-angle_min: -40
-angle_max: 40
+angle_min: -70
+angle_max: 70
 angle_increment: 1
 span_angle: 10
 goal_risk_range: 30
 
 ob_exist_coefficient: 5
 ob_near_coefficient: 2
-goal_orient_coefficient: 0
+goal_orient_coefficient: 3
 
 kp_angle : 0.0
 ki_angle : 0.0 # max 0.05?
