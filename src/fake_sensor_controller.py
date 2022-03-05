@@ -10,7 +10,7 @@ pub = rospy.Publisher('sensing_value', FakeSensor, queue_size=0)
 
 while not rospy.is_shutdown():
     fake_sensor = FakeSensor()
-    sensor_type = int(input("Sensor (1: GPS / 2: IMU / 3: LiDAR) >> "))
+    sensor_type = int(input("Sensor (1: GPS / 2: IMU / 3: LiDAR / others: quit) >> "))
     fake_sensor.sensor_type = sensor_type
     if sensor_type == 1:
         x = input("ENU Pos X >> ")
@@ -19,6 +19,8 @@ while not rospy.is_shutdown():
 
     elif sensor_type == 2:
         fake_sensor.heading_ang = int(input("Heading Ang (deg) >> "))
-    else:
+    elif sensor_type == 3:
         fake_sensor.ob_case = int(input("Scan Case (1~5) >> "))
+    else:
+        break
     pub.publish(fake_sensor) # 한 번에 못 받으면?

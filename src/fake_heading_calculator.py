@@ -5,32 +5,22 @@ import rospy
 from std_msgs.msg import Float64
 from tricat221.msg import FakeSensor
 
-global pub
-global h
+class FakeHeading:
+    def __init__(self):
+        self.h = 0
+        self.pub = rospy.Publisher("/heading", Float64, queue_size=0)
+        rospy.Subscriber("/sensing_value", FakeSensor, self.callback, queue_size=1)
 
-def heading_publish():
-    global pub
-    global h
-
-    while True:
-        pub.publish(h)
-        rospy.sleep(0.2)
-
-def callback(msg):
-    global h
-
-    if msg.sensor_type == 2:
-        h = msg.heading_ang
-        # heading_publish(msg.heading_ang)
+    def callback(self, msg):
+        if msg.sensor_type == 2:
+            self.h = msg.heading_ang
 
 rospy.init_node('F_headingCalculator', anonymous=False)
 
-pub = rospy.Publisher("/heading", Float64, queue_size=0)
-rospy.Subscriber("/sensing_value", FakeSensor, callback, queue_size=1)
+fake_heading = FakeHeading()
+rate = rospy.Rate(5)
 
 while not rospy.is_shutdown():
-    global h
-    pub.publish(h)
-    rospy.sleep(0.2)
+    fake_heading.pub.publish(fake_heading.h)
 
 rospy.spin()
