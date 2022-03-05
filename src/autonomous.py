@@ -19,10 +19,10 @@ import rviz_viewer as rv
 class Autonomous:
     def __init__(self):
         ## sub, pub
-        heading_sub = rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
-        enu_pos_sub = rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
-        obstacle_sub = rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback, queue_size=1)
-        yaw_rate_sub = rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
+        self.heading_sub = rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
+        self.enu_pos_sub = rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
+        self.obstacle_sub = rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback, queue_size=1)
+        self.yaw_rate_sub = rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
 
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0) # TODO 아두이노 쪽에서 S 수정하기
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
@@ -35,11 +35,12 @@ class Autonomous:
         self.rviz_traj_pub = rospy.Publisher("/traj_rviz", Marker, queue_size=0)    # 지나온 경로\
 
         ## 파라미터 및 변수
-        self.goal_x, self.goal_y = 3, 5 #gc.enu_convert(rospy.get_param("autonomous_goal"))
+        # self.goal_x, self.goal_y = 3, 5 #gc.enu_convert(rospy.get_param("autonomous_goal"))
+        self.goal_x, self.goal_y = rospy.get_param('~goal_x'), rospy.get_param('~goal_y')
         self.goal_range = rospy.get_param("goal_range")
 
         ### rviz module test
-        self.rviz_goal = rv.RvizMarker("goal", 11, 8, p_sclae=0.2, b=1)
+        self.rviz_goal = rv.RvizMarker("goal", 11, 8, p_scale=0.2, b=1)
         self.rviz_goal.append_marker_point(self.goal_x, self.goal_y)
         
         self.angle_min = rospy.get_param("angle_min") # 목표 각도 후보 최솟값
@@ -285,7 +286,7 @@ class Autonomous:
         boat = rv.RvizMarker("boat", 6, 8, p_scale=0.2, r=1)
         boat.append_marker_point(self.boat_x, self.boat_y)
 
-        ob_mark = rv.RvizMarker("obstacles", 7, 5, p_scale=0.05, r=1, g=1, 0)
+        ob_mark = rv.RvizMarker("obstacles", 7, 5, p_scale=0.05, r=1, g=1)
         for ob in self.obstacle:
             begin_x = self.boat_x + ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.x * math.sin(math.radians(self.psi))
             begin_y = self.boat_y + ob.begin.y * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
@@ -320,16 +321,16 @@ class Autonomous:
     
     def is_all_connected(self):
         not_connected = []
-        if heading_sub.get_num_connections() == 0:
+        if self.heading_sub.get_num_connections() == 0:
             not_connected.append("headingCalculator")
 
-        if enu_pos_sub.get_num_connections() == 0
+        if self.enu_pos_sub.get_num_connections() == 0:
             not_connected.append("gnssConverter")
 
-        if obstacle_sub.get_num_connections() == 0:
+        if self.obstacle_sub.get_num_connections() == 0:
             not_connected.append("lidarConverter")
             
-        if yaw_rate_sub.get_num_connections() == 0:
+        if self.yaw_rate_sub.get_num_connections() == 0:
             not_connected.append("imu")
 
         if len(not_connected)==0:

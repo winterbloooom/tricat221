@@ -53,6 +53,7 @@ add_message_files(
   FILES
   Obstacle.msg
   ObstacleList.msg
+  FakeSensor.msg
 )
 
 ## Generate services in the 'srv' folder
