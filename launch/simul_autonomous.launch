@@ -1,6 +1,26 @@
-<launch>
-	<!--<node pkg="tricat221" type="fake_sensor_controller.py" name="F_Controller" output="screen"/>-->
+<?xml version="1.0" encoding="UTF-8"?>
 
+<!--bag and pub-->
+<launch>
+	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/>
+	<node pkg="tricat221" type="autonomous.py" name="autonomous" respawn="true" output="screen">
+		<param name="goal_x" value="3"/>
+		<param name="goal_y" value="3"/>
+	</node>
+
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting1.rviz" />
+	<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>
+	
+	<!--PARAMETER-->
+	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
+	<rosparam command="load" file="$(find tricat221)/params/autonomous_params.yaml"/>
+	<rosparam command="load" file="$(find tricat221)/params/coordinates.yaml"/>
+	
+</launch>
+
+
+<!--simul scripts-->
+<!--<launch>
 	<node pkg="tricat221" type="fake_scan.py" name="F_scan"/>
 	<node pkg="tricat221"  type="fake_gnss_converter.py" name="F_gnssConverter"/>
 	<node pkg="tricat221"  type="fake_heading_calculator.py" name="F_headingCalculator"/>
@@ -15,4 +35,4 @@
 
 	<rosparam command="load" file="$(find tricat221)/params/autonomous_params.yaml"/>
 	<rosparam command="load" file="$(find tricat221)/params/coordinates.yaml"/>
-</launch>
+</launch>-->

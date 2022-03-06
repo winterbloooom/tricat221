@@ -1,31 +1,31 @@
 <raw 데이터들만>
-rosbag play ~/tricat/src/tricat221/bag/0207.bag -l --topics /imu/data /imu/mag /scan /ublox_gps/fix
+rosbag play ~/tricat/src/tricat221/etc/0207.bag -l --topics /imu/data /imu/mag /scan /ublox_gps/fix
 
 <autonomous 직전>
 
-rosbag play ~/tricat/src/tricat221/bag/0207.bag -l --topics /enu_position /heading /imu/data /imu/mag /obstacles /rviz_visual /scan /ublox_gps/fix
+rosbag play ~/tricat/src/tricat221/etc/0207.bag -l --topics /enu_position /heading /imu/data /imu/mag /obstacles /rviz_visual /scan /ublox_gps/fix
 
 
 <센서 최종 처리까지>
-rosbag play ~/tricat/src/tricat221/bag/0207.bag -l --topics /enu_position /heading /imu/data /obstacles
+rosbag play ~/tricat/src/tricat221/etc/0207.bag -l --topics /enu_position /heading /imu/data /obstacles
 
 
 <GPS, IMU raw만>
-rosbag play ~/tricat/src/tricat221/bag/0207.bag -l --topics /imu/data /imu/mag /ublox_gps/fix
+rosbag play ~/tricat/src/tricat221/etc/0207.bag -l --topics /imu/data /imu/mag /ublox_gps/fix
 
 <GPS 빼고 센서 처리된 값들만>
-rosbag play ~/tricat/src/tricat221/bag/0207.bag -l --topics /heading /obstacles
+rosbag play ~/tricat/src/tricat221/etc/0207.bag -l --topics /heading /obstacles
 
 <무시>
 /diagnostics /rosout /rosout_agg
 
 <0223 lidar bag>
-rosbag play ~/tricat/src/tricat221/bag/0223.bag -l --topics /scan
+rosbag play ~/tricat/src/tricat221/etc/0223.bag -l --topics /scan
 
 -------------------------------------------
 터미널1: roscre
 터미널2: 
-rosbag play ~/tricat/src/tricat221/bag/0207.bag -l --topics /imu/data /scan
+rosbag play ~/tricat/src/tricat221/etc/0207.bag -l --topics /imu/data /scan
 터미널3:
 rostopic pub /enu_position geometry_msgs/Point -r 10 -- 0 0 0
 터미널4:

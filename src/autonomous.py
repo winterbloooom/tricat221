@@ -7,7 +7,7 @@ import pymap3d as pm
 
 from std_msgs.msg import UInt16, Float64
 from sensor_msgs.msg import Imu
-from geometry_msgs.msg import Point, Vector3
+from geometry_msgs.msg import Point, Vector3, Pose
 from visualization_msgs.msg import Marker, MarkerArray
 from tricat221.msg import Obstacle, ObstacleList
 
@@ -35,8 +35,8 @@ class Autonomous:
         self.rviz_traj_pub = rospy.Publisher("/traj_rviz", Marker, queue_size=0)    # 지나온 경로\
 
         ## about goal
-        self.goal_x, self.goal_y = gc.enu_convert(rospy.get_param("autonomous_goal"))
-        # self.goal_x, self.goal_y = rospy.get_param('~goal_x'), rospy.get_param('~goal_y')
+        # self.goal_x, self.goal_y = gc.enu_convert(rospy.get_param("autonomous_goal"))
+        self.goal_x, self.goal_y = rospy.get_param('~goal_x'), rospy.get_param('~goal_y')
         self.goal_range = rospy.get_param("goal_range")
         self.distance_to_goal = 100000 #TODO 괜찮을지 확인. 처음부터 0으로 넣는다면 gps 받아오기 전부터 finished됨
         self.rviz_goal = rv.RvizMarker("goal", 11, 8, p_scale=0.2, b=1)
@@ -57,7 +57,7 @@ class Autonomous:
             # 목표각 탐색 범위임. TODO : 수정 필요할 수도!
         self.psi = 0
         self.psi_desire = 0
-        self.psi_goal = 0
+        self.psi_goal = math.degrees(math.atan2(self.goal_y, self.goal_x))    # 한 번 넣으면 변하지 않는 값임
         self.error_angle = 0
 
         ## coefficients for calculations
@@ -68,6 +68,7 @@ class Autonomous:
         
         ## about obstacles
         self.obstacle = []
+        self.inrange_obstacle = []
 
         ## variables for PID control
         self.yaw_rate = 0 # z축 각속도 [degree/s]
@@ -89,7 +90,7 @@ class Autonomous:
         self.cnt = 0 # print 출력 속도 조절 위한 타이머
         
         ## first call functions
-        self.calc_angle_to_goal()
+        # self.calc_angle_to_goal()
         self.calc_distance_to_goal()
 
 
@@ -115,8 +116,8 @@ class Autonomous:
         self.distance_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
 
 
-    def calc_angle_to_goal(self):
-        self.psi_goal = math.atan2(self.goal_y, self.goal_x)
+    # def calc_angle_to_goal(self):     # 필요 없음
+    #     self.psi_goal = math.atan2(self.goal_y, self.goal_x)
 
 
     def arrival_check(self):
@@ -142,12 +143,12 @@ class Autonomous:
             not_connected.append("imu")
 
         if len(not_connected)==0:
-            return False
+            return True
         else:
             print("\n\n----------...NOT CONNECTED YET...----------")
             print(not_connected)
             print("\n\n")
-            rospy.sleep(0.1)
+            return False
 
 
     ######################## 경로 계산 관련 함수들 ########################
@@ -162,83 +163,138 @@ class Autonomous:
 
     def calc_ob_risk(self):
         dist_to_obstacles = [] # [장애물 중점까지 거리, 각도 인덱스]의 배열
+        self.inrange_obstacle = []
 
         for ob in self.obstacle:
-            """
-            회전변환행렬 이용. [heading 방향으로 0도로 하는 Xb-Yb축] -> [진북을 0도로 하는 Xo-Yo 축]
-            | cos(a)  -sin(a) | | x | | x' |
-            |                 |.|   |=|    |
-            | sin(a)   cos(a) | | y | | y' |
-            """
-            # TODO msg, 계산 잘 들어가는지 확인
-            begin = pc.Point.empty_point()
-            begin.x = ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.x * math.sin(math.radians(self.psi))
-            begin.y = ob.begin.y * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
+            begin_ang = math.degrees(math.atan2(ob.begin.y, ob.begin.x)) # 장애물 블럭 시작점
+            end_ang = math.degrees(math.atan2(ob.end.y, ob.end.x))   # 장애물 블럭 끝점
 
-            end = pc.Point.empty_point()
-            end.x = ob.end.x * math.cos(math.radians(self.psi)) - ob.end.x * math.sin(math.radians(self.psi))
-            end.y = ob.end.y * math.sin(math.radians(self.psi)) + ob.end.y * math.cos(math.radians(self.psi))
+            middle_x = (ob.begin.x + ob.end.x) / 2  # 장애물 블럭 중점
+            middle_y = (ob.begin.y + ob.end.y) / 2
+            middle_ang = round(math.degrees(math.atan2(middle_y, middle_x))) # TODO increment를 1로 했을 때를 가정해 round를 했음 소숫점까지 내려가면 모르겠다..
 
-            middle = (begin + end) / 2
-
-            start_ang = round(begin.polar_angle_deg() - self.span_angle) # TODO 부호 합당한가 확인. lidar converter의 반시계 방향 건 참고해서
-            end_ang = round(end.polar_angle_deg() + self.span_angle) # TODO round 올림 어디서 할 건지 결정
-            middle_ang = round(middle.polar_angle_deg())
-
-            if end_ang < self.angle_min or start_ang > self.angle_max:
-                continue  # min_angle, max_angle 벗어난 것 처리함. TODO 잘 들어가는지 확인 / del ob, del obstacle[obstacle.index(ob)] 안됨
-
-            start_ang_idx = int((start_ang - self.angle_min) / self.angle_increment) if (start_ang > self.angle_min) else 0 # int 안 씌워도 되는지? # self.angle_risk.find(start_ang)
-            end_ang_idx = int((end_ang - self.angle_min) / self.angle_increment) if (end_ang < self.angle_max) else len(self.angle_risk) - 1
-            if middle_ang < self.angle_min:
-                middle_ang_idx = 0
-            elif middle_ang > self.angle_max:
-                middle_ang_idx = len(self.angle_risk) - 1
+            if middle_ang < self.angle_min or middle_ang > self.angle_max:
+                continue  # min_angle, max_angle 벗어난 것 처리함. TODO 잘 들어가는지 확인
             else:
-                middle_ang_idx = int((middle_ang - self.angle_min) / self.angle_increment)
+                self.inrange_obstacle.append(ob)    # 계산 범위에 있는 장애물임 # TODO 나중에는 Rviz 상에서 보도록 span도 추가해서보자
+
+            if (begin_ang - self.span_angle) > self.angle_min:
+                start_ang = round(begin_ang - self.span_angle)
+            else:
+                start_ang = self.angle_min
             
-            # if start_ang_idx == -1 or end_ang_idx == -1 or middle_ang_idx == -1: # TODO 내가 해놓고도 이거 어떻게 동작하는지 까먹음.. 실화?
-            #     print("Error!")
-            # else:
-            #     for idx in range(start_ang_idx, end_ang_idx, self.angle_increment):
-            #         self.angle_risk[idx] += 1*self.ob_exist_coefficient  # TODO 잘 작동하는지 확인할 것
+            if (end_ang + self.span_angle) < self.angle_max:
+                fin_ang = round(end_ang + self.span_angle)
+            else:
+                fin_ang = self.angle_max
+            
+            start_ang_idx = int((start_ang - self.angle_min) / self.angle_increment)
+            fin_ang_idx = int((fin_ang - self.angle_min) / self.angle_increment)
+            middle_ang_idx = int((start_ang_idx + fin_ang_idx) / 2) # 장애물이 계산 범위 넘어가 있어 start_ang / fin_ang이 바뀌었더라도 탐지범위 내 있는 크기의 중간으로 삼음
 
-            for idx in range(start_ang_idx, end_ang_idx, self.angle_increment):
-                self.angle_risk[idx] += 1*self.ob_exist_coefficient  # TODO 잘 작동하는지 확인할 것
+            for idx in range(start_ang_idx, fin_ang_idx + 1, self.angle_increment):
+                self.angle_risk[idx] += self.ob_exist_coefficient  # TODO 잘 작동하는지 확인할 것
 
-            dist = middle.dist_btw_points2(self.boat_x, self.boat_y)
-            dist_to_obstacles.append([dist, middle_ang_idx])
+            dist = math.sqrt(pow(self.boat_x - middle_x, 2.0) + pow(self.boat_y - middle_y, 2.0))   # 장애물 중점에서 배까지 거리
+            self.angle_risk[middle_ang_idx] += dist * self.ob_near_coefficient  # 거리에 비례해 곱해줌. 때문에 해당 계수는 1 이하여야함
+
+        #     """
+        #     회전변환행렬 이용. [heading 방향으로 0도로 하는 Xb-Yb축] -> [진북을 0도로 하는 Xo-Yo 축]
+        #     | cos(a)  -sin(a) | | x | | x' |
+        #     |                 |.|   |=|    |
+        #     | sin(a)   cos(a) | | y | | y' |
+        #     """
+        #     # TODO msg, 계산 잘 들어가는지 확인
+        #     begin = pc.Point.empty_point()
+        #     begin.x = ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.x * math.sin(math.radians(self.psi))
+        #     begin.y = ob.begin.y * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
+
+        #     end = pc.Point.empty_point()
+        #     end.x = ob.end.x * math.cos(math.radians(self.psi)) - ob.end.x * math.sin(math.radians(self.psi))
+        #     end.y = ob.end.y * math.sin(math.radians(self.psi)) + ob.end.y * math.cos(math.radians(self.psi))
+
+        #     middle = (begin + end) / 2
+
+        #     start_ang = round(begin.polar_angle_deg() - self.span_angle) # TODO 부호 합당한가 확인. lidar converter의 반시계 방향 건 참고해서
+        #     end_ang = round(end.polar_angle_deg() + self.span_angle) # TODO round 올림 어디서 할 건지 결정
+        #     middle_ang = round(middle.polar_angle_deg())
+
+        #     if end_ang < self.angle_min or start_ang > self.angle_max:
+        #         continue  # min_angle, max_angle 벗어난 것 처리함. TODO 잘 들어가는지 확인 / del ob, del obstacle[obstacle.index(ob)] 안됨
+
+        #     start_ang_idx = int((start_ang - self.angle_min) / self.angle_increment) if (start_ang > self.angle_min) else 0 # int 안 씌워도 되는지? # self.angle_risk.find(start_ang)
+        #     end_ang_idx = int((end_ang - self.angle_min) / self.angle_increment) if (end_ang < self.angle_max) else len(self.angle_risk) - 1
+        #     if middle_ang < self.angle_min:
+        #         middle_ang_idx = 0
+        #     elif middle_ang > self.angle_max:
+        #         middle_ang_idx = len(self.angle_risk) - 1
+        #     else:
+        #         middle_ang_idx = int((middle_ang - self.angle_min) / self.angle_increment)
+            
+        #     # if start_ang_idx == -1 or end_ang_idx == -1 or middle_ang_idx == -1: # TODO 내가 해놓고도 이거 어떻게 동작하는지 까먹음.. 실화?
+        #     #     print("Error!")
+        #     # else:
+        #     #     for idx in range(start_ang_idx, end_ang_idx, self.angle_increment):
+        #     #         self.angle_risk[idx] += 1*self.ob_exist_coefficient  # TODO 잘 작동하는지 확인할 것
+
+        #     for idx in range(start_ang_idx, end_ang_idx, self.angle_increment):
+        #         self.angle_risk[idx] += 1*self.ob_exist_coefficient  # TODO 잘 작동하는지 확인할 것
+
+        #     dist = middle.dist_btw_points2(self.boat_x, self.boat_y)
+        #     dist_to_obstacles.append([dist, middle_ang_idx])
         
-        dist_to_obstacles.sort() # 거리를 오름차순 정렬. 가장 가까운 장애물부터.
-        for d in dist_to_obstacles:
-            self.angle_risk[d[1]] += 1*self.ob_near_coefficient # TODO 잘 작동하는지 확인할 것
+        # dist_to_obstacles.sort() # 거리를 오름차순 정렬. 가장 가까운 장애물부터.
+        # for d in dist_to_obstacles:
+        #     self.angle_risk[d[1]] += 1*self.ob_near_coefficient # TODO 잘 작동하는지 확인할 것
 
 
-    def calc_goal_risk(self): # 목표점에 가까워야 하니까 위험도는 낮아짐. 그래서 - 연산
-        if self.angle_min <= self.psi_goal <= self.angle_max: # 목표각 탐색 범위 안에 목표점이 존재함
+    def calc_goal_risk(self): # 목표점에 가까워야 하니까 위험도는 낮아짐.
+        error_goal_ang = self.psi_goal - self.psi # 선박고정좌표계 기준 도착지까지 각도
+
+        if self.angle_min <= error_goal_ang <= self.angle_max: # 계산 범위 안에 목표점이 존재함
             for idx in range(len(self.angle_risk)):
                 ang = idx * self.angle_increment + self.angle_min
-                delta_ang = abs(self.psi - ang) # TODO 값 확인하기
+                delta_ang = abs(error_goal_ang - ang) # TODO 값 확인하기
                 if delta_ang <= self.goal_risk_range:
-                    continue
+                    self.angle_risk[idx] += 1 * self.goal_orient_coefficient   # 해당 각도가 목표점과 많이 떨어져 있지 않음. 값을 조금만 더해줌
                 elif delta_ang <= (self.goal_risk_range * 2):
-                    self.angle_risk[idx] -= 1*self.goal_orient_coefficient
+                    self.angle_risk[idx] += 2 * self.goal_orient_coefficient
                 elif delta_ang <= (self.goal_risk_range * 3):
-                    self.angle_risk[idx] -= 2*self.goal_orient_coefficient
+                    self.angle_risk[idx] += 3 * self.goal_orient_coefficient
                 else:
-                    self.angle_risk[idx] -= 3*self.goal_orient_coefficient
-        elif self.angle_min > self.psi_goal: # 목적지가 탐색 범위를 벗어난 좌현에 위치 -> TODO 일단 중심 각도를 기준으로 왼쪽에 모두 점수 부여
-            for idx in range(len(self.angle_risk)//2):
-                self.angle_risk[idx] -= 1*self.goal_orient_coefficient # TODO 1을 곱하는 게 맞을까?
-        else:   # 목적지가 탐색 범위를 벗어난 우현에 위치(ex. 출발 지점) -> TODO 일단 중심 각도를 기준으로 오른쪽에 모두 점수 부여
-            for idx in range(len(self.angle_risk)//2, len(self.angle_risk) + 1):
-                self.angle_risk[idx] -= 1*self.goal_orient_coefficient # TODO 1을 곱하는 게 맞을까?
+                    self.angle_risk[idx] += 4 * self.goal_orient_coefficient
+        elif self.angle_min > error_goal_ang: # 목적지가 탐색 범위를 벗어난 좌현에 위치 -> TODO 일단 중심 각도를 기준으로 우쪽에 모두 점수 부여. 반대쪽이니까 우현에 안 가도록 위험도 높임
+            for idx in range(len(self.angle_risk)//2, len(self.angle_risk)):
+                self.angle_risk[idx] += 2 * self.goal_orient_coefficient # TODO 2를 곱하는 게 맞을까?
+        else:   # 목적지가 탐색 범위를 벗어난 우현에 위치(ex. 출발 지점) -> TODO 일단 중심 각도를 기준으로 왼쪽에 모두 점수 부여
+            for idx in range(0, len(self.angle_risk)//2 + 1):
+                self.angle_risk[idx] += 2 * self.goal_orient_coefficient # TODO 1을 곱하는 게 맞을까?
+
+        # if self.angle_min <= self.psi_goal <= self.angle_max: # 목표각 탐색 범위 안에 목표점이 존재함
+        #     for idx in range(len(self.angle_risk)):
+        #         ang = idx * self.angle_increment + self.angle_min
+        #         delta_ang = abs(self.psi - ang) # TODO 값 확인하기
+        #         if delta_ang <= self.goal_risk_range:
+        #             continue
+        #         elif delta_ang <= (self.goal_risk_range * 2):
+        #             self.angle_risk[idx] -= 1*self.goal_orient_coefficient
+        #         elif delta_ang <= (self.goal_risk_range * 3):
+        #             self.angle_risk[idx] -= 2*self.goal_orient_coefficient
+        #         else:
+        #             self.angle_risk[idx] -= 3*self.goal_orient_coefficient
+        # elif self.angle_min > self.psi_goal: # 목적지가 탐색 범위를 벗어난 좌현에 위치 -> TODO 일단 중심 각도를 기준으로 왼쪽에 모두 점수 부여
+        #     for idx in range(len(self.angle_risk)//2):
+        #         self.angle_risk[idx] -= 1*self.goal_orient_coefficient # TODO 1을 곱하는 게 맞을까?
+        # else:   # 목적지가 탐색 범위를 벗어난 우현에 위치(ex. 출발 지점) -> TODO 일단 중심 각도를 기준으로 오른쪽에 모두 점수 부여
+        #     for idx in range(len(self.angle_risk)//2, len(self.angle_risk) + 1):
+        #         self.angle_risk[idx] -= 1*self.goal_orient_coefficient # TODO 1을 곱하는 게 맞을까?
 
 
     def calc_psi_desire(self):
                           # 가장 위험도 낮은 각도의 인덱스
-        self.psi_desire = self.angle_risk.index(min(self.angle_risk)) * self.angle_increment + self.angle_min # TODO 계산식 맞는지 확인할 것
-        self.error_angle = self.psi_desire - self.psi
+        self.error_angle = self.angle_risk.index(min(self.angle_risk)) * self.angle_increment + self.angle_min
+                # TODO 계산식 맞는지 확인할 것 / 선박고정좌표계 기준값 -> 그대로 error_angle에 해당함
+        self.psi_desire = self.error_angle + self.psi   # TODO 쓸 지는 모르겠지만 일단 계산해둠
 
 
     def error_angle_PID(self):
@@ -285,11 +341,11 @@ class Autonomous:
         print("-"*20)
         print("")   # TODO : 자릿수 맞추기 / 더 출력해봐야 할 것 있나?
         print("Boat loc : [{0}, {1}]".format(self.boat_x, self.boat_y))
-        print("Error Angle  : {0} deg | Servo   : {1}".format(self.error_angle, self.u_servo))
-        print("Dist. to Goal: {0} m".format(self.distance_to_goal))
+        print("Dist. to Goal: {0} m | Ang. to Goal: {1}".format(self.distance_to_goal, self.psi_goal))
         print("index of min angle risk: {0}".format(self.angle_risk.index(min(self.angle_risk))))
         print(self.angle_risk)
-        print("psi: {0}, psi_desire: {1}".format(self.psi, self.psi_desire))
+        print("psi(heading): {0}, psi_desire(wanna go): {1}".format(self.psi, self.psi_desire))
+        print("Error Angle(psi-desire): {0} deg | Servo : {1}".format(self.error_angle, self.u_servo))        
         print("")
 
         self.cnt = 0
@@ -308,43 +364,67 @@ class Autonomous:
         psi_desire.append_marker_point(self.boat_x, self.boat_y)
         psi_desire.append_marker_point(2 * math.cos(math.radians(self.psi_desire)) + self.boat_x,\
                                     2 * math.sin(math.radians(self.psi_desire)) + self.boat_y)
+        
+        psi_desire_txt = rv.RvizMarker("psi_d_txt", 13, 9, r=1, g=1, b=1)
+        psi_desire_txt.marker.scale.z = 0.5
+        psi_desire_txt.marker.text = "psi_desire"
+        psi_desire_txt.marker.pose.position = Point(2.2 * math.cos(math.radians(self.psi_desire)) + self.boat_x,\
+                                    2.2 * math.sin(math.radians(self.psi_desire)) + self.boat_y, 0)
 
         boat = rv.RvizMarker("boat", 6, 8, p_scale=0.2, r=1)
         boat.append_marker_point(self.boat_x, self.boat_y)
 
-        ob_mark = rv.RvizMarker("obstacles", 7, 5, p_scale=0.05, r=1, g=1)
+        ob_mark = rv.RvizMarker("obstacles", 7, 5, p_scale=0.05, r=1, b=1)
         for ob in self.obstacle:
-            begin_x = self.boat_x + ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.x * math.sin(math.radians(self.psi))
-            begin_y = self.boat_y + ob.begin.y * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
-            end_x = self.boat_x + ob.end.x * math.cos(math.radians(self.psi)) - ob.end.x * math.sin(math.radians(self.psi))
-            end_y = self.boat_y + ob.end.y * math.sin(math.radians(self.psi)) + ob.end.y * math.cos(math.radians(self.psi))
+            """
+            (우리는 x, y가 바뀌어야 함)(부호도 반대) -> 그러니까 똑같네???
+            ycos + xsin = y'
+            -ysin + xcos = x'
+            """
+            begin_x = self.boat_x + ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.y * math.sin(math.radians(self.psi))
+            begin_y = self.boat_y + ob.begin.x * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
+            end_x = self.boat_x + ob.end.x * math.cos(math.radians(self.psi)) - ob.end.y * math.sin(math.radians(self.psi))
+            end_y = self.boat_y + ob.end.x * math.sin(math.radians(self.psi)) + ob.end.y * math.cos(math.radians(self.psi))
             ob_mark.append_marker_point(begin_x, begin_y)
             ob_mark.append_marker_point(end_x, end_y)
 
+        inrange_ob_mark = rv.RvizMarker("obstacles", 12, 5, p_scale=0.1, r=1, g=1)
+        for ob in self.inrange_obstacle:
+            begin_x = self.boat_x + ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.y * math.sin(math.radians(self.psi))
+            begin_y = self.boat_y + ob.begin.x * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
+            end_x = self.boat_x + ob.end.x * math.cos(math.radians(self.psi)) - ob.end.y * math.sin(math.radians(self.psi))
+            end_y = self.boat_y + ob.end.x * math.sin(math.radians(self.psi)) + ob.end.y * math.cos(math.radians(self.psi))
+            # begin_x = self.boat_x + ob.begin.x
+            # begin_y = self.boat_y + ob.begin.y
+            # end_x = self.boat_x + ob.end.x
+            # end_y = self.boat_y + ob.end.y
+            inrange_ob_mark.append_marker_point(begin_x, begin_y)
+            inrange_ob_mark.append_marker_point(end_x, end_y)
+
         detect_start = rv.RvizMarker("detect_start", 9, 5, p_scale=0.03, r=0.5)
         detect_start.append_marker_point(self.boat_x, self.boat_y)
-        detect_start.append_marker_point(3 * math.cos(math.radians(self.angle_min)) + self.boat_x,\
-                                    3 * math.sin(math.radians(self.angle_min)) + self.boat_y)
+        detect_start.append_marker_point(3 * math.cos(math.radians(self.psi + self.angle_min)) + self.boat_x,\
+                                    3 * math.sin(math.radians(self.psi + self.angle_min)) + self.boat_y)
 
         detect_end = rv.RvizMarker("detect_end", 10, 5, p_scale=0.03, g=0.5)
         detect_end.append_marker_point(self.boat_x, self.boat_y)
-        detect_end.append_marker_point(3 * math.cos(math.radians(self.angle_max)) + self.boat_x,\
-                                    3 * math.sin(math.radians(self.angle_max)) + self.boat_y)
+        detect_end.append_marker_point(3 * math.cos(math.radians(self.psi + self.angle_max)) + self.boat_x,\
+                                    3 * math.sin(math.radians(self.psi + self.angle_max)) + self.boat_y)
   
         self.rviz_traj_pub.publish(self.rviz_traj.marker)
         self.rviz_goal_pub.publish(self.rviz_goal.marker)
 
         rviz_points_arr.markers.append(boat.marker)
         rviz_points_arr.markers.append(ob_mark.marker)
+        rviz_points_arr.markers.append(inrange_ob_mark.marker)
         self.rviz_points_pub.publish(rviz_points_arr)
         
         rviz_ang_arr.markers.append(heading.marker)
         rviz_ang_arr.markers.append(psi_desire.marker)
+        rviz_ang_arr.markers.append(psi_desire_txt.marker)
         rviz_ang_arr.markers.append(detect_start.marker)
         rviz_ang_arr.markers.append(detect_end.marker)
         self.rviz_angles_pub.publish(rviz_ang_arr)
-
-
 
 
 def main():
@@ -353,11 +433,15 @@ def main():
     autonomous = Autonomous()
     rate = rospy.Rate(10)
 
-    while True:
-        if autonomous.is_all_connected():
-            pass
-        else:
-            break
+    # while True:
+    #     if autonomous.is_all_connected(): #not_connected==0이면, 다 연결되었으면 False
+    #         pass
+    #     else:
+    #         break
+
+    while not autonomous.is_all_connected():
+        rospy.sleep(1)
+        pass
 
     while not rospy.is_shutdown():
         # autonomous.calc_angle_risk()
