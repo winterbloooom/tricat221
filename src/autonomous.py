@@ -8,8 +8,8 @@ import pymap3d as pm
 from std_msgs.msg import UInt16, Float64
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Point, Vector3
-from tricat221.msg import Obstacle, ObstacleList
 from visualization_msgs.msg import Marker, MarkerArray
+from tricat221.msg import Obstacle, ObstacleList
 
 import gnss_converter as gc # src/gnss_converter.py
 import point_class as pc # src/point_class.py
@@ -18,97 +18,99 @@ import rviz_viewer as rv
 
 class Autonomous:
     def __init__(self):
-        ## sub, pub
+        ## subscribers
         self.heading_sub = rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
         self.enu_pos_sub = rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
         self.obstacle_sub = rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback, queue_size=1)
         self.yaw_rate_sub = rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
 
+        ## publishers
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0) # TODO 아두이노 쪽에서 S 수정하기
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
 
-        ### 계속 변하는 값 rviz pub
-        self.rviz_angles_pub = rospy.Publisher("/angles_rviz", MarkerArray, queue_size=0)   # heading, psi_desire(목표까지의 에러각), 지금 서보로 돌릴 각
-        self.rviz_points_pub = rospy.Publisher("/points_rviz", MarkerArray, queue_size=0)   # 현재 배 위치, 장애물 위치
-        ### 변하지 않는 값, 누적값 rviz pub
+        ### rviz publishers
+        self.rviz_angles_pub = rospy.Publisher("/angles_rviz", MarkerArray, queue_size=0)   # psi, psi_desire, angle_min, angle_max
+        self.rviz_points_pub = rospy.Publisher("/points_rviz", MarkerArray, queue_size=0)   # boat, obstacle
         self.rviz_goal_pub = rospy.Publisher("/goal_rviz", Marker, queue_size=0)    # 목표점
         self.rviz_traj_pub = rospy.Publisher("/traj_rviz", Marker, queue_size=0)    # 지나온 경로\
 
-        ## 파라미터 및 변수
+        ## about goal
         self.goal_x, self.goal_y = gc.enu_convert(rospy.get_param("autonomous_goal"))
         # self.goal_x, self.goal_y = rospy.get_param('~goal_x'), rospy.get_param('~goal_y')
         self.goal_range = rospy.get_param("goal_range")
-
-        ### rviz module test
+        self.distance_to_goal = 100000 #TODO 괜찮을지 확인. 처음부터 0으로 넣는다면 gps 받아오기 전부터 finished됨
         self.rviz_goal = rv.RvizMarker("goal", 11, 8, p_scale=0.2, b=1)
         self.rviz_goal.append_marker_point(self.goal_x, self.goal_y)
+
+        ## about position
+        self.boat_x, self.boat_y = 0, 0
+        self.trajectory = []
+        self.rviz_traj = rv.RvizMarker("traj", 8, 8, p_scale=0.1, g=1)
+        # self.rviz_traj.append_marker_point(self.boat_x, self.boat_y)
         
+        ## about angles
         self.angle_min = rospy.get_param("angle_min") # 목표 각도 후보 최솟값
         self.angle_max = rospy.get_param("angle_max") # 목표 각도 후보 최댓값
         self.angle_increment = rospy.get_param("angle_increment") # 각도 계산할 단위각
         self.span_angle = rospy.get_param("span_angle")
         self.angle_risk = [0 for ang in range(self.angle_min, self.angle_max + self.angle_increment, self.angle_increment)]
             # 목표각 탐색 범위임. TODO : 수정 필요할 수도!
-        self.goal_risk_range = rospy.get_param("goal_risk_range")
+        self.psi = 0
+        self.psi_desire = 0
+        self.psi_goal = 0
+        self.error_angle = 0
+
+        ## coefficients for calculations
         self.ob_exist_coefficient = rospy.get_param("ob_exist_coefficient")
         self.ob_near_coefficient = rospy.get_param("ob_near_coefficient")
+        self.goal_risk_range = rospy.get_param("goal_risk_range")
         self.goal_orient_coefficient = rospy.get_param("goal_orient_coefficient")
+        
+        ## about obstacles
+        self.obstacle = []
 
+        ## variables for PID control
+        self.yaw_rate = 0 # z축 각속도 [degree/s]
         self.error_sum_angle = 0
         self.kp_angle = rospy.get_param("kp_angle")
         self.ki_angle = rospy.get_param("ki_angle")
         self.kd_angle = rospy.get_param("kd_angle")
 
+        ## servo motor range
         self.servo_middle = rospy.get_param("servo_middle")
         self.servo_left_max = rospy.get_param("servo_left_max")
         self.servo_right_max = rospy.get_param("servo_right_max")
 
+        ## thruster range
         self.thruster_max = rospy.get_param("thruster_max")
         self.thruster_min = rospy.get_param("thruster_min")
 
-        self.boat_x = 0
-        self.boat_y = 0
-        self.trajectory = []
-
-        self.yaw_rate = 0 # z축 각속도 [degree/s]
-
-        self.psi = 0
-        self.psi_desire = 0
-        self.psi_goal = 0
+        ## for report
+        self.cnt = 0 # print 출력 속도 조절 위한 타이머
+        
+        ## first call functions
         self.calc_angle_to_goal()
-
-        self.obstacle = []
-
-        self.distance_to_goal = 100000 #TODO 괜찮을지 확인. 처음부터 0으로 넣는다면 gps 받아오기 전부터 finished됨
         self.calc_distance_to_goal()
 
-        self.error_angle = 0
 
-        self.cnt = 0 # print 출력 속도 조절 위한 타이머
-
-        self.rviz_traj = rv.RvizMarker("traj", 8, 8, p_scale=0.1, g=1)
-        self.rviz_traj.append_marker_point(self.boat_x, self.boat_y)
-        
-
-    # IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수
+    ######################## Callback 함수들 ########################
     def heading_callback(self, msg):
+        """IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수"""
         self.psi = msg.data # [degree]
-
 
     def yaw_rate_callback(self, msg):
         self.yaw_rate = math.degrees(msg.angular_velocity.z) # [rad/s] -> [degree/s]
-    
 
-    # GPS로 측정한 배의 ENU 변환 좌표 콜백함수
     def boat_position_callback(self, msg):
+        """ GPS로 측정한 배의 ENU 변환 좌표 콜백함수 """
         self.boat_x = msg.x
         self.boat_y = msg.y
-
 
     def obstacle_callback(self, msg):
         self.obstacle = msg.obstacle #[msg.obstacle.begin.x, msg.obstacle.begin.y, msg.obstacle.end.x, msg.obstacle.end.y]
 
 
+    ######################## 업데이트 및 체크 관련 함수들 ########################
     def calc_distance_to_goal(self):
         self.distance_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
 
@@ -125,8 +127,32 @@ class Autonomous:
             return False
 
 
-    # 각도 위험도 구하기
+    def is_all_connected(self):
+        not_connected = []
+        if self.heading_sub.get_num_connections() == 0:
+            not_connected.append("headingCalculator")
+
+        if self.enu_pos_sub.get_num_connections() == 0:
+            not_connected.append("gnssConverter")
+
+        if self.obstacle_sub.get_num_connections() == 0:
+            not_connected.append("lidarConverter")
+            
+        if self.yaw_rate_sub.get_num_connections() == 0:
+            not_connected.append("imu")
+
+        if len(not_connected)==0:
+            return False
+        else:
+            print("\n\n----------...NOT CONNECTED YET...----------")
+            print(not_connected)
+            print("\n\n")
+            rospy.sleep(0.1)
+
+
+    ######################## 경로 계산 관련 함수들 ########################
     def calc_angle_risk(self):
+        """ 각도 위험도 구하기 """
         self.angle_risk = [0 for ang in range(self.angle_min, self.angle_max + self.angle_increment, self.angle_increment)]
         self.calc_ob_risk()  # (1) 장애물이 존재하는 각도 (2) 지금 배와 가까운 곳에 존재하는 장애물의 각도 등을 기준으로 점수 메기기 
         self.calc_goal_risk() # (3) 목표점에 가까운 각도는 적은 위험 멀면 큰 위험 
@@ -318,28 +344,7 @@ class Autonomous:
         rviz_ang_arr.markers.append(detect_end.marker)
         self.rviz_angles_pub.publish(rviz_ang_arr)
 
-    
-    def is_all_connected(self):
-        not_connected = []
-        if self.heading_sub.get_num_connections() == 0:
-            not_connected.append("headingCalculator")
 
-        if self.enu_pos_sub.get_num_connections() == 0:
-            not_connected.append("gnssConverter")
-
-        if self.obstacle_sub.get_num_connections() == 0:
-            not_connected.append("lidarConverter")
-            
-        if self.yaw_rate_sub.get_num_connections() == 0:
-            not_connected.append("imu")
-
-        if len(not_connected)==0:
-            return False
-        else:
-            print("\n\n----------...NOT CONNECTED YET...----------")
-            print(not_connected)
-            print("\n\n")
-            rospy.sleep(0.1)
 
 
 def main():
@@ -348,8 +353,11 @@ def main():
     autonomous = Autonomous()
     rate = rospy.Rate(10)
 
-    while autonomous.is_all_connected():
-        pass
+    while True:
+        if autonomous.is_all_connected():
+            pass
+        else:
+            break
 
     while not rospy.is_shutdown():
         # autonomous.calc_angle_risk()
