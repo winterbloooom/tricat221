@@ -162,7 +162,7 @@ class Autonomous:
 
 
     def calc_ob_risk(self):
-        dist_to_obstacles = [] # [장애물 중점까지 거리, 각도 인덱스]의 배열
+        # dist_to_obstacles = [] # [장애물 중점까지 거리, 각도 인덱스]의 배열 # 안 씀!!!
         self.inrange_obstacle = []
 
         for ob in self.obstacle:
@@ -196,7 +196,7 @@ class Autonomous:
                 self.angle_risk[idx] += self.ob_exist_coefficient  # TODO 잘 작동하는지 확인할 것
 
             dist = math.sqrt(pow(self.boat_x - middle_x, 2.0) + pow(self.boat_y - middle_y, 2.0))   # 장애물 중점에서 배까지 거리
-            self.angle_risk[middle_ang_idx] += dist * self.ob_near_coefficient  # 거리에 비례해 곱해줌. 때문에 해당 계수는 1 이하여야함
+            self.angle_risk[middle_ang_idx] -= dist * self.ob_near_coefficient  # 거리에 비례해 곱해줌. 때문에 해당 계수는 1 이하여야함
 
         #     """
         #     회전변환행렬 이용. [heading 방향으로 0도로 하는 Xb-Yb축] -> [진북을 0도로 하는 Xo-Yo 축]
@@ -319,7 +319,7 @@ class Autonomous:
 
     def control_publish(self):
         # 에러각 계산 -> PID로
-        self.calc_psi_desire()
+        # self.calc_psi_desire() # TODO 다시 들어가 있네...
         self.u_servo = self.error_angle_PID()
 
         # 남은 거리 계산 -> PID로 / TODO  속도는 동일하게 간다고 하고 PID 사용 유보
@@ -394,10 +394,6 @@ class Autonomous:
             begin_y = self.boat_y + ob.begin.x * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
             end_x = self.boat_x + ob.end.x * math.cos(math.radians(self.psi)) - ob.end.y * math.sin(math.radians(self.psi))
             end_y = self.boat_y + ob.end.x * math.sin(math.radians(self.psi)) + ob.end.y * math.cos(math.radians(self.psi))
-            # begin_x = self.boat_x + ob.begin.x
-            # begin_y = self.boat_y + ob.begin.y
-            # end_x = self.boat_x + ob.end.x
-            # end_y = self.boat_y + ob.end.y
             inrange_ob_mark.append_marker_point(begin_x, begin_y)
             inrange_ob_mark.append_marker_point(end_x, end_y)
 
@@ -440,8 +436,8 @@ def main():
     #         break
 
     while not autonomous.is_all_connected():
-        rospy.sleep(1)
-        pass
+        rospy.sleep(0.2)
+        # pass
 
     while not rospy.is_shutdown():
         # autonomous.calc_angle_risk()
