@@ -11,3 +11,6 @@ waypoints: [
 ] #temp value
 
 autonomous_goal: [37.4511531, 126.6560461, 45.0] #temp value
+
+docking_start_point: [37.4511531, 126.6560461, 45.0] #temp value
+docking_end_point: [37.4511531, 126.6560461, 45.0] #temp value
