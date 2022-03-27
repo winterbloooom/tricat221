@@ -23,7 +23,7 @@ rosbag play ~/tricat/src/tricat221/etc/0207.bag -l --topics /heading /obstacles
 rosbag play ~/tricat/src/tricat221/etc/0223.bag -l --topics /scan
 
 -------------------------------------------
-터미널1: roscre
+터미널1: roscore
 터미널2: 
 rosbag play ~/tricat/src/tricat221/etc/0207.bag -l --topics /imu/data /scan
 터미널3:
