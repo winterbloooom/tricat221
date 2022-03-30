@@ -15,12 +15,6 @@ import rviz_viewer as rv
 
 class ObstacleAvoidance:
     def __init__(self):
-        ## subscribers
-        self.heading_sub = rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
-        self.enu_pos_sub = rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
-        self.obstacle_sub = rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback, queue_size=1)
-        self.yaw_rate_sub = rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
-
         ## publishers
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0) # TODO 아두이노 쪽에서 S 수정하기
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
@@ -86,25 +80,7 @@ class ObstacleAvoidance:
         self.cnt = 0 # print 출력 속도 조절 위한 타이머
         
         ## first call functions
-        # self.calc_angle_to_goal()
         self.calc_distance_to_goal()
-
-
-    ######################## Callback 함수들 ########################
-    def heading_callback(self, msg):
-        """IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수"""
-        self.psi = msg.data # [degree]
-
-    def yaw_rate_callback(self, msg):
-        self.yaw_rate = math.degrees(msg.angular_velocity.z) # [rad/s] -> [degree/s]
-
-    def boat_position_callback(self, msg):
-        """ GPS로 측정한 배의 ENU 변환 좌표 콜백함수 """
-        self.boat_x = msg.x
-        self.boat_y = msg.y
-
-    def obstacle_callback(self, msg):
-        self.obstacle = msg.obstacle #[msg.obstacle.begin.x, msg.obstacle.begin.y, msg.obstacle.end.x, msg.obstacle.end.y]
 
 
     ######################## 업데이트 및 체크 관련 함수들 ########################
@@ -117,30 +93,7 @@ class ObstacleAvoidance:
             return True
         else:
             return False
-
-
-    def is_all_connected(self):
-        not_connected = []
-        if self.heading_sub.get_num_connections() == 0:
-            not_connected.append("headingCalculator")
-
-        if self.enu_pos_sub.get_num_connections() == 0:
-            not_connected.append("gnssConverter")
-
-        if self.obstacle_sub.get_num_connections() == 0:
-            not_connected.append("lidarConverter")
             
-        if self.yaw_rate_sub.get_num_connections() == 0:
-            not_connected.append("imu")
-
-        if len(not_connected)==0:
-            return True
-        else:
-            print("\n\n----------...NOT CONNECTED YET...----------")
-            print(not_connected)
-            print("\n\n")
-            return False
-
 
     ######################## 경로 계산 관련 함수들 ########################
     def calc_angle_risk(self):

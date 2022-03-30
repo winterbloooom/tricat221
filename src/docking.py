@@ -5,12 +5,7 @@
     while not autonomous.is_all_connected():
         rospy.sleep(0.2)
 
-    while not autonomous.arrival_check():
-        autonomous.calc_angle_risk()
-        autonomous.control_publish()
-        autonomous.print_state()
-        autonomous.view_rviz()
-        rate.sleep()
+    
     
 도착했음 -> 도킹으로 전환
 
@@ -30,3 +25,102 @@ Lidar로 장애물 계산, 스테이션 우선 서보 모터 제어량 결정
 퍼블리시
 """
 
+#!/usr/bin/env python
+#-*- coding:utf-8 -*-
+
+import rospy
+import math
+import pymap3d as pm
+
+from std_msgs.msg import UInt16, Float64
+from sensor_msgs.msg import Imu
+from geometry_msgs.msg import Point, Vector3, Pose
+from visualization_msgs.msg import Marker, MarkerArray
+from tricat221.msg import Obstacle, ObstacleList
+
+import gnss_converter as gc # src/gnss_converter.py
+import point_class as pc # src/point_class.py
+import rviz_viewer as rv
+
+import obstacle_avoidance as oa
+
+class Docking:
+    def __init__(self) -> None:
+        ## subscribers
+        self.heading_sub = rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
+        self.enu_pos_sub = rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
+        self.obstacle_sub = rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback, queue_size=1)
+        self.yaw_rate_sub = rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
+
+        ## publishers
+        self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0) # TODO 아두이노 쪽에서 S 수정하기
+        self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
+
+    def heading_callback(self, msg):
+        """IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수"""
+        self.psi = msg.data # [degree]
+
+    def yaw_rate_callback(self, msg):
+        self.yaw_rate = math.degrees(msg.angular_velocity.z) # [rad/s] -> [degree/s]
+
+    def boat_position_callback(self, msg):
+        """ GPS로 측정한 배의 ENU 변환 좌표 콜백함수 """
+        self.boat_x = msg.x
+        self.boat_y = msg.y
+
+    def obstacle_callback(self, msg):
+        self.obstacle = msg.obstacle #[msg.obstacle.begin.x, msg.obstacle.begin.y, msg.obstacle.end.x, msg.obstacle.end.y]
+
+    def is_all_connected(self):
+        not_connected = []
+        if self.heading_sub.get_num_connections() == 0:
+            not_connected.append("headingCalculator")
+
+        if self.enu_pos_sub.get_num_connections() == 0:
+            not_connected.append("gnssConverter")
+
+        if self.obstacle_sub.get_num_connections() == 0:
+            not_connected.append("lidarConverter")
+            
+        if self.yaw_rate_sub.get_num_connections() == 0:
+            not_connected.append("imu")
+
+        if len(not_connected)==0:
+            return True
+        else:
+            print("\n\n----------...NOT CONNECTED YET...----------")
+            print(not_connected)
+            print("\n\n")
+            return False
+
+
+
+
+def main():
+    rate = rospy.Rate(10)
+
+    rospy.init_node('docking', anonymous=False)
+
+    docking = Docking()
+    
+    while not docking.is_all_connected():
+        rospy.sleep(0.2)
+
+    print("----------All Connected, Start Obstacle Avoidance----------")
+
+    ob_avoidance = oa.ObstacleAvoidance()
+
+    while not ob_avoidance.arrival_check():
+        ob_avoidance.calc_angle_risk()
+        ob_avoidance.control_publish()
+        ob_avoidance.print_state()
+        # ob_avoidance.view_rviz()
+        rate.sleep()
+
+    while not rospy.is_shutdown():
+        
+
+    rospy.spin()
+
+if __name__ == "__main__":
+    main()
