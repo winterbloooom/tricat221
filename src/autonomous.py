@@ -35,8 +35,8 @@ class Autonomous:
         self.rviz_traj_pub = rospy.Publisher("/traj_rviz", Marker, queue_size=0)    # 지나온 경로\
 
         ## about goal
-        # self.goal_x, self.goal_y = gc.enu_convert(rospy.get_param("autonomous_goal"))
-        self.goal_x, self.goal_y = rospy.get_param('~goal_x'), rospy.get_param('~goal_y')
+        self.goal_x, self.goal_y = gc.enu_convert(rospy.get_param("autonomous_goal"))
+        # self.goal_x, self.goal_y = rospy.get_param('~goal_x'), rospy.get_param('~goal_y')
         self.goal_range = rospy.get_param("goal_range")
         self.distance_to_goal = 100000 #TODO 괜찮을지 확인. 처음부터 0으로 넣는다면 gps 받아오기 전부터 finished됨
         self.rviz_goal = rv.RvizMarker("goal", 11, 8, p_scale=0.2, b=1)
