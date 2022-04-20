@@ -8,6 +8,8 @@ class StarboardCam:
         self.p1 = 0 # 좌측 끝단부터 표지 중점까지 길이(픽셀 x좌표 차)
         self.p2 = 0 # 표지 중점부터 중앙 수직선까지 길이(픽셀 x좌표 차)
 
+        self.target_mark = rospy.get_param("target_mark")
+
     def mark_detect(self):
         """
         카메라를 열어 프레임 단위로 표지 존재 여부 및 목표 표지 검출

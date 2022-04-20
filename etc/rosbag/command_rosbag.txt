@@ -31,3 +31,8 @@ rostopic pub /enu_position geometry_msgs/Point -r 10 -- 0 0 0
 터미널4:
 rostopic pub /heading std_msgs/Float64 -r 10 -- 20
 터미널5: roslaunch
+
+----------------------------------------------
+
+0329 직진 ver
+rosbag play ~/tricat/src/tricat221/etc/rosbag/0329_5south_straight.bag -l --topics /enu_position /heading /imu/data /imu/mag /scan /ublox_gps/fix

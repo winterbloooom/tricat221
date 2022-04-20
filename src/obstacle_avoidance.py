@@ -15,10 +15,6 @@ import rviz_viewer as rv
 
 class ObstacleAvoidance:
     def __init__(self):
-        ## publishers
-        self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0) # TODO 아두이노 쪽에서 S 수정하기
-        self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
-
         ### rviz publishers
         self.rviz_angles_pub = rospy.Publisher("/angles_rviz", MarkerArray, queue_size=0)   # psi, psi_desire, angle_min, angle_max
         self.rviz_points_pub = rospy.Publisher("/points_rviz", MarkerArray, queue_size=0)   # boat, obstacle
@@ -26,15 +22,10 @@ class ObstacleAvoidance:
         self.rviz_traj_pub = rospy.Publisher("/traj_rviz", Marker, queue_size=0)    # 지나온 경로\
 
         ## about goal
-        self.goal_x, self.goal_y = gc.enu_convert(rospy.get_param("docking_end_point"))
-        # self.goal_x, self.goal_y = rospy.get_param('~goal_x'), rospy.get_param('~goal_y')
-        self.goal_range = rospy.get_param("goal_range")
-        self.distance_to_goal = 100000 #TODO 괜찮을지 확인. 처음부터 0으로 넣는다면 gps 받아오기 전부터 finished됨
         self.rviz_goal = rv.RvizMarker("goal", 11, 8, p_scale=0.2, b=1)
         self.rviz_goal.append_marker_point(self.goal_x, self.goal_y)
 
         ## about position
-        self.boat_x, self.boat_y = 0, 0
         self.trajectory = []
         self.rviz_traj = rv.RvizMarker("traj", 8, 8, p_scale=0.1, g=1)
         
@@ -45,11 +36,7 @@ class ObstacleAvoidance:
         self.span_angle = rospy.get_param("span_angle")
         self.angle_risk = [0 for ang in range(self.angle_min, self.angle_max + self.angle_increment, self.angle_increment)]
             # 목표각 탐색 범위임. TODO : 수정 필요할 수도!
-        self.psi = 0
-        self.psi_desire = 0
-        self.psi_goal = math.degrees(math.atan2(self.goal_y, self.goal_x))    # 한 번 넣으면 변하지 않는 값임
-        self.error_angle = 0
-
+        
         ## coefficients for calculations
         self.ob_exist_coefficient = rospy.get_param("ob_exist_coefficient")
         self.ob_near_coefficient = rospy.get_param("ob_near_coefficient")
@@ -58,41 +45,7 @@ class ObstacleAvoidance:
         
         ## about obstacles
         self.obstacle = []
-        self.inrange_obstacle = []
-
-        ## variables for PID control
-        self.yaw_rate = 0 # z축 각속도 [degree/s]
-        self.error_sum_angle = 0
-        self.kp_angle = rospy.get_param("kp_angle")
-        self.ki_angle = rospy.get_param("ki_angle")
-        self.kd_angle = rospy.get_param("kd_angle")
-
-        ## servo motor range
-        self.servo_middle = rospy.get_param("servo_middle")
-        self.servo_left_max = rospy.get_param("servo_left_max")
-        self.servo_right_max = rospy.get_param("servo_right_max")
-
-        ## thruster range
-        self.thruster_max = rospy.get_param("thruster_max")
-        self.thruster_min = rospy.get_param("thruster_min")
-
-        ## for report
-        self.cnt = 0 # print 출력 속도 조절 위한 타이머
-        
-        ## first call functions
-        self.calc_distance_to_goal()
-
-
-    ######################## 업데이트 및 체크 관련 함수들 ########################
-    def calc_distance_to_goal(self):
-        self.distance_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
-
-    def arrival_check(self):
-        self.calc_distance_to_goal() #목적지까지 거리 다시 계산
-        if self.distance_to_goal <= self.goal_range:
-            return True
-        else:
-            return False
+        self.inrange_obstacle = []   
             
 
     ######################## 경로 계산 관련 함수들 ########################

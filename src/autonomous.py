@@ -341,6 +341,7 @@ class Autonomous:
         print("-"*20)
         print("")   # TODO : 자릿수 맞추기 / 더 출력해봐야 할 것 있나?
         print("Boat loc : [{0}, {1}]".format(self.boat_x, self.boat_y))
+        print("Goal : [{0}, {1}]".format(self.goal_x, self.goal_y))
         print("Dist. to Goal: {0} m | Ang. to Goal: {1}".format(self.distance_to_goal, self.psi_goal))
         print("index of min angle risk: {0}".format(self.angle_risk.index(min(self.angle_risk))))
         print(self.angle_risk)

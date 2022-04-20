@@ -56,6 +56,43 @@ class Docking:
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0) # TODO 아두이노 쪽에서 S 수정하기
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
 
+        self.boat_x = 0
+        self.boat_y = 0
+
+        self.docking_start = rospy.get_param("docking_start")   # TODO :gc 적용하기
+        self.docking_end = rospy.get_param("docking_end")   # TODO :gc 적용하기
+        self.nxt_point_x = self.docking_start[0]
+        self.nxt_point_y = self.docking_start[1]
+
+        self.arrival_range = rospy.get_param("arrival_range")
+        self.dist_to_point = 100000 #도킹 시작점 혹은 끝점까지 남은 거리
+
+        self.psi = 0
+        self.psi_desire = 0
+        self.psi_goal = math.degrees(math.atan2(self.nxt_point_y, self.nxt_point_x))
+        self.error_angle = 0
+
+        ## variables for PID control
+        self.yaw_rate = 0 # z축 각속도 [degree/s]
+        self.error_sum_angle = 0
+        self.kp_angle = rospy.get_param("kp_angle")
+        self.ki_angle = rospy.get_param("ki_angle")
+        self.kd_angle = rospy.get_param("kd_angle")
+
+        ## servo motor range
+        self.servo_middle = rospy.get_param("servo_middle")
+        self.servo_left_max = rospy.get_param("servo_left_max")
+        self.servo_right_max = rospy.get_param("servo_right_max")
+
+        ## thruster range
+        self.thruster_max = rospy.get_param("thruster_max")
+        self.thruster_min = rospy.get_param("thruster_min")
+
+        ## for report
+        self.cnt = 0 # print 출력 속도 조절 위한 타이머
+        
+        self.calc_dist_to_point()
+
     def heading_callback(self, msg):
         """IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수"""
         self.psi = msg.data # [degree]
@@ -93,7 +130,16 @@ class Docking:
             print("\n\n")
             return False
 
+    ######################## 업데이트 및 체크 관련 함수들 ########################
+    def calc_dist_to_point(self):
+        self.dist_to_point = math.hypot(self.boat_x - self.nxt_point_x, self.boat_y - self.nxt_point_y)
 
+    def arrival_check(self):
+        self.calc_dist_to_point() #목적지까지 거리 다시 계산
+        if self.dist_to_point <= self.arrival_range:
+            return True
+        else:
+            return False
 
 
 def main():
@@ -110,7 +156,7 @@ def main():
 
     ob_avoidance = oa.ObstacleAvoidance()
 
-    while not ob_avoidance.arrival_check():
+    while not docking.arrival_check():
         ob_avoidance.calc_angle_risk()
         ob_avoidance.control_publish()
         ob_avoidance.print_state()
