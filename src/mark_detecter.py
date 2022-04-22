@@ -35,6 +35,10 @@ class StarboardCam:
         cv2.createTrackbar("V low", "hsv", 0, 255)
         cv2.createTrackbar("V high", "hsv", 122, 255)
 
+        self.H_bound = [0, 0]
+        self.S_bound = [0, 0]
+        self.V_bound = [0, 0]
+
     def starboard_callback(self, msg):
         self.img_raw = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
@@ -53,13 +57,20 @@ class StarboardCam:
             else:
                 # 검출 안 되었으면 계속 전진
         """
-        bright_adjust = self.mean_brightness() # 1. 평균 밝기로 변환
-        blur = cv2.GaussianBlur(bright_adjust, (self.kernel_size, self.kernel_size), 0) # 2. 가우시안 블러
-        mask = self.HSV_mask()
+        hsv = np.empty(shape=[0])  # TODO 수정할 것
         color_selected = np.empty(shape=[0])  # TODO 수정할 것
+
+
+        bright_adjust = self.mean_brightness() # 1. 평균 밝기로 변환
+        cv2.cvtColor(bright_adjust, hsv, cv2.COLOR_BGR2HSV) # TODO: 여기 맞나?
+        blur = cv2.GaussianBlur(hsv, (self.kernel_size, self.kernel_size), 0) # 2. 가우시안 블러
+        
+        self.set_HSV_value()
+        mask = self.HSV_mask(blur)
+        
         cv2.copyTo(blur, color_selected, mask)
-        gray = np.empty(shape=[0])  # TODO 수정할 것
-        cv2.cvtColor(color_selected, gray, cv2.COLOR_HSV2GRAY)
+        
+        
         # 이진화 어떻게...? HSV 하고 반전!
         # 모양 검출 -> 플래그 설정할까?
         if # 검출됨:
@@ -74,10 +85,26 @@ class StarboardCam:
         pass
 
     def set_HSV_value(self):
+        self.H_bound[0] = cv2.getTrackbarPos("H low", "hsv")
+        self.H_bound[1] = cv2.getTrackbarPos("H high", "hsv")
+        self.S_bound[0] = cv2.getTrackbarPos("S low", "hsv")
+        self.S_bound[1] = cv2.getTrackbarPos("S high", "hsv")
+        self.V_bound[0] = cv2.getTrackbarPos("V low", "hsv")
+        self.V_bound[1] = cv2.getTrackbarPos("V high", "hsv")
 
         
-    def HSV_mask(self):
-        pass
+    def HSV_mask(self, img):
+        hsv_channels = cv2.split(img)
+        H = hsv_channels[0] #  TODO 순서 맞는지 확인
+        S = hsv_channels[1]
+        V = hsv_channels[2]
+
+        H = cv2.inRange(H, self.H_bound[0], self.H_bound[1])
+        S = cv2.inRange(S, self.S_bound[0], self.S_bound[1])
+        V = cv2.inRange(V, self.V_bound[0], self.V_bound[1])
+
+        mask = cv2.merge([H, S, V]) # TODO 확인
+        return mask
 
     def mark_pos(self):
         # 음???
