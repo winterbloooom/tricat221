@@ -1,4 +1,4 @@
-import cv2, sys
+import cv2, sys, time
 import numpy as np
 
 class StarboardCam:
@@ -10,6 +10,8 @@ class StarboardCam:
         
         self.w = self.img_raw.shape[0] #640
         self.h = self.img_raw.shape[1] #480
+
+        self.img_raw = cv2.resize(self.img_raw, dsize=(300, 300))
 
         self.kernel_size = 5
 
@@ -24,12 +26,12 @@ class StarboardCam:
         self.target_shape = self.target[1]
 
         cv2.namedWindow("hsv")
-        cv2.createTrackbar("H low", "hsv", 0, 180, self.trackbar_callback)
-        cv2.createTrackbar("H high", "hsv", 90, 180, self.trackbar_callback)
-        cv2.createTrackbar("S low", "hsv", 0, 255, self.trackbar_callback)
-        cv2.createTrackbar("S high", "hsv", 122, 255, self.trackbar_callback)
-        cv2.createTrackbar("V low", "hsv", 0, 255, self.trackbar_callback)
-        cv2.createTrackbar("V high", "hsv", 122, 255, self.trackbar_callback)
+        cv2.createTrackbar("H lower", "hsv", 0, 180, self.trackbar_callback)
+        cv2.createTrackbar("H upper", "hsv", 16, 180, self.trackbar_callback)
+        cv2.createTrackbar("S lower", "hsv", 98, 255, self.trackbar_callback)
+        cv2.createTrackbar("S upper", "hsv", 255, 255, self.trackbar_callback)
+        cv2.createTrackbar("V lower", "hsv", 0, 255, self.trackbar_callback)
+        cv2.createTrackbar("V upper", "hsv", 255, 255, self.trackbar_callback)
 
         self.H_bound = [0, 0]
         self.S_bound = [0, 0]
@@ -56,28 +58,54 @@ class StarboardCam:
             else:
                 # 검출 안 되었으면 계속 전진
         """
-        hsv = np.empty(shape=[0])  # TODO 수정할 것
         color_selected = np.empty(shape=[0])  # TODO 수정할 것
 
 
-        bright_adjust = self.mean_brightness() # 1. 평균 밝기로 변환
-        hsv = cv2.cvtColor(bright_adjust, cv2.COLOR_BGR2HSV) # TODO: 여기 맞나?
+        # bright_adjust = self.mean_brightness() # 1. 평균 밝기로 변환
+        hsv = cv2.cvtColor(self.img_raw, cv2.COLOR_BGR2HSV) # TODO: 여기 맞나?
         blur = cv2.GaussianBlur(hsv, (self.kernel_size, self.kernel_size), 0) # 2. 가우시안 블러
         
         self.set_HSV_value()
         mask = self.HSV_mask(blur)
-        
 
         cv2.imshow("raw", self.img_raw)
-        cv2.imshow("bright_adjust", bright_adjust)
-        cv2.imshow("hsv", hsv)
+        # cv2.imshow("bright_adjust", bright_adjust)
+        # cv2.imshow("hsv", hsv)
         cv2.imshow("blur", blur)
 
+
+        color_selected = cv2.bitwise_and(blur, blur, mask=mask)
         # cv2.copyTo(blur, color_selected, mask)
-        
-        
         # # 이진화 어떻게...? HSV 하고 반전!
-        # cv2.imshow("color_selected", color_selected)
+
+        cv2.imshow("color_selected", color_selected)
+
+        mask = 255 - mask
+
+        
+
+        # contours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        # print(len(contours))
+        
+
+        # for contour in contours:
+        #     print(contour)
+        #     approx = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.02, True)
+        #     vertex_num = len(approx)
+
+        #     if vertex_num == 3:
+        #         self.set_label(mask, contour, "Triangle")
+        #     elif vertex_num == 4:
+        #         self.set_label(mask, contour, "Rectangle")
+        #     else:
+        #         area = cv2.contourArea(contour)
+        #         _, radius = cv2.minEnclosingCircle(contour)
+        #         ratio = radius * radius * 3.14 / area
+        #         if ratio > 0.8 and ratio < 1.2:
+        #             self.set_label(mask, contour, "Circle")
+
+        
+        cv2.imshow("mask", mask)
 
         # # 모양 검출 -> 플래그 설정할까?
         # if # 검출됨:
@@ -88,6 +116,12 @@ class StarboardCam:
         #     return False
         return False
 
+    def set_label(self, img, pts, label):
+        (x, y, w, h) = cv2.boudingRect(pts)
+        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(img, label, (x, y - 3), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255))
+        print("_________________")
+        print(label)
 
     def mean_brightness(self):
         img = self.img_raw
@@ -101,31 +135,33 @@ class StarboardCam:
         return dst
 
     def set_HSV_value(self):
-        self.H_bound[0] = cv2.getTrackbarPos("H low", "hsv")
-        self.H_bound[1] = cv2.getTrackbarPos("H high", "hsv")
-        self.S_bound[0] = cv2.getTrackbarPos("S low", "hsv")
-        self.S_bound[1] = cv2.getTrackbarPos("S high", "hsv")
-        self.V_bound[0] = cv2.getTrackbarPos("V low", "hsv")
-        self.V_bound[1] = cv2.getTrackbarPos("V high", "hsv")
+        self.H_bound[0] = cv2.getTrackbarPos("H lower", "hsv")
+        self.H_bound[1] = cv2.getTrackbarPos("H upper", "hsv")
+        self.S_bound[0] = cv2.getTrackbarPos("S lower", "hsv")
+        self.S_bound[1] = cv2.getTrackbarPos("S upper", "hsv")
+        self.V_bound[0] = cv2.getTrackbarPos("V lower", "hsv")
+        self.V_bound[1] = cv2.getTrackbarPos("V upper", "hsv")
 
         
     def HSV_mask(self, img):
-        # hsv_img = np.array((self.h, self.w * 3))
+        # hsv_channels = cv2.split(img)
+        # H = hsv_channels[0] #  TODO 순서 맞는지 확인
+        # S = hsv_channels[1]
+        # V = hsv_channels[2]
 
-        hsv_channels = cv2.split(img)
-        H = hsv_channels[0] #  TODO 순서 맞는지 확인
-        S = hsv_channels[1]
-        V = hsv_channels[2]
+        # H = cv2.inRange(H, self.H_bound[0], self.H_bound[1])
+        # S = cv2.inRange(S, self.S_bound[0], self.S_bound[1])
+        # V = cv2.inRange(V, self.V_bound[0], self.V_bound[1])
 
-        H = cv2.inRange(H, self.H_bound[0], self.H_bound[1])
-        S = cv2.inRange(S, self.S_bound[0], self.S_bound[1])
-        V = cv2.inRange(V, self.V_bound[0], self.V_bound[1])
+        # hsv_img = np.hstack([H, S, V]) # TODO 확인
 
-        hsv_img = np.vstack([H, S, V]) # TODO 확인
+        # mask = cv2.merge([H, S, V]) # TODO 확인
 
-        mask = cv2.merge([H, S, V]) # TODO 확인
+        lower = np.array([self.H_bound[0], self.S_bound[0], self.V_bound[0]])
+        upper = np.array([self.H_bound[1], self.S_bound[1], self.V_bound[1]])
+        mask = cv2.inRange(img, lower, upper)
 
-        cv2.imshow("hsv_img", hsv_img)
+        # cv2.imshow("hsv_img", hsv_img)
         cv2.imshow("mask", mask)
 
         return mask
@@ -139,6 +175,8 @@ if __name__=="__main__":
             print("p1: {} / p2: {}".format(starCam.p1, starCam.p2))
         else:
             print("\nNone")
+
+        time.sleep(60)
 
         if cv2.waitKey(1) == 27:
             break
