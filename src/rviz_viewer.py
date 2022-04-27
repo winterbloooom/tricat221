@@ -24,6 +24,8 @@ class RvizMarker:
 
         if marker_type == 0: #arrow
             self.marker.scale = Vector3(a_x_scale, a_y_scale, 0)
+        elif marker_type == 9:
+            pass
         else:
             self.marker.scale = Vector3(p_scale, p_scale, 0)
 
