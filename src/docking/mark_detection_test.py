@@ -7,20 +7,17 @@ import numpy as np
 class StarboardCam:
     def __init__(self, target):
         # self.img_raw = cv2.imread('C:\coding\\tricat221\\src\\pic23.jpeg', cv2.IMREAD_COLOR)v ~/tricat/src/tricat221/src/pic23.jpeg
-        self.img_raw = cv2.imread('pic1.jpeg', cv2.IMREAD_COLOR)
+        self.img_raw = cv2.imread('pic23.jpeg', cv2.IMREAD_COLOR)
         if self.img_raw is None:
             print("Image load failed!")
             exit(1)
-        
-        self.w = self.img_raw.shape[0] #640
+
+        self.w = self.img_raw.shape[0] #640로 resize 할 값으로 바꾸기
         self.h = self.img_raw.shape[1] #480
 
         self.img_raw = cv2.resize(self.img_raw, dsize=(300, 300))
 
         self.kernel_size = 5
-
-        self.p1 = 0 # 좌측 끝단부터 표지 중점까지 길이(픽셀 x좌표 차)
-        self.p2 = 0 # 표지 중점부터 중앙 수직선까지 길이(픽셀 x좌표 차)
 
         self.target = target #rospy.get_param("target").split('-')
             # TODO 잘 작동하나 확인
@@ -31,7 +28,7 @@ class StarboardCam:
 
         cv2.namedWindow("hsv")
         cv2.createTrackbar("H lower", "hsv", 0, 180, self.trackbar_callback)
-        cv2.createTrackbar("H upper", "hsv", 16, 180, self.trackbar_callback)
+        cv2.createTrackbar("H upper", "hsv", 7, 180, self.trackbar_callback)
         cv2.createTrackbar("S lower", "hsv", 98, 255, self.trackbar_callback)
         cv2.createTrackbar("S upper", "hsv", 255, 255, self.trackbar_callback)
         cv2.createTrackbar("V lower", "hsv", 0, 255, self.trackbar_callback)
@@ -48,23 +45,6 @@ class StarboardCam:
         self.img_raw = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
     def detect_mark(self):  # 한 프레임 당 
-        """
-        검출되면 T/F 리턴 -> 검출은 됐지만 원하는 비율이 아님 / 검출도 됐고 원하는 비율임 / 검출 안 됐음 으로 나눠 리턴?
-
-        main에서
-        while True:
-            while not starCam.img_raw.size == (640 * 480 * 3):
-                continue
-
-            if starCam.detect_mark():
-                # 검출되면 True.
-                starCam.mark_pos()
-            else:
-                # 검출 안 되었으면 계속 전진
-        """
-        color_selected = np.empty(shape=[0])  # TODO 수정할 것
-
-
         # bright_adjust = self.mean_brightness() # 1. 평균 밝기로 변환
         hsv = cv2.cvtColor(self.img_raw, cv2.COLOR_BGR2HSV) # TODO: 여기 맞나?
         blur = cv2.GaussianBlur(hsv, (self.kernel_size, self.kernel_size), 0) # 2. 가우시안 블러
@@ -75,57 +55,60 @@ class StarboardCam:
         cv2.imshow("raw", self.img_raw)
         # cv2.imshow("bright_adjust", bright_adjust)
         # cv2.imshow("hsv", hsv)
-        cv2.imshow("blur", blur)
+        # cv2.imshow("blur", blur)
 
-
-        color_selected = cv2.bitwise_and(blur, blur, mask=mask)
-        # cv2.copyTo(blur, color_selected, mask)
-        # # 이진화 어떻게...? HSV 하고 반전!
-
-        cv2.imshow("color_selected", color_selected)
-
-        mask = 255 - mask
-
-        
-
-        # contours = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-        # print(len(contours))
-        
-
-        # for contour in contours:
-        #     print(contour)
-        #     approx = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.02, True)
-        #     vertex_num = len(approx)
-
-        #     if vertex_num == 3:
-        #         self.set_label(mask, contour, "Triangle")
-        #     elif vertex_num == 4:
-        #         self.set_label(mask, contour, "Rectangle")
-        #     else:
-        #         area = cv2.contourArea(contour)
-        #         _, radius = cv2.minEnclosingCircle(contour)
-        #         ratio = radius * radius * 3.14 / area
-        #         if ratio > 0.8 and ratio < 1.2:
-        #             self.set_label(mask, contour, "Circle")
-
-        
         cv2.imshow("mask", mask)
 
-        # # 모양 검출 -> 플래그 설정할까?
-        # if # 검출됨:
-        #     self.p1, self.p2 = # 설정하기
-        #     return True
-        # else:
-        #     self.p1, self.p2 = -1, -1   # 음...?
-        #     return False
+        ### 모폴로지 연산
+        #################3 best 기록
+        ### (1, 1) open, H upper 조금 키우기
+        ### (3, 3) close, H upper 13
+        ### (9, 9) close, 그대로
+        ### (5, 5) open, H upper 조금 키우기
+
+        morph_kernel = np.ones((5, 5), np.uint8)
+        morph = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, morph_kernel)
+
+        shape = cv2.cvtColor(morph, cv2.COLOR_GRAY2BGR) # 임시
+
+        _, contours, _ = cv2.findContours(morph, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)  # 모드 좋은 걸로 탐색
+        print("# of conturs : {}".format(len(contours)))
+        
+        for contour in contours:
+            # print("conture size : {}".format(len(contour)))
+
+            approx = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.02, True)
+
+            area = cv2.contourArea(approx)
+            if area < 1000:
+                continue
+
+
+            vertex_num = len(approx)
+            # print("conture size : {}".format(vertex_num))
+
+            if vertex_num == 3:
+                shape = self.set_label(shape, approx, "Triangle")
+            elif vertex_num == 4:
+                shape = self.set_label(shape, approx, "Rectangle")
+            else:
+                # area = cv2.contourArea(approx)  # 여기 0 나와서 div zero 에러 남
+                _, radius = cv2.minEnclosingCircle(approx)
+                ratio = radius * radius * 3.14 / area
+                if ratio > 0.5 and ratio < 1.5: # 조정하자. 트랙바...?
+                    self.set_label(shape, approx, "Circle")
+            
+        cv2.imshow("shape", shape)
+
         return False
 
-    def set_label(self, img, pts, label):
-        (x, y, w, h) = cv2.boudingRect(pts)
+
+    def set_label(self, img, approx, label):
+        drawn = cv2.drawContours(img, [approx], -1, (0, 0, 255), -1)
+        x, y, w, h = cv2.boundingRect(approx)
         cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.putText(img, label, (x, y - 3), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255))
-        print("_________________")
-        print(label)
+        cv2.putText(img, label, (x, y - 3), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 255))
+        return drawn
 
     def mean_brightness(self):
         img = self.img_raw
@@ -138,6 +121,7 @@ class StarboardCam:
 
         return dst
 
+
     def set_HSV_value(self):
         self.H_bound[0] = cv2.getTrackbarPos("H lower", "hsv")
         self.H_bound[1] = cv2.getTrackbarPos("H upper", "hsv")
@@ -148,25 +132,9 @@ class StarboardCam:
 
         
     def HSV_mask(self, img):
-        # hsv_channels = cv2.split(img)
-        # H = hsv_channels[0] #  TODO 순서 맞는지 확인
-        # S = hsv_channels[1]
-        # V = hsv_channels[2]
-
-        # H = cv2.inRange(H, self.H_bound[0], self.H_bound[1])
-        # S = cv2.inRange(S, self.S_bound[0], self.S_bound[1])
-        # V = cv2.inRange(V, self.V_bound[0], self.V_bound[1])
-
-        # hsv_img = np.hstack([H, S, V]) # TODO 확인
-
-        # mask = cv2.merge([H, S, V]) # TODO 확인
-
         lower = np.array([self.H_bound[0], self.S_bound[0], self.V_bound[0]])
         upper = np.array([self.H_bound[1], self.S_bound[1], self.V_bound[1]])
         mask = cv2.inRange(img, lower, upper)
-
-        # cv2.imshow("hsv_img", hsv_img)
-        cv2.imshow("mask", mask)
 
         return mask
 
@@ -180,7 +148,7 @@ if __name__=="__main__":
         else:
             print("\nNone")
 
-        time.sleep(60)
+        # time.sleep(60)
 
         if cv2.waitKey(1) == 27:
             break
