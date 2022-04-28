@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+#-*- coding:utf-8 -*-
+
 """
 시작, ObstacleAvoidance 호출 후
 
@@ -25,9 +28,9 @@ Lidar로 장애물 계산, 스테이션 우선 서보 모터 제어량 결정
 퍼블리시
 """
 
-#!/usr/bin/env python
-#-*- coding:utf-8 -*-
 
+
+############################################################################################
 import rospy
 import math
 import pymap3d as pm
@@ -130,43 +133,47 @@ class Docking:
             print("\n\n")
             return False
 
-    ######################## 업데이트 및 체크 관련 함수들 ########################
-    def calc_dist_to_point(self):
-        self.dist_to_point = math.hypot(self.boat_x - self.nxt_point_x, self.boat_y - self.nxt_point_y)
+#     ######################## 업데이트 및 체크 관련 함수들 ########################
+#     def calc_dist_to_point(self):
+#         self.dist_to_point = math.hypot(self.boat_x - self.nxt_point_x, self.boat_y - self.nxt_point_y)
 
-    def arrival_check(self):
-        self.calc_dist_to_point() #목적지까지 거리 다시 계산
-        if self.dist_to_point <= self.arrival_range:
-            return True
-        else:
-            return False
+#     def arrival_check(self):
+#         self.calc_dist_to_point() #목적지까지 거리 다시 계산
+#         if self.dist_to_point <= self.arrival_range:
+#             return True
+#         else:
+#             return False
 
 
-def main():
-    rate = rospy.Rate(10)
+# def main():
+#     rate = rospy.Rate(10)
 
-    rospy.init_node('docking', anonymous=False)
+#     rospy.init_node('docking', anonymous=False)
 
-    docking = Docking()
+#     docking = Docking()
     
-    while not docking.is_all_connected():
-        rospy.sleep(0.2)
+#     while not docking.is_all_connected():
+#         rospy.sleep(0.2)
 
-    print("----------All Connected, Start Obstacle Avoidance----------")
+#     print("----------All Connected, Start Obstacle Avoidance----------")
 
-    ob_avoidance = oa.ObstacleAvoidance()
+#     ob_avoidance = oa.ObstacleAvoidance()
 
-    while not docking.arrival_check():
-        ob_avoidance.calc_angle_risk()
-        ob_avoidance.control_publish()
-        ob_avoidance.print_state()
-        # ob_avoidance.view_rviz()
-        rate.sleep()
+#     while not docking.arrival_check():
+#         ob_avoidance.calc_angle_risk()
+#         ob_avoidance.control_publish()
+#         ob_avoidance.print_state()
+#         # ob_avoidance.view_rviz()
+#         rate.sleep()
 
-    while not rospy.is_shutdown():
+#     while not rospy.is_shutdown():
         
 
-    rospy.spin()
+#     rospy.spin()
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
+
+
+
+########################################################################3
