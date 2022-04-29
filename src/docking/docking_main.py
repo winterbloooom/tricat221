@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+#-*- coding:utf-8 -*-
+
 import rospy
 import math
 import pymap3d as pm
@@ -116,7 +119,7 @@ class Docking:
         elif self.state == 1:
             if self.target_found:
                 self.state = 2# 방금 수행한 연산이 장애물 탐색이었음 -> mark_found가 True이면 전환
-                self.next_goal = ?????
+                # self.next_goal = ?????
             else:
                 dist_to_docking_end = dist_between_pts(self.boat, self.next_goal)
                 if dist_to_docking_end <= self.goal_range:
@@ -177,7 +180,7 @@ class Docking:
         frame_mid = 320
 
         detected = self.star_cam.find_target_pos()
-        
+        print(detected)
 
         ### confidence check -> 테스트 후 실전에서는 줄여서 쓰자
         if detected:
@@ -280,7 +283,6 @@ class Docking:
         
 
     def control_publish(self, u_servo, u_thruster):
-        ### TODO : 후진은 따로 구현해야 할 거 같은데?
         self.trajectory.append([self.boat_x, self.boat_y]) # 현재 위치(지나온 경로의 하나가 될 점) 업데이트 # TODO 이거 왜 배열로 담아??(저장 이유?)
         self.rviz_traj.append_marker_point(self.boat_x, self.boat_y)
 
@@ -300,9 +302,11 @@ class StarboardCam:
         self.min_area = 500
         self.circ_area_range = [0.5, 1.5]
 
-        target = rospy.get_param("target").split('-')
-            # TODO 잘 작동하나 확인
-            # TODO yaml 수정 / yello-모서리 수(3, 4, 5) 식으로
+        # target = rospy.get_param("target").split('-')
+        #     # TODO 잘 작동하나 확인
+        #     # TODO yaml 수정 / yello-모서리 수(3, 4, 5) 식으로
+        str = "red-4"
+        target = str.split('-')
         self.target_color = target[0]
         self.target_shape = int(target[1])
         
@@ -327,7 +331,8 @@ class StarboardCam:
         self.img_raw = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
     def find_target_pos(self):  # 한 프레임 당 
-        # TODO 입력 이미지 다 있는지 확인하는 부분 추가하기
+        while not self.img_raw.size == (640 * 480 * 3):
+            return
 
         detected = False
 
@@ -358,7 +363,7 @@ class StarboardCam:
         shape = cv2.cvtColor(morph, cv2.COLOR_GRAY2BGR)
 
         _, contours, _ = cv2.findContours(morph, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)  # 모드 좋은 걸로 탐색
-        print("# of conturs : {}".format(len(contours)))
+        # print("# of conturs : {}".format(len(contours)))
         
         for contour in contours:
             # print("conture size : {}".format(len(contour)))
@@ -399,12 +404,14 @@ class StarboardCam:
         return True if detected else False
 
     def set_label(self, img, approx, label):
-        drawn = cv2.drawContours(img, [approx], -1, (255, 0, 0), -1)
+        drawn = cv2.drawContours(img, [approx], -1, (0, 255, 0), -1)
         x, y, w, h = cv2.boundingRect(approx)
-        cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-        cv2.putText(img, label, (x, y - 3), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 0, 0))
+        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(img, label, (x, y - 3), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0))
 
         self.bbox = [x + w//2, y + h//2, w, h]
+        print("{} : [{}, {}, {}, {}]".format(label, x + w//2, y + h//2, w, h))
+
         return drawn
 
     def mean_brightness(self):
@@ -436,10 +443,6 @@ class StarboardCam:
         return mask
 
 
-
-
-
-
 def dist_between_pts(p1, p2):
     # 두 점 사이의 거리를 구함
     # p1, p2는 [x, y] 좌표 가지고 있음
@@ -448,8 +451,9 @@ def dist_between_pts(p1, p2):
 
 
 def main():
-    rate = rospy.Rate(10)
+    
     rospy.init_node('Docking', anonymous=True)
+    rate = rospy.Rate(10)
     docking = Docking()
 
 
