@@ -65,6 +65,10 @@ class Point:
     def perpendicular(self): # TODO : 무슨 뜻인지?
         return Point(-self.y, self.x)
 
+def dist_btw_2points(p1, p2):
+    return sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2)
+
+
 # class Point:
 #     def __init__(self, idx, r, phi):
 #         self.idx = idx

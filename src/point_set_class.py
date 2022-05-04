@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from math import sqrt, pow
+from math import sqrt, pow, atan2
+import point_class as pc
 
 
 class Point_Set:
@@ -43,3 +44,18 @@ class Point_Set:
 
     def dist_begin_to_end(self):
         return sqrt(pow(self.begin.x - self.end.x, 2) + pow(self.begin.y - self.end.y, 2))
+
+    # def find_center(self):
+    #     cx = (self.begin.x + self.end.x) / 2
+    #     cy = (self.begin.y + self.end.y) / 2
+
+    def cartesian_to_polar(self):
+        cx = (self.begin.x + self.end.x) / 2
+        cy = (self.begin.y + self.end.y) / 2
+        return atan2(cy, cx)  # TODO 맞나 확인
+
+    def dist_to_wall(self):
+        #여기 공식 검증하기. 둔각일 때도 맞는지 등등
+        d = pc.dist_btw_2points(self.begin, self.end)
+        A = abs(self.begin.x * self.end.y - self.begin.y * self.end.x) # 넓이의 절반
+        return d / A

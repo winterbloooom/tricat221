@@ -9,7 +9,7 @@ from sensor_msgs.msg import LaserScan, PointCloud
 from geometry_msgs.msg import Point32
 from visualization_msgs.msg import Marker, MarkerArray
 
-from tricat221.msg import Obstacle, ObstacleList
+from tricat221.msg import Obstacle, Wall, ObstacleList
 
 
 class Lidar_Converter:
@@ -32,12 +32,15 @@ class Lidar_Converter:
         self.lidar_header_frameid = 0
         self.input_points = [] # 라이다에서 받은 모든 점들을 (x, y) 형태로 저장
         self.point_sets_list = [] # point_set들의 리스트 [ps1, ps2, ...]
+        
         self.obstacles = [] # 최종적으로 합쳐지고 나눠인 set들 저장 (wall + buoy)
+        self.walls = []
 
     def lidar_raw_callback(self, msg):
         self.input_points = []
         self.point_sets_list = []
         self.obstacles = []
+        self.walls = []
         self.lidar_header_stamp = msg.header.stamp
         self.lidar_header_frameid = msg.header.frame_id
 
@@ -152,7 +155,7 @@ class Lidar_Converter:
 
         for p in ps.point_set:
             if p.dist_btw_points(wall_particle.begin) > self.min_wall_particle_length:
-                self.obstacles.append(wall_particle)
+                self.walls.append(wall_particle)
 
                 del wall_particle
                 wall_particle = Point_Set()
@@ -160,7 +163,7 @@ class Lidar_Converter:
             # else:
                 # wall_particle.append_point(p)
             wall_particle.append_point(p)
-        self.obstacles.append(wall_particle) #마지막 파티클까지 잊지 않고 넣어줌
+        self.walls.append(wall_particle) #마지막 파티클까지 잊지 않고 넣어줌
 
     def publish_obstacles(self):
         ob_list = ObstacleList()
@@ -174,10 +177,26 @@ class Lidar_Converter:
             obstacle.begin.y = ob.begin.y
             obstacle.end.x = ob.end.x
             obstacle.end.y = ob.end.y
+            obstacle.center.x = (ob.begin.x + ob.end.x) / 2
+            obstacle.center.y = (ob.begin.y + ob.end.y) / 2
+            obstacle.radius = dist_btw_2points(ob.begin, ob.end)
+            obstacle.theta = ob.cartesian_to_polar()
         
             ob_list.obstacle.append(obstacle)
         
+        for w in self.walls:
+            wall = Wall()
+            wall.begin.x = w.begin.x
+            wall.begin.y = w.begin.y
+            wall.end.x = w.end.x
+            wall.end.y = w.end.y
+            wall.distance = w.dist_to_wall()
+
+            ob_list.wall.append(wall)
+        
         self.obstacle_pub.publish(ob_list)
+        print("# Obstacle : {}".format(len(self.obstacles)))
+        print("# Wall : {}".format(len(self.walls)))
 
     def publish_rviz(self):
         marker_array = MarkerArray()

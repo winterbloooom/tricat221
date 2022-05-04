@@ -3,10 +3,10 @@
 <!--bag and pub-->
 <launch>
 	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/>
-	<node pkg="tricat221" type="autonomous.py" name="autonomous" respawn="true" output="screen">
+	<!--<node pkg="tricat221" type="autonomous.py" name="autonomous" respawn="true" output="screen">
 		<param name="goal_x" value="3"/>
 		<param name="goal_y" value="3"/>
-	</node>
+	</node>-->
 
 	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0329_5south_rotate2.bag -l --topics /enu_position /heading /imu/data /imu/mag /scan /ublox_gps/fix"/>
 
