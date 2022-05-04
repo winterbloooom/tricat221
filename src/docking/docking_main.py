@@ -297,7 +297,7 @@ class StarboardCam:
         self.img_raw = np.empty(shape=[0])  # TODO 수정할 것
         
         self.gaussian_kernel = 5 # TODO 파라미터화하거나 트랙바로 돌릴 것
-        self.morph_kernel = 5
+        self.morph_kernel = 3
         self.eps = 0.02
         self.min_area = 500
         self.circ_area_range = [0.5, 1.5]
@@ -305,7 +305,7 @@ class StarboardCam:
         # target = rospy.get_param("target").split('-')
         #     # TODO 잘 작동하나 확인
         #     # TODO yaml 수정 / yello-모서리 수(3, 4, 5) 식으로
-        str = "red-4"
+        str = "red-3"
         target = str.split('-')
         self.target_color = target[0]
         self.target_shape = int(target[1])

@@ -4,7 +4,7 @@
     <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
         <param name="video_device" value="/dev/video2" />
         <param name="autoexposure" value="false" />
-        <param name="exposure" value="50" />
+        <param name="exposure" value="0" />
         <param name="image_width" value="640" />
         <param name="image_height" value="480" />
         <param name="pixel_format" value="yuyv" />

@@ -7,12 +7,12 @@ span_angle: 10
 goal_risk_range: 10
 
 ob_exist_coefficient: 0
-ob_near_coefficient: 0.5
+ob_near_coefficient: 0
 goal_orient_coefficient: 5
 
-kp_angle : 0.0
-ki_angle : 0.0 # max 0.05?
-kd_angle : 0.0
+kp_angle : 0.1
+ki_angle : 0.001 # max 0.05?
+kd_angle : 0.05
 
 # kp_distance : 40
 # ki_distance : 40

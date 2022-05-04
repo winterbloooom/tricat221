@@ -112,28 +112,17 @@ class Autonomous:
 
     def boat_position_callback(self, msg):
         """ GPS로 측정한 배의 ENU 변환 좌표 콜백함수 """
+        # self.boat_y = msg.x
+        # self.boat_x = msg.y
         self.boat_y = msg.x
         self.boat_x = msg.y
 
     def obstacle_callback(self, msg):
         self.obstacle = msg.obstacle #[msg.obstacle.begin.x, msg.obstacle.begin.y, msg.obstacle.end.x, msg.obstacle.end.y]
-
-        # self.obstacle = np.array(self.obstacle)
-        # print("ob callback shape : {}".format(self.obstacle.shape))
-        # print(self.obstacle)
-        # sys.exit(1)
-        # self.obstacle[:, [0, 2]] *= -1
-            # lidar좌표축의 x와 우리가 쓰는 x축이 서로 부호만 반대임
-        
-
-
+     
     ######################## 업데이트 및 체크 관련 함수들 ########################
     def calc_distance_to_goal(self):
         self.distance_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
-
-
-    # def calc_angle_to_goal(self):     # 필요 없음
-    #     self.psi_goal = math.atan2(self.goal_y, self.goal_x)
 
 
     def arrival_check(self):
@@ -178,12 +167,9 @@ class Autonomous:
 
 
     def calc_ob_risk(self):
-        # dist_to_obstacles = [] # [장애물 중점까지 거리, 각도 인덱스]의 배열 # 안 씀!!!
         self.inrange_obstacle = []
 
         for ob in self.obstacle:
-            # ob.begin.x *= -1
-            # ob.end.x *= -1
             begin_ang = math.degrees(math.atan2(ob.begin.y, -ob.begin.x)) # 장애물 블럭 시작점
             end_ang = math.degrees(math.atan2(ob.end.y, -ob.end.x))   # 장애물 블럭 끝점
 
@@ -284,6 +270,9 @@ class Autonomous:
         elif u_servo < self.servo_right_max:
             u_servo = self.servo_right_max
 
+        # print("cp_angle : {} / ci_angle : {} / cd_angle : {}".format(cp_angle, ci_angle, cd_angle))
+        # print("u_angle : {} / u_servo : {}".format(u_angle, u_servo))
+
         return round(u_servo)
 
 
@@ -314,7 +303,7 @@ class Autonomous:
         print("Goal : [{0}, {1}]".format(self.goal_x, self.goal_y))
         print("Dist. to Goal: {0} m | Ang. to Goal: {1}".format(self.distance_to_goal, self.psi_goal))
         print("index of min angle risk: {0}".format(self.angle_risk.index(min(self.angle_risk))))
-        print(self.angle_risk)
+        # print(self.angle_risk)
         print("psi(heading): {0}, psi_desire(wanna go): {1}".format(self.psi, self.psi_desire))
         print("Error Angle(psi-desire): {0} deg | Servo : {1}".format(self.error_angle, self.u_servo))        
         print("")
@@ -422,22 +411,10 @@ def main():
     autonomous = Autonomous()
     rate = rospy.Rate(10)
 
-    # while True:
-    #     if autonomous.is_all_connected(): #not_connected==0이면, 다 연결되었으면 False
-    #         pass
-    #     else:
-    #         break
-
     while not autonomous.is_all_connected():
         rospy.sleep(0.2)
-        # pass
 
     while not rospy.is_shutdown():
-        # autonomous.calc_angle_risk()
-        # autonomous.control_publish()
-
-        # TODO if, else 문 주석 해제한 버전으로 쓰면 처음부터 Finished가 나옴. 왜 그럴까? 
-        # ---->목표점을 0, 0으로 해뒀으니까 바보야...
         if autonomous.arrival_check(): # 최종 목적지에 도착함
             autonomous.servo_pub.publish(autonomous.servo_middle)
             autonomous.thruster_pub.publish(0) # TODO: 정지값 넣어주기
