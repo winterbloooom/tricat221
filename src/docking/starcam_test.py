@@ -13,7 +13,9 @@ from sensor_msgs.msg import Imu, Image
 
 class StarboardCam:
     def __init__(self, target):
-        rospy.Subscriber("/usb_cam/image_raw/", Image, self.starboard_callback)
+        
+        # rospy.Subscriber("/usb_cam/image_raw/", Image, self.starboard_callback)
+        rospy.Subscriber("/camera/color/image_raw/", Image, self.starboard_callback)
 
         self.bridge = CvBridge()
         self.img_raw = np.empty(shape=[0])  # TODO 수정할 것

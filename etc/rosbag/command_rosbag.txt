@@ -36,3 +36,7 @@ rostopic pub /heading std_msgs/Float64 -r 10 -- 20
 
 0329 직진 ver
 rosbag play ~/tricat/src/tricat221/etc/rosbag/0329_5south_straight.bag -l --topics /enu_position /heading /imu/data /imu/mag /scan /ublox_gps/fix
+
+
+
+rostopic echo -b 0429.bag -p /enu_position > enu_position.csv && rostopic echo -b 0429.bag -p /imu/data > imu_data.csv && rostopic echo -b 0429.bag -p /imu/mag > imu_mag.csv && rostopic echo -b 0429.bag -p /scan > scan.csv && rostopic echo -b 0429.bag -p /ublox_gps/fix > gps.csv
