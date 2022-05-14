@@ -17,7 +17,7 @@ class IMU_MAF:
 
         self.raw_time = []
         self.raw_data = []
-        # self.f_data = [0, 0 ,0]
+        
         self.x_prev = []
         self.y_prev = []
         self.z_prev = []
@@ -31,8 +31,8 @@ class IMU_MAF:
 
     def filter_data(self):
         self.raw_time = [self.imu_mag.header.stamp.secs, self.imu_mag.header.stamp.nsecs]
-        self.record[0].append(self.raw_time[0])  #self.imu_mag.header.stamp.secs
-        self.record[1].append(self.raw_time[1]) #self.imu_mag.header.stamp.nsecs
+        self.record[0].append(self.raw_time[0])
+        self.record[1].append(self.raw_time[1])
 
         magnetic_x = self.imu_mag.magnetic_field.x
         magnetic_y = self.imu_mag.magnetic_field.y
@@ -44,9 +44,6 @@ class IMU_MAF:
         self.record[3].append(magnetic_y)
         self.record[4].append(magnetic_z)
 
-        # self.x_prev = MovingAverageFilter(self.x_prev, self.n, magnetic_x)
-        # self.y_prev = MovingAverageFilter(self.y_prev, self.n, magnetic_y)
-        # self.z_prev = MovingAverageFilter(self.z_prev, self.n, magnetic_z)
         f_x = MovingAverageFilter(self.x_prev, self.n, magnetic_x)
         f_y = MovingAverageFilter(self.y_prev, self.n, magnetic_y)
         f_z = MovingAverageFilter(self.z_prev, self.n, magnetic_z)
@@ -54,11 +51,6 @@ class IMU_MAF:
         self.record[5].append(f_x)
         self.record[6].append(f_y)
         self.record[7].append(f_z)
-
-        # for i in range(3):    
-        #     self.f_data[i] = MovingAverageFilter(self.f_data[i], self.n, self.raw_data[i])
-        #     self.record[i+2] = self.raw_data[i]
-        #     self.record[i+5] = self.f_data[i]
 
         self.output_msg.header.stamp.secs = self.raw_time[0]
         self.output_msg.header.stamp.nsecs = self.raw_time[1]
@@ -85,22 +77,18 @@ def main():
     rate = rospy.Rate(10)
     imu_maf = IMU_MAF()
     file_name = '/home/lumos/tricat/src/tricat221/src/' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.csv'
-    cnt = 1000
     rospy.sleep(1)
 
     f = open(file_name, "w")
 
     while not rospy.is_shutdown():
         imu_maf.filter_data()
-        # cnt -= 1
-        # print(cnt)
-        # if cnt < 0:
-        #     break
         rate.sleep()
 
-    result = np.asarray(imu_maf.record)
-    result = np.transpose(result)
-    np.savetxt(file_name, result, delimiter=",")
+    ### for saving to csv file
+    # result = np.asarray(imu_maf.record)
+    # result = np.transpose(result)
+    # np.savetxt(file_name, result, delimiter=",")
 
 if __name__ == '__main__':
     main()
