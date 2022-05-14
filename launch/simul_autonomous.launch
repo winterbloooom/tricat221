@@ -7,10 +7,11 @@
 		<param name="goal_x" value="3"/>
 		<param name="goal_y" value="3"/>
 	</node>
+	<node pkg="tricat221" type="moving_avg_filter.py" name="MAF_IMU" respawn="true" output="screen"/>
 
-	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0329_5south_rotate2.bag -l --topics /enu_position /heading /imu/data /imu/mag /scan /ublox_gps/fix"/>
+	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0429.bag -l --topics /enu_position /heading /imu/data /imu/mag /scan /ublox_gps/fix"/>
 
-	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting1.rviz" />
+	<!--<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting1.rviz" />-->
 	<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>
 	
 	<!--PARAMETER-->

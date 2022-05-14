@@ -1,15 +1,49 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-import numpy as np
-import matplotlib.pyplot as plt
-import csv
+import time
+import pandas as pd # pip install pandas
 
-csv_file = open("../etc/rosbag/0429_heading.csv", "r", encoding="utf_8")
-f = csv.reader(csv_file, delimiter=",", skipinitialspace=True)
-print(f)
+from sensor_msgs.msg import MagneticField
+from std_msgs.msg import Header
 
+class IMU_MAF:
+    def __init__(self) -> None:
+        rospy.Subscriber("/imu/mag", MagneticField, self.Magnetic_callback, queue_size=1)
+        self.pub = rospy.Publisher('f_imu_mag', MagneticField, queue_size=10)
 
+        self.raw_time = []
+        self.raw_data = []
+        self.f_data = []
+        self.record = [["time_sec"], ["time_nsec"], ["raw_x"], ["raw_y"], ["raw_z"], ["f_x"], ["f_y"], ["f_z"]]
+        self.n = 5
+        self.output_msg = MagneticField()
+
+    def Magnetic_callback(self, msg):
+        self.imu_mag = msg
+
+    def filter_data(self):
+        #self.raw_time = [self.imu_mag.header.stamp.sec, self.imu_mag.header.stamp.nsec]
+        self.record[0] = self.imu_mag.header.stamp.sec  #self.raw_time[0]
+        self.record[1] = self.imu_mag.header.stamp.nsec #self.raw_time[1]
+
+        magnetic_x = self.imu_mag.magnetic_field.x
+        magnetic_y = self.imu_mag.magnetic_field.y
+        magnetic_z = self.imu_mag.magnetic_field.z
+        self.raw_data = [magnetic_x, magnetic_y, magnetic_z]
+
+        for i in range(3):    
+            self.f_data[i] = MovingAverageFilter(self.f_data[i], self.n, self.raw_data[i])
+            self.record[i+2] = self.raw_data[i]
+            self.record[i+5] = self.f_data[i]
+
+        self.output_msg.header.stamp.sec = self.record[0]
+        self.output_msg.header.stamp.nsec = self.record[1]
+        self.output_msg.magnetic_field.x = self.f_data[0]
+        self.output_msg.magnetic_field.y = self.f_data[1]
+        self.output_msg.magnetic_field.z = self.f_data[2]
+
+        pub.publish(self.output_msg)
 
 def MovingAverageFilter(prev_data, n, x):
     """
@@ -19,31 +53,25 @@ def MovingAverageFilter(prev_data, n, x):
     (return)    avg : 이동평균
     """
 
-    # n개의 데이터가 모이기 전까지는 무시하는 버전
-    # if len(prev_data) < n:
-    #     return 0
-
     if len(prev_data) >= n:
         prev_data.pop(0)
     prev_data.append(x)
 
     return sum(prev_data) / len(prev_data)
 
-# n_samples = 500
-# n = 10
+def main():
+    rospy.init_node('MAF_IMU', anonymous=True)
+    rate = rospy.Rate(5)
+    imu_maf = IMU_MAF()
+    file_name = './' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.csv'
 
-# x_filtered = []
-# prev_data = []
+    while not rospy.is_shutdown():
+        imu_maf.filter_data()
+        rate.sleep()
+    
+    df = pd.DataFrame(imu_maf.record)
+    df = df.transpose()
+    df.to_csv(file_name, header=False, index=False)
 
-# x_filtered = [MovingAverageFilter(prev_data, n, x) for x in sonar_data[:n_samples]]
-
-# time = np.arange(0, n_samples)
-# plt.plot(time, sonar_data[:n_samples], '.', color='dodgerblue', label='original')
-# plt.plot(time, x_filtered, 'r-', label='filtered')
-
-# plt.legend()
-# plt.xlabel('Time [sec]')
-# plt.ylabel('Altitude [m]')
-
-# plt.savefig('../output/part1-chapter2-moving_average_filter.png')
-# plt.show()
+if __name__ == '__main__':
+    main()
