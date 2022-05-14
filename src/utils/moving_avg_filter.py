@@ -23,7 +23,7 @@ class IMU_MAF:
         self.z_prev = []
         # self.record = [["time_sec"], ["time_nsec"], ["raw_x"], ["raw_y"], ["raw_z"], ["f_x"], ["f_y"], ["f_z"]]
         self.record = [[], [] ,[] ,[] ,[] ,[] ,[] ,[]]
-        self.n = 5
+        self.n = 10
         self.output_msg = MagneticField()
 
     def Magnetic_callback(self, msg):
@@ -78,8 +78,6 @@ def main():
     imu_maf = IMU_MAF()
     file_name = '/home/lumos/tricat/src/tricat221/src/' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.csv'
     rospy.sleep(1)
-
-    f = open(file_name, "w")
 
     while not rospy.is_shutdown():
         imu_maf.filter_data()
