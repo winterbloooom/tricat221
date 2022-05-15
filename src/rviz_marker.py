@@ -32,7 +32,7 @@ class LineStrip:
         self.mark.color = ColorRGBA(color[0], color[1], color[2], color[3])
         self.mark.scale.x = scale_x
         self.mark.pose.orientation.w = 1
-        print(self.mark.points)
+        print(ns, id, color, scale_x, p1, p2)
         self.mark.points.append(Point(p1[0], p1[1], 0))
         self.mark.points.append(Point(p2[0], p2[1], 0))
 

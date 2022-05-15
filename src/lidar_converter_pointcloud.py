@@ -126,7 +126,7 @@ class LiDARConverter:
                 lidar_point.theta = theta
                 lidar_point.psi_p = theta - (self.psi_goal - psi)    # (heading과 점까지 차이각) - (heading과 goal까지 차이각) = (heading과 점까지 차이각) - ((x축과 goal까지 차이각) - (x축과 heading까지 차이각))
             
-                result.points.append(lidar_point)
+                result.points.append([lidar_point])
 
             theta += scan.angle_increment
 
@@ -143,8 +143,10 @@ class LiDARConverter:
         for i, data in enumerate(result.points):
             if data.range < self.danger_range:
                 color = [1, 0, 0, 1]
-            else:
+            elif data.range < self.f_range_max:
                 color = [0, 1, 0, 1]
+            else:
+                color = [0, 0, 1, 0]
 
             p1 = [self.boat_x, self.boat_y]
             p2 = [self.boat_x + (-data.range) * math.cos(math.radians(data.theta)),\
@@ -190,8 +192,9 @@ def main():
 
     while not rospy.is_shutdown():
         result = lidar_converter.calc_inrange_ob()
+        print(result.points)
         lidar_converter.result_pub.publish(result)
-        lidar_converter.rviz_publish(result)
+        # lidar_converter.rviz_publish(result)
 
         rate.sleep()
 

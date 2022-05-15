@@ -1,2 +1,2 @@
-Header header
-float32[] points
+std_msgs/Header header
+tricat221/LiDARPoint[] points
