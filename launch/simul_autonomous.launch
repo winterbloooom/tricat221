@@ -9,11 +9,11 @@
 		<param name="goal_y" value="3"/>
 	</node>
 	<node pkg="tricat221" type="moving_avg_filter.py" name="MAF_IMU" output="screen"/>
-	<node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>
+	<!--<node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>-->
 
 	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0429.bag -l --topics /enu_position /imu/data /imu/mag /scan /ublox_gps/fix"/>
 
-	<!--<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting1.rviz" />-->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting1.rviz" />
 	<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>
 	
 	<!--PARAMETER-->
