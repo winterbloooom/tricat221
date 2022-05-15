@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--bag and pub-->
+<launch>
+	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true"/>
+	<node pkg="tricat221" type="hopping_tour.py" name="hopping" respawn="true" output="screen"/>
+	<node pkg="tricat221" type="moving_avg_filter.py" name="MAF_IMU" output="screen"/>
+
+	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0429.bag -l --topics /enu_position /imu/data /imu/mag /ublox_gps/fix"/>
+
+	<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>
+	
+	<!--PARAMETER-->
+	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
+	<rosparam command="load" file="$(find tricat221)/params/hopping_params.yaml"/>
+	<rosparam command="load" file="$(find tricat221)/params/coordinates.yaml"/>
+	
+</launch>
