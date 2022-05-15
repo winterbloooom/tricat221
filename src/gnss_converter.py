@@ -17,6 +17,7 @@ def gps_fix_callback(msg):
 def enu_convert(gnss):
     e, n, u = pm.geodetic2enu(gnss[0], gnss[1], gnss[2], origin[0], origin[1], origin[2])
     return e, n
+    # TODO hopping말고 다른 곳에 쓰이는지 볼 것
 
 def main():
     rospy.init_node('gnss_converter', anonymous=True)

@@ -32,7 +32,8 @@ class Hopping:
         gnss_waypoint = rospy.get_param("waypoints")
         # ENU 좌표로 변환
         for waypoint in gnss_waypoint:
-            enu_waypoint = enu_convert(waypoint) #enu_waypoint = gc.enu_convert(waypoint)
+            e, n = gc.enu_convert(waypoint) #enu_waypoint = gc.enu_convert(waypoint)
+            enu_waypoint = [n, e]
             self.remained_waypoint.append(enu_waypoint) # TODO extend되진 않는지 확인할 것
 
         self.goal_range = rospy.get_param("goal_range")
@@ -233,7 +234,7 @@ def main():
             hopping.control_publish() # 계속 다음 목적지로 이동하라
 
         hopping.print_state()
-        hopping.visualize()
+        # hopping.visualize()
         rate.sleep()
 
     rospy.spin()

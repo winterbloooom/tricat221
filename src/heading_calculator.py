@@ -9,8 +9,8 @@ from sensor_msgs.msg import MagneticField
 
 class Heading_Angle:
     def __init__(self):
-        # rospy.Subscriber("/imu/mag", MagneticField, self.Magnetic_callback, queue_size=1)
-        rospy.Subscriber("f_imu_mag", MagneticField, self.Magnetic_callback, queue_size=1)
+        rospy.Subscriber("/imu/mag", MagneticField, self.Magnetic_callback, queue_size=1)
+        # rospy.Subscriber("f_imu_mag", MagneticField, self.Magnetic_callback, queue_size=1)
         
         self.magnetic_x = 0.0
         self.magnetic_y = 0.0

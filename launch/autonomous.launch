@@ -24,7 +24,7 @@
 	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter" respawn="true"/>
 	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/>
 	<node pkg="tricat221" type="autonomous.py" name="autonomous" respawn="true" output="screen"/>
-	<!--<node pkg="tricat_211" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>-->
+	<!--<node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>-->
 
 	<node pkg="rviz" type="rviz" name="rviz_auto" args="-d $(find tricat221)/rviz/rviz_setting1.rviz" />
 	<!--<node pkg="rviz" type="rviz" name="rviz_lidar" args="-d $(find tricat221)/rviz/lidar.rviz" />-->
