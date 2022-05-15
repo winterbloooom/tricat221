@@ -18,10 +18,10 @@ class Point:
         return cls(0, 0)
 
     def __add__(self, p2):
-      return Point(self.x + p2.x, self.y + p2.y)
+        return Point(self.x + p2.x, self.y + p2.y)
 
     def __sub__(self, p2):
-      return Point(self.x - p2.x, self.y - p2.y)
+        return Point(self.x - p2.x, self.y - p2.y)
 
     def __mul__(self, c):
         return Point(self.x*c, self.y*c)

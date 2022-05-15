@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from cgi import print_directory
 import rospy
 import math
-import pymap3d as pm
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import numpy as np
+# import sys
+# sys.path.append('/home/lumos/tricat/src/tricat221/src')
+
 import gnss_converter as gc # src/gnss_converter.py
 
 from std_msgs.msg import UInt16, Float64
@@ -28,7 +32,7 @@ class Hopping:
         gnss_waypoint = rospy.get_param("waypoints")
         # ENU 좌표로 변환
         for waypoint in gnss_waypoint:
-            enu_waypoint = gc.enu_convert(waypoint)
+            enu_waypoint = enu_convert(waypoint) #enu_waypoint = gc.enu_convert(waypoint)
             self.remained_waypoint.append(enu_waypoint) # TODO extend되진 않는지 확인할 것
 
         self.goal_range = rospy.get_param("goal_range")
@@ -60,7 +64,7 @@ class Hopping:
         self.goal_x = self.remained_waypoint[0][0] # 다음 목표의 x좌표
         self.goal_y = self.remained_waypoint[0][1] # 다음 목표의 y좌표
         
-        self.distance_to_goal = 0
+        self.distance_to_goal = 100000
         self.calc_distance_to_goal() # 다음 목표까지 남은 거리
         self.error_angle = 0
         self.calc_error_angle()
@@ -69,21 +73,29 @@ class Hopping:
         self.u_servo = self.servo_middle
         self.u_thruster = self.thruster_min
 
+        # plt.figure(figsize=(20, 20))
+        plt.plot(np.array([-50, 50]), np.array([-50, -50]), color='None')
+
+
     # IMU z축 각속도 콜백함수
     def yaw_rate_callback(self, msg):
         self.yaw_rate = math.degrees(msg.angular_velocity.z) # [rad/s] -> [degree/s]
-    
+
+
     # IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수
     def heading_callback(self, msg):
         self.psi = msg.data # [degree]
-    
+
+
     # GPS로 측정한 배의 ENU 변환 좌표 콜백함수
     def boat_position_callback(self, msg):
-        self.boat_x = msg.x
-        self.boat_y = msg.y
-    
+        self.boat_y = msg.x # ENU 좌표계와 축이 반대라 바꿔줌
+        self.boat_x = msg.y
+
+
     def calc_distance_to_goal(self):
         self.distance_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
+
 
     def distance_PID(self):
         cp_distance = self.kp_distance * self.distance_to_goal
@@ -91,20 +103,28 @@ class Hopping:
         cd_distance = - self.kd_distance * self.distance_to_goal / 0.1 # dt = rate
         
         u_distance = cp_distance + cd_distance # + ci_distance
-
         u_thruster = (self.thruster_min + u_distance) 
             # m 단위인 distance 쓰러스터 제어값으로 바꾸는 법: 계수값 조정 + min/max 값 더하고 빼고
+        
         if u_thruster > self.thruster_max:
             u_thruster = self.thruster_max
+        
+        if u_thruster < self.thruster_min:
+            u_thruster = self.thruster_min
 
-        return int(u_thruster) # TODO: 이름 다시?
+        return int(u_thruster)
+
 
     def set_next_goal(self):
-        # TODO : ENU 좌표계로 잘 변환된 뒤에 작동하는지 순서 체크하기
         self.passed_waypoint.append(self.remained_waypoint[0]) # 지금 목표를 '지난 목표 리스트'에 넣음
         del self.remained_waypoint[0] # 지금 목표를 '남은 목표 리스트'에서 지움
+
+        if len(self.remained_waypoint) == 0:
+            return
+
         self.goal_x = self.remained_waypoint[0][0]
         self.goal_y = self.remained_waypoint[0][1]
+
 
     def arrival_check(self):
         self.calc_distance_to_goal() #목적지까지 거리 다시 계산
@@ -113,21 +133,21 @@ class Hopping:
         else:
             return False
 
+
     def calc_error_angle(self):
         # psi_desire 계산(x축(North)과 goal 사이 각)
-        self.psi_desire = math.atan2(self.goal_y-self.boat_y, self.goal_x-self.boat_x) #math.atan2(y, x) -> radians, which is between PI and -PI
+        self.psi_desire = math.degrees(math.atan2(self.goal_y - self.boat_y, self.goal_x - self.boat_x))
         self.error_angle = self.psi_desire - self.psi
     
+
     def error_angle_PID(self):
         cp_angle = self.kp_angle * self.error_angle # TODO : 부호 확인하기
 
         self.error_sum_angle += self.error_angle * 0.1 # dt = rate 
         ci_angle = self.ki_angle * self.error_sum_angle
-            # 작년 코드에서 왜 이 값이 +- 90 넘지 않게 설정했었는지 알아보기 -> 임의 설정이었음
             # TODO : errorsum 초기화할 위치 선정하기
 
         cd_angle = - self.kd_angle * self.yaw_rate
-            # 작년 코드에서 왜 de/dt를 yaw_rate로 했는지 알아보기 -> Derivative kick 현상 방지 위해 각도의 변화율인 각속도 사용
         
         u_angle = cp_angle + ci_angle + cd_angle
         u_servo = self.servo_middle - u_angle
@@ -137,8 +157,12 @@ class Hopping:
         elif u_servo < self.servo_right_max:
             u_servo = self.servo_right_max
 
+        # print("cp_angle : {} / ci_angle : {} / cd_angle : {}".format(cp_angle, ci_angle, cd_angle))
+        # print("u_angle : {} / u_servo : {}".format(u_angle, u_servo))
+
         return round(u_servo)
-        
+
+
     def control_publish(self):
         # 에러각 계산 -> PID로
         self.calc_error_angle()
@@ -150,6 +174,7 @@ class Hopping:
 
         self.servo_pub.publish(self.u_servo)
         self.thruster_pub.publish(self.u_thruster)
+
 
     def print_state(self):
         if self.cnt < 10:
@@ -166,6 +191,22 @@ class Hopping:
 
         self.cnt = 0
 
+
+    def visualize(self):
+        ### 그래프의 x, y축 전부 반대로 넣어야 함!
+
+        for point in self.remained_waypoint:
+            circle = patches.Circle((point[1], point[0]), radius=self.goal_range, color='white', ec='g')
+            plt.gca().add_patch(circle)
+
+        for point in self.passed_waypoint:
+            circle = patches.Circle((point[1], point[0]), radius=self.goal_range, color='white', ec='g')
+            plt.gca().add_patch(circle)
+
+        boat = patches.Circle((self.boat_y, self.boat_x), radius=0.5, color='black')
+        plt.gca().add_patch(boat)
+        plt.axis('scaled')
+        plt.show()
 
 def main():
     rospy.init_node('HoppingTour', anonymous=False)
@@ -192,6 +233,7 @@ def main():
             hopping.control_publish() # 계속 다음 목적지로 이동하라
 
         hopping.print_state()
+        hopping.visualize()
         rate.sleep()
 
     rospy.spin()

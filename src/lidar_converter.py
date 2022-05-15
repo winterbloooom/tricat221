@@ -2,6 +2,8 @@
 #-*- coding:utf-8 -*-
 
 import rospy
+# import sys
+# sys.path.append('/home/lumos/tricat/src/tricat221/src')
 
 from point_class import * # point_class.py
 from point_set_class import *

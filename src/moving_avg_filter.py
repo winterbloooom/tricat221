@@ -2,7 +2,6 @@
 #-*- coding:utf-8 -*-
 
 import time
-from httplib2 import RelativeURIError
 import pandas as pd # pip install pandas
 import rospy
 import numpy as np

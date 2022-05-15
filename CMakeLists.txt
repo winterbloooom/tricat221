@@ -164,9 +164,9 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  src/lidar_converter.py
-  src/point_class.py
-  src/point_set_class.py
+  src/perception/lidar_converter.py
+  src/utils/point_class.py
+  src/utils/point_set_class.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
