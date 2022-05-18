@@ -9,6 +9,17 @@ import numpy as np
 from sensor_msgs.msg import MagneticField
 from std_msgs.msg import Header
 
+class MAF:
+    def __init__(self, n=5):
+        self.n = 5
+        self.data = []
+    
+    def add_and_get_data(self, new_data):
+        if len(self.data) >= self.n:
+            self.data.pop(0)
+        self.data.append(new_data)
+        return sum(self.data) / len(self.data)
+
 class IMU_MAF:
     def __init__(self):
         rospy.Subscriber("/imu/mag", MagneticField, self.Magnetic_callback, queue_size=1)

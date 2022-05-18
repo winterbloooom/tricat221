@@ -46,7 +46,7 @@ class Text:
         self.mark.color = ColorRGBA(1, 1, 1, 1)
         self.mark.scale.z = 0.5
         self.mark.text = text
-        self.mark.pose.position = Point(pose[0], pose[1], 0)
+        self.mark.pose.position = Point(pose[0], pose[1], 0.5)
 
 class Points:
     def __init__(self, ns, id, color, scale, p):

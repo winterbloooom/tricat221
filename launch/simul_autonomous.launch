@@ -3,19 +3,19 @@
 <!--bag and pub-->
 <launch>
 	<node pkg="tricat221" type="lidar_converter_pointcloud.py" name="lidarConverter" output="screen"/> <!--respawn="true" -->
-	<!--<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true"/>
-	<node pkg="tricat221" type="moving_avg_filter.py" name="MAF_IMU" output="screen"/>-->
+	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true"/>
+	<node pkg="tricat221" type="moving_avg_filter.py" name="MAF_IMU" output="screen"/>
 
-	<!--<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0429.bag -l topics /enu_position /imu/data /imu/mag /scan /ublox_gps/fix"/>-->
+	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0429.bag -l --topics /enu_position /imu/data /imu/mag /ublox_gps/fix /scan"/>
 	
-	<node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
+	<!--<node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
 		<param name="serial_port"         type="string" value="/dev/ttyLiDAR"/>  
 		<param name="serial_baudrate"     type="int"    value="256000"/>
 		<param name="frame_id"            type="string" value="laser"/>
 		<param name="inverted"            type="bool"   value="false"/>
 		<param name="angle_compensate"    type="bool"   value="true"/>
 		<param name="scan_mode"           type="string" value="Stability"/>
-	</node>
+	</node>-->
 
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" />
 	<!--<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>-->
