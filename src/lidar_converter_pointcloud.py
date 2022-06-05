@@ -226,7 +226,8 @@ class LiDARConverter:
         self.rviz_lidar_pub.publish(lidar_markers)
 
     def calc_best_angle(self, result):
-        result.sort(key = lambda x: (x.range, abs(x.psi_p), abs(x.theta)))
+        # result.sort(key = lambda x: (x.range, abs(x.psi_p), abs(x.theta)))
+        result.sort(key = lambda x: (abs(x.psi_p), x.range, abs(x.theta)))
         # print("----------------------------------")
         # for r in result:
         #     print("range  {0:02.2f} / theta  {1:03.2f} / psi_p  {2:03.2f}".format(r.range, r.theta, r.psi_p))
@@ -246,6 +247,9 @@ def main():
     rospy.sleep(1)
 
     while not rospy.is_shutdown():
+        if len(lidar_converter.raw_data.ranges) == 0:
+            continue
+
         result = lidar_converter.calc_inrange_ob()
         error_angle = lidar_converter.calc_best_angle(result.points)
         # lidar_converter.result_pub.publish(result)
