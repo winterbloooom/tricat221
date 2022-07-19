@@ -173,8 +173,8 @@ class Hopping:
         self.calc_distance_to_goal()
         self.u_thruster = self.distance_PID()
 
-        self.servo_pub.publish(self.u_servo)
-        self.thruster_pub.publish(self.u_thruster)
+        self.servo_pub.publish(int(self.u_servo))
+        self.thruster_pub.publish(int(self.u_thruster))
 
 
     def print_state(self):
@@ -219,7 +219,7 @@ def main():
         if len(hopping.remained_waypoint)==0:
             # 마지막 목적지까지 도착함
             hopping.servo_pub.publish(hopping.servo_middle)
-            hopping.thruster_pub.publish() # TODO: 정지값 넣어주기
+            hopping.thruster_pub.publish(1500)
             print("-"*20)
             print("Finished!")
             return

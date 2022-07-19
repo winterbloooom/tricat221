@@ -8,11 +8,11 @@ goal_risk_range: 10
 
 ob_exist_coefficient: 0
 ob_near_coefficient: 0
-goal_orient_coefficient: 5
+goal_orient_coefficient: 7
 
-kp_angle : 0.1
-ki_angle : 0.001 # max 0.05?
-kd_angle : 0.05
+kp_angle : 0.45
+ki_angle : 0.01 # max 0.05?
+kd_angle : 0.1
 
 # kp_distance : 40
 # ki_distance : 40
@@ -24,5 +24,4 @@ servo_right_max: 68 #93-25
 
 thruster_max : 1850
 thruster_min : 1600
-
-# all temp value!
+thruster_average : 1650

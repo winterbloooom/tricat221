@@ -93,6 +93,7 @@ class Autonomous:
         ## thruster range
         self.thruster_max = rospy.get_param("thruster_max")
         self.thruster_min = rospy.get_param("thruster_min")
+        self.thruster_average = rospy.get_param("thruster_average")
 
         ## for report
         self.cnt = 0 # print 출력 속도 조절 위한 타이머
@@ -289,7 +290,7 @@ class Autonomous:
         self.rviz_traj.append_marker_point(self.boat_x, self.boat_y)
 
         self.servo_pub.publish(self.u_servo)
-        self.thruster_pub.publish() # TODO thruster도 PID 할 필요 없다면 굳이 여기 위치시킬 필요 있나?
+        self.thruster_pub.publish(self.thruster_average) # TODO thruster도 PID 할 필요 없다면 굳이 여기 위치시킬 필요 있나?
 
 
     def print_state(self):
@@ -417,7 +418,7 @@ def main():
     while not rospy.is_shutdown():
         if autonomous.arrival_check(): # 최종 목적지에 도착함
             autonomous.servo_pub.publish(autonomous.servo_middle)
-            autonomous.thruster_pub.publish(0) # TODO: 정지값 넣어주기
+            autonomous.thruster_pub.publish(1500) # TODO: 정지값 넣어주기
             print("-"*20)
             print("Finished!")
             return
