@@ -10,8 +10,8 @@ from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker, MarkerArray
 from tricat221.msg import ObstacleList
 
-import gnss_converter as gc
-import rviz_viewer as rv
+import perception.gnss_converter as gc
+import utils.rviz_viewer as rv
 
 class ObstacleAvoidance:
     def __init__(self):

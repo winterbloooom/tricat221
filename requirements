@@ -1,0 +1,9 @@
+#######
+numpy
+ROS 18.04 LTS
+rviz
+rqt
+pymap3d
+
+#######
+pre-commit

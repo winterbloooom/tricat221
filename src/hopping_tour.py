@@ -9,7 +9,7 @@ import numpy as np
 # import sys
 # sys.path.append('/home/lumos/tricat/src/tricat221/src')
 
-import gnss_converter as gc # src/gnss_converter.py
+import perception.gnss_converter as gc # src/gnss_converter.py
 
 from std_msgs.msg import UInt16, Float64
 from geometry_msgs.msg import Point

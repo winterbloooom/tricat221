@@ -3,9 +3,11 @@
 
 import rospy
 import math
-import sys
 import pymap3d as pm
 import numpy as np
+
+import sys
+sys.path.append('/home/lumos/catkin_ws/src/tricat221')
 
 from std_msgs.msg import UInt16, Float64
 from sensor_msgs.msg import Imu
@@ -13,9 +15,10 @@ from geometry_msgs.msg import Point, Vector3, Pose
 from visualization_msgs.msg import Marker, MarkerArray
 from tricat221.msg import Obstacle, ObstacleList
 
-import gnss_converter as gc # src/utils/gnss_converter.py
+
+import perception.gnss_converter as gc # src/utils/gnss_converter.py
 import point_class as pc # src/utils/point_class.py
-import rviz_viewer as rv
+import utils.rviz_viewer as rv
 
 
 class Autonomous:

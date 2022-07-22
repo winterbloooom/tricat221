@@ -2,7 +2,7 @@
 #-*- coding:utf-8 -*-
 
 import time
-import pandas as pd # pip install pandas
+# import pandas as pd # pip install pandas
 import rospy
 import numpy as np
 

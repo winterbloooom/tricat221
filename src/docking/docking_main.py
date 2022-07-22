@@ -14,9 +14,9 @@ from geometry_msgs.msg import Point, Vector3, Pose
 from visualization_msgs.msg import Marker, MarkerArray
 from tricat221.msg import Obstacle, ObstacleList
 
-import gnss_converter as gc # src/gnss_converter.py
+import perception.gnss_converter as gc # src/gnss_converter.py
 import point_class as pc # src/point_class.py
-import rviz_viewer as rv
+import utils.rviz_viewer as rv
 
 class Docking:
     def __init__(self) -> None:
