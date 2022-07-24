@@ -71,14 +71,14 @@ class StarboardCam:
         cv2.copyTo(blur, color_selected, mask)
         
         
-        # 이진화 어떻게...? HSV 하고 반전!
-        # 모양 검출 -> 플래그 설정할까?
-        if # 검출됨:
-            self.p1, self.p2 = # 설정하기
-            return True
-        else:
-            self.p1, self.p2 = -1, -1   # 음...?
-            return False
+        # # 이진화 어떻게...? HSV 하고 반전!
+        # # 모양 검출 -> 플래그 설정할까?
+        # if # 검출됨:
+        #     self.p1, self.p2 = # 설정하기
+        #     return True
+        # else:
+        #     self.p1, self.p2 = -1, -1   # 음...?
+        #     return False
 
 
     def mean_brightness(self, img):
