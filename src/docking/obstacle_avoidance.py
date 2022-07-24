@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 
 """
 """
@@ -11,6 +11,7 @@
 #     """
 #     walls = []
 #     buoys = []
+
 
 def calc_error_angle():
     """

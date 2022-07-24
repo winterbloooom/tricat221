@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 
 """search marks in an input image and detect target mark
 
@@ -10,11 +10,14 @@ Todo
     * 코드 정리하기
 """
 
-import numpy as np
-import cv2
+import os
+import sys
 
-import sys, os
+import cv2
+import numpy as np
+
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+
 
 def preprocess_image(raw_img, hsv=True, blur=False, brightness=False):
     """preprocess the raw input image
@@ -26,17 +29,17 @@ def preprocess_image(raw_img, hsv=True, blur=False, brightness=False):
         hsv (bool): Whether to convert color space into HSV
         blur (bool): Whether to do Gaussian Blur or not. Fix kernel size with 5
         brightness (bool): Whether to adjust brightness with mean brightness value
-    
+
     Returns:
         np.ndarray: preprocessed image
     """
     img = raw_img
 
-    if brightness==True:
+    if brightness == True:
         pass
-    if blur==True:
+    if blur == True:
         img = cv2.GaussianBlur(img, (5, 5), 0)
-    if hsv==True:
+    if hsv == True:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     return img
@@ -48,7 +51,7 @@ def select_color(img, range, color_space="hsv"):
         img (np.ndarray): preprocessed image with 3 channels
         range (list): (3 X 2) list that limits color space range. For row, [lower bound, upper bound]. Columns are color space elements.
         color (str): Select color space to convert input image. hsv(default), rgb
-    
+
     Returns:
         np.ndarray: gray-scale image with specific color range
 
@@ -108,21 +111,21 @@ def detect_target(img, target_shape, draw_contour=True):
     morph_kernel = np.ones((9, 9), np.uint8)
     morph = cv2.morphologyEx(img, cv2.MORPH_CLOSE, morph_kernel)
     shape = cv2.cvtColor(morph, cv2.COLOR_GRAY2BGR)
-    targets = [] # [area, center_col]
+    targets = []  # [area, center_col]
 
     _, contours, _ = cv2.findContours(morph, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
-    
+
     num_contours = len(contours)
     print("# of conturs : {}".format(num_contours))
 
     for contour in contours:
         approx = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.02, True)
-        
+
         area = cv2.contourArea(approx)
         if area < 500:
             continue
 
-        print("-"*30)
+        print("-" * 30)
         print("area : {}".format(area))
 
         vertex_num = len(approx)
@@ -168,13 +171,15 @@ def detect_target(img, target_shape, draw_contour=True):
         if len(targets) == 1:
             return targets[-1]
         else:
-            max_area_idx = targets.index(max(targets)) # 0번째 요소 기준 정렬
+            max_area_idx = targets.index(max(targets))  # 0번째 요소 기준 정렬
             return targets[max_area_idx]
     else:
         return None
 
+
 def trackbar_callback(usrdata):
     pass
+
 
 def set_HSV_value(range):
     range[0][0] = cv2.getTrackbarPos("H lower", "hsv")
@@ -186,9 +191,10 @@ def set_HSV_value(range):
 
     return range
 
+
 path_prefix = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 
-raw_img = cv2.imread(path_prefix + '/pic23.jpeg', cv2.IMREAD_COLOR)
+raw_img = cv2.imread(path_prefix + "/pic23.jpeg", cv2.IMREAD_COLOR)
 raw_img = cv2.resize(raw_img, (640, 480))
 if raw_img is None:
     print("Image load failed!")
@@ -206,11 +212,13 @@ cv2.createTrackbar("V upper", "hsv", 255, 255, trackbar_callback)
 range = np.empty((2, 3))
 
 while True:
-    processed_img = preprocess_image(raw_img) #, hsv=True, blur=True
+    processed_img = preprocess_image(raw_img)  # , hsv=True, blur=True
     range = set_HSV_value(range)
-    mask = select_color(processed_img, range) #[[100, 200], [100, 200], [100, 200]]  np.array([[100, 0, 100], [255, 150, 255]])
+    mask = select_color(
+        processed_img, range
+    )  # [[100, 200], [100, 200], [100, 200]]  np.array([[100, 0, 100], [255, 150, 255]])
     print(detect_target(mask, 3))
-    
+
     cv2.imshow("win2", mask)
     if cv2.waitKey(1) == 27:
         cv2.destroyAllWindows()

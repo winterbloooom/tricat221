@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 
 """탐지한 타겟으로 도킹
 
@@ -10,14 +10,16 @@ Todo
     * 얼마나 틀어야 몇 픽셀인지 결정해야 함
 """
 
-import sys, os
+import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from utils.filter import *
 
 
 def avoide_station_collision():
-    """스테이션 회피각 리턴
-    """
+    """스테이션 회피각 리턴"""
+
 
 def pixel_to_degree(target, alpha):
     """
@@ -57,7 +59,9 @@ def degree_to_servo(error_angle, angle_range, servo_range, alpha):
     """
     angle_mid = sum(angle_range) / 2
     u_angle = angle_mid - error_angle
-    u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (angle_range[1] - angle_range[0]) + servo_range[0]
+    u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (
+        angle_range[1] - angle_range[0]
+    ) + servo_range[0]
     return u_servo * alpha
 
 

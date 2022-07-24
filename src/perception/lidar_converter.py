@@ -1,16 +1,19 @@
 #!/usr/bin/env python
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
+
+import os
+import sys
 
 import rospy
-import sys, os
+
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+
+from geometry_msgs.msg import Point32
+from sensor_msgs.msg import LaserScan, PointCloud
+from visualization_msgs.msg import Marker, MarkerArray
 
 from datatypes.point_class import *
 from datatypes.point_set_class import *
-from sensor_msgs.msg import LaserScan, PointCloud
-from geometry_msgs.msg import Point32
-from visualization_msgs.msg import Marker, MarkerArray
-
 from tricat221.msg import Obstacle, ObstacleList
 
 
@@ -18,7 +21,9 @@ class Lidar_Converter:
     def __init__(self):
         # sub, pub 개체
         rospy.Subscriber("/scan", LaserScan, self.lidar_raw_callback, queue_size=1)
-        self.obstacle_pub = rospy.Publisher("/obstacles", ObstacleList, queue_size=10) # TODO queue_size가 publish 속도에 영향 주는지 연구!
+        self.obstacle_pub = rospy.Publisher(
+            "/obstacles", ObstacleList, queue_size=10
+        )  # TODO queue_size가 publish 속도에 영향 주는지 연구!
         self.marker_array_pub = rospy.Publisher("/rviz_visual", MarkerArray, queue_size=10)
 
         # 파라미터 임포트
@@ -32,9 +37,9 @@ class Lidar_Converter:
         # 변수
         self.lidar_header_stamp = 0
         self.lidar_header_frameid = 0
-        self.input_points = [] # 라이다에서 받은 모든 점들을 (x, y) 형태로 저장
-        self.point_sets_list = [] # point_set들의 리스트 [ps1, ps2, ...]
-        self.obstacles = [] # 최종적으로 합쳐지고 나눠인 set들 저장 (wall + buoy)
+        self.input_points = []  # 라이다에서 받은 모든 점들을 (x, y) 형태로 저장
+        self.point_sets_list = []  # point_set들의 리스트 [ps1, ps2, ...]
+        self.obstacles = []  # 최종적으로 합쳐지고 나눠인 set들 저장 (wall + buoy)
 
     def lidar_raw_callback(self, msg):
         self.input_points = []
@@ -43,7 +48,7 @@ class Lidar_Converter:
         self.lidar_header_stamp = msg.header.stamp
         self.lidar_header_frameid = msg.header.frame_id
 
-        phi = msg.angle_min # 각 점의 각도 계산 위해 계속 누적해갈 각도
+        phi = msg.angle_min  # 각 점의 각도 계산 위해 계속 누적해갈 각도
         for r in msg.ranges:
             if msg.range_min <= r <= msg.range_max:
                 p = Point.polar_to_cartesian(r, phi)
@@ -54,7 +59,7 @@ class Lidar_Converter:
 
     def process_points(self):
         if len(self.input_points) < self.min_input_points_size:
-            return # TODO 다 가려졌을 때는 아예 이전 상태로 유지라서, 아예 점 없어지는 처리 필요
+            return  # TODO 다 가려졌을 때는 아예 이전 상태로 유지라서, 아예 점 없어지는 처리 필요
 
         self.group_points()
 
@@ -69,24 +74,24 @@ class Lidar_Converter:
 
     def group_points(self):
         point_set = Point_Set()
-        point_set.append_point(self.input_points[0]) #중복으로 들어가게 될 것임. 마지막에 제거 해줌
+        point_set.append_point(self.input_points[0])  # 중복으로 들어가게 될 것임. 마지막에 제거 해줌
         for p in self.input_points:
             if p.dist_btw_points(point_set.end) > self.max_gap_in_set:
                 if point_set.set_size > self.min_point_set_size:
                     self.point_sets_list.append(point_set)
                     # TODO 크기 따라 작은지 큰지 bool 변경해주는 부분 추가 -> 그냥 아예 리스트 추가 자체를 안 하는 걸로
 
-                del point_set 
-                    # 파이썬은 변수들 자체가 포인터 역할 하므로 
-                    # 단순히 point_set의 인스턴스 변수들을 초기화하면 
-                    # append 되는 point_set들이 다 동일한 것이 들어감(앞의 것도 바뀜)
-                    # 그래서 메모리 확보 위해 아예 변수 지우고 다시 선언함
+                del point_set
+                # 파이썬은 변수들 자체가 포인터 역할 하므로
+                # 단순히 point_set의 인스턴스 변수들을 초기화하면
+                # append 되는 point_set들이 다 동일한 것이 들어감(앞의 것도 바뀜)
+                # 그래서 메모리 확보 위해 아예 변수 지우고 다시 선언함
 
                 point_set = Point_Set()
                 point_set.append_point(p)
             else:
                 point_set.append_point(p)
-        self.point_sets_list.append(point_set) # 마지막 set 리스트에 빼먹지 않고 추가해줌
+        self.point_sets_list.append(point_set)  # 마지막 set 리스트에 빼먹지 않고 추가해줌
 
         ##### 중복으로 들어간 첫 번째 점 제거함 / TODO IndexError: list index out of range
         # print(self.point_sets_list[0].begin)
@@ -99,25 +104,30 @@ class Lidar_Converter:
         del self.point_sets_list[0].point_set[0]
 
     def split_group(self, ps):
-        max_distance = 0 # point_set의 첫점부터 끝점까지 이은 직선으로부터 가장 멀리 떨어진 점까지의 거리
-        split_idx = 0 # TODO : 잘 동작하는지 확인하기
+        max_distance = 0  # point_set의 첫점부터 끝점까지 이은 직선으로부터 가장 멀리 떨어진 점까지의 거리
+        split_idx = 0  # TODO : 잘 동작하는지 확인하기
         point_idx = 0
 
         for p in ps.point_set:
-            dist_to_ps_line = ps.dist_to_point(p) # print(p.x, "라인까지 거리", dist_to_ps_line)
+            dist_to_ps_line = ps.dist_to_point(p)  # print(p.x, "라인까지 거리", dist_to_ps_line)
             if dist_to_ps_line > max_distance:
                 max_distance = dist_to_ps_line
                 split_idx = point_idx
             point_idx += 1
 
         if max_distance > self.max_dist_to_ps_line:
-            if split_idx  < self.min_point_set_size or (ps.set_size - split_idx) < self.min_point_set_size:
+            if (
+                split_idx < self.min_point_set_size
+                or (ps.set_size - split_idx) < self.min_point_set_size
+            ):
                 return
 
             ps1 = Point_Set()
             ps1.input_point_set(ps.point_set[:split_idx])
             ps2 = Point_Set()
-            ps2.input_point_set(ps.point_set[split_idx:]) #ps2 = Point_Set(ps.point_set[split_idx:])
+            ps2.input_point_set(
+                ps.point_set[split_idx:]
+            )  # ps2 = Point_Set(ps.point_set[split_idx:])
 
             # print("현재 ps의 인덱스", (point_sets_list).index(ps))
             # print("나누기 이전 psl 크기", len(point_sets_list))
@@ -125,12 +135,14 @@ class Lidar_Converter:
             # print("0번 ps의 첫 점 x", point_sets_list[0].point_set[0].x, "ps 크기 ", len(point_sets_list[0].point_set))
             # print("1번 ps의 첫 점 x", point_sets_list[1].point_set[0].x, "ps 크기 ", len(point_sets_list[1].point_set))
             # print("2번 ps의 첫 점 x", point_sets_list[2].point_set[0].x, "ps 크기 ", len(point_sets_list[2].point_set))
-            self.point_sets_list.insert(self.point_sets_list.index(ps), ps2) # TODO 이거 전후 위치도 확인하기. 분할된 것도 순서 지켜서 들어가는지
+            self.point_sets_list.insert(
+                self.point_sets_list.index(ps), ps2
+            )  # TODO 이거 전후 위치도 확인하기. 분할된 것도 순서 지켜서 들어가는지
             # print("0번 ps의 첫 점 x", point_sets_list[0].point_set[0].x, "ps 크기 ", len(point_sets_list[0].point_set))
             # print("1번 ps의 첫 점 x", point_sets_list[1].point_set[0].x, "ps 크기 ", len(point_sets_list[1].point_set))
             # print("2번 ps의 첫 점 x", point_sets_list[2].point_set[0].x, "ps 크기 ", len(point_sets_list[2].point_set))
             # print("3번 ps의 첫 점 x", point_sets_list[3].point_set[0].x, "ps 크기 ", len(point_sets_list[3].point_set))
-            
+
             del self.point_sets_list[self.point_sets_list.index(ps)]
 
             # print("나눈 후 psl 크기 ", len(point_sets_list))
@@ -143,10 +155,10 @@ class Lidar_Converter:
 
     def classify_groups(self):
         for ps in self.point_sets_list:
-            if ps.dist_begin_to_end() > self.min_wall_length: # 길이 길어서 벽으로 분류
-                self.split_wall(ps) # 어느 정도 길이로 벽을 쪼개서 obstacle에 넣음
+            if ps.dist_begin_to_end() > self.min_wall_length:  # 길이 길어서 벽으로 분류
+                self.split_wall(ps)  # 어느 정도 길이로 벽을 쪼개서 obstacle에 넣음
             else:
-                self.obstacles.append(ps) # 부표로 인식하고 바로 obstacle에 넣어줌
+                self.obstacles.append(ps)  # 부표로 인식하고 바로 obstacle에 넣어줌
 
     def split_wall(self, ps):
         wall_particle = Point_Set()
@@ -160,13 +172,13 @@ class Lidar_Converter:
                 wall_particle = Point_Set()
                 # wall_particle.append_point(p)
             # else:
-                # wall_particle.append_point(p)
+            # wall_particle.append_point(p)
             wall_particle.append_point(p)
-        self.obstacles.append(wall_particle) #마지막 파티클까지 잊지 않고 넣어줌
+        self.obstacles.append(wall_particle)  # 마지막 파티클까지 잊지 않고 넣어줌
 
     def publish_obstacles(self):
         ob_list = ObstacleList()
-        
+
         # ob_list.lidar_header.stamp = self.lidar_header_stamp
         # ob_list.lidar_header.frame_id = self.lidar_header_frameid
 
@@ -176,9 +188,9 @@ class Lidar_Converter:
             obstacle.begin.y = ob.begin.y
             obstacle.end.x = ob.end.x
             obstacle.end.y = ob.end.y
-        
+
             ob_list.obstacle.append(obstacle)
-        
+
         self.obstacle_pub.publish(ob_list)
 
     def publish_rviz(self):
@@ -221,17 +233,17 @@ class Lidar_Converter:
         #         point.y = p.y
         #         filtered_points.points.append(point)
 
-        point_set = Marker() #각 point_set을 확인용
+        point_set = Marker()  # 각 point_set을 확인용
         point_set.header.frame_id = "/map"
         point_set.header.stamp = rospy.Time.now()
         point_set.ns = "pointSet"
-        point_set.action = 0 #ADD
-        point_set.pose.orientation.w = 1.0 #???
+        point_set.action = 0  # ADD
+        point_set.pose.orientation.w = 1.0  # ???
         point_set.id = 2
-        point_set.type = 5 #LINE_LIST
+        point_set.type = 5  # LINE_LIST
         point_set.scale.x = 0.05
-        point_set.color.b = 1.0 # Blue
-        point_set.color.a = 1.0 # 투명도 0
+        point_set.color.b = 1.0  # Blue
+        point_set.color.a = 1.0  # 투명도 0
         for ps in self.point_sets_list:
             point = Point32()
             point.x = ps.begin.x
@@ -242,18 +254,18 @@ class Lidar_Converter:
             point.y = ps.end.y
             point_set.points.append(point)
 
-        obstacle = Marker() #벽까지 다 구분된 파티클 확인용
+        obstacle = Marker()  # 벽까지 다 구분된 파티클 확인용
         obstacle.header.frame_id = "/map"
         obstacle.header.stamp = rospy.Time.now()
         obstacle.ns = "obstacle"
-        obstacle.action = 0 #ADD
-        obstacle.pose.orientation.w = 1.0 #???
+        obstacle.action = 0  # ADD
+        obstacle.pose.orientation.w = 1.0  # ???
         obstacle.id = 3
-        obstacle.type = 5 #LINE_LIST
+        obstacle.type = 5  # LINE_LIST
         obstacle.scale.x = 0.1
-        obstacle.color.r = 1.0 # Yellow
-        obstacle.color.g = 1.0 # Yellow
-        obstacle.color.a = 1.0 # 투명도 0
+        obstacle.color.r = 1.0  # Yellow
+        obstacle.color.g = 1.0  # Yellow
+        obstacle.color.a = 1.0  # 투명도 0
         for ob in self.obstacles:
             point = Point32()
             point.x = ob.begin.x
@@ -271,8 +283,9 @@ class Lidar_Converter:
 
         self.marker_array_pub.publish(marker_array)
 
+
 def main():
-    rospy.init_node('LidarConverter', anonymous=False)
+    rospy.init_node("LidarConverter", anonymous=False)
 
     lidar_converter = Lidar_Converter()
     rate = rospy.Rate(10)
@@ -284,18 +297,15 @@ def main():
 
     rospy.spin()
 
+
 if __name__ == "__main__":
     main()
 
 
-
-
-
-
 ######## TRASH ################
 # class Lidar_Converter:
-    # def __init__(self):
-    #     rospy.Subscriber("/scan", LaserScan, self.lidar_raw_callback)
+# def __init__(self):
+#     rospy.Subscriber("/scan", LaserScan, self.lidar_raw_callback)
 
 #         self.max_point_set_gap = rospy.get_param("max_point_set_gap")
 #         self.min_point_set_size = rospy.get_param("min_point_set_size")
@@ -335,7 +345,7 @@ if __name__ == "__main__":
 #         for p in self.input_points:
 #             if len(temp_point_set)==0: #point_set_size==0
 #                 temp_point_set.append(p)
-            
+
 #             if p.distance_between_points(temp_point_set[-1]) > self.max_point_set_gap: # 마지막 점부터 지금 탐색 중인 점까지 거리가 멀어서 하나의 set으로 볼 수 없음
 #                 if len(temp_point_set) >= self.min_point_set_size: # if point_set_size >= self.min_point_set_size # 지금까지 모아온 set의 크기(점의 개수)가 충분히 큼(적지 않음)
 #                     self.point_sets.append(temp_point_set) # point_set으로 인정하고 추가함. 그렇지 않으면 그냥 무시하고 set으로 넣지 않음
@@ -350,7 +360,7 @@ if __name__ == "__main__":
 #     # def filter_seperated_point(self):
 #     #     for ps in self.point_sets:
 #     #         if len(ps) < self.min_point_set_size:
-#     #             del 
+#     #             del
 
 #     def split_group(self):
 #         for ps in self.point_sets:
@@ -359,9 +369,6 @@ if __name__ == "__main__":
 #             for i in range(2, len(ps)): # 첫 번째, 두 번째 점은 그냥 넘어감 -> TODO: 정말 넘어가도 되는지 확인 필요?
 #                 dist_to_line = self.calc_dist_to_line(ps[i], start_point_idx, end_point_idx)
 #                 if dist_to_line > self.max_point_set_range:
-                    
-
-                
 
 
 #     # 직선과 점 사이 거리

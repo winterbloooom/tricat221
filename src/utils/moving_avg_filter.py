@@ -1,27 +1,29 @@
 #!/usr/bin/env python
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 
 import time
-# import pandas as pd # pip install pandas
-import rospy
+
 import numpy as np
 
+# import pandas as pd # pip install pandas
+import rospy
 from sensor_msgs.msg import MagneticField
 from std_msgs.msg import Header
+
 
 class IMU_MAF:
     def __init__(self):
         rospy.Subscriber("/imu/mag", MagneticField, self.Magnetic_callback, queue_size=1)
-        self.pub = rospy.Publisher('f_imu_mag', MagneticField, queue_size=10)
+        self.pub = rospy.Publisher("f_imu_mag", MagneticField, queue_size=10)
 
         self.raw_time = []
         self.raw_data = []
-        
+
         self.x_prev = []
         self.y_prev = []
         self.z_prev = []
         # self.record = [["time_sec"], ["time_nsec"], ["raw_x"], ["raw_y"], ["raw_z"], ["f_x"], ["f_y"], ["f_z"]]
-        self.record = [[], [] ,[] ,[] ,[] ,[] ,[] ,[]]
+        self.record = [[], [], [], [], [], [], [], []]
         self.n = 10
         self.output_msg = MagneticField()
 
@@ -37,7 +39,6 @@ class IMU_MAF:
         magnetic_y = self.imu_mag.magnetic_field.y
         magnetic_z = self.imu_mag.magnetic_field.z
         self.raw_data = [magnetic_x, magnetic_y, magnetic_z]
-
 
         self.record[2].append(magnetic_x)
         self.record[3].append(magnetic_y)
@@ -59,6 +60,7 @@ class IMU_MAF:
 
         self.pub.publish(self.output_msg)
 
+
 def MovingAverageFilter(prev_data, n, x):
     """
     (param)     prev_data : 이전 데이터가 저장된 배열
@@ -71,11 +73,14 @@ def MovingAverageFilter(prev_data, n, x):
     prev_data.append(x)
     return sum(prev_data) / len(prev_data)
 
+
 def main():
-    rospy.init_node('MAF_IMU', anonymous=True)
+    rospy.init_node("MAF_IMU", anonymous=True)
     rate = rospy.Rate(10)
     imu_maf = IMU_MAF()
-    file_name = '/home/lumos/tricat/src/tricat221/src/' + time.strftime('%Y-%m-%d_%H-%M-%S') + '.csv'
+    file_name = (
+        "/home/lumos/tricat/src/tricat221/src/" + time.strftime("%Y-%m-%d_%H-%M-%S") + ".csv"
+    )
     rospy.sleep(1)
 
     while not rospy.is_shutdown():
@@ -87,5 +92,6 @@ def main():
     # result = np.transpose(result)
     # np.savetxt(file_name, result, delimiter=",")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

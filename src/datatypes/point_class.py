@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 
-from math import sqrt, pow, cos, sin, atan2, degrees
+from math import atan2, cos, degrees, pow, sin, sqrt
 
 
 class Point:
@@ -24,13 +24,13 @@ class Point:
         return Point(self.x - p2.x, self.y - p2.y)
 
     def __mul__(self, c):
-        return Point(self.x*c, self.y*c)
+        return Point(self.x * c, self.y * c)
 
-    def __div__(self, d): #__truediv__
-        return Point(self.x / d, self.y / d) if d!=0 else Point(0, 0)
+    def __div__(self, d):  # __truediv__
+        return Point(self.x / d, self.y / d) if d != 0 else Point(0, 0)
 
     def __eq__(self, p2):
-        return (self.x == p2.x and self.y == p2.y)
+        return self.x == p2.x and self.y == p2.y
 
     def dist_from_origin(self):
         return sqrt(pow(self.x, 2.0) + pow(self.y, 2.0))
@@ -56,14 +56,15 @@ class Point:
     def cross(self, p):
         return self.x * p.y - self.y * p.x
 
-    def normalized_point(self): # TODO : 값 직접 계산해 확인해볼 것
-        return  (self / self.dist_from_origin()) if self.dist_from_origin() > 0.0 else self
+    def normalized_point(self):  # TODO : 값 직접 계산해 확인해볼 것
+        return (self / self.dist_from_origin()) if self.dist_from_origin() > 0.0 else self
 
-    def reflected(self, normal_vec): # TODO : 값 직접 계산해 확인해볼 것
+    def reflected(self, normal_vec):  # TODO : 값 직접 계산해 확인해볼 것
         return self - normal_vec * (2 * normal_vec.dot(self))
 
-    def perpendicular(self): # TODO : 무슨 뜻인지?
+    def perpendicular(self):  # TODO : 무슨 뜻인지?
         return Point(-self.y, self.x)
+
 
 # class Point:
 #     def __init__(self, idx, r, phi):
@@ -83,5 +84,3 @@ class Point:
 #         self.idx = -1
 #         self.phi = 0
 #         self.x
-
-
