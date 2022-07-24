@@ -6,7 +6,7 @@
 	<node pkg="tricat221" type="hopping_tour.py" name="hopping" respawn="true" output="screen"/>
 	<node pkg="tricat221" type="moving_avg_filter.py" name="MAF_IMU" output="screen"/>
 
-	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0429.bag -l --topics /enu_position /imu/data /imu/mag /ublox_gps/fix"/>
+	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0429.bag -l --topics /enu_position /imu/data /imu/mag /scan /ublox_gps/fix"/>
 
 	<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>
 	

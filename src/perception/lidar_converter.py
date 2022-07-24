@@ -2,11 +2,11 @@
 #-*- coding:utf-8 -*-
 
 import rospy
-# import sys
-# sys.path.append('/home/lumos/tricat/src/tricat221/src')
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-from point_class import * # point_class.py
-from point_set_class import *
+from datatypes.point_class import *
+from datatypes.point_set_class import *
 from sensor_msgs.msg import LaserScan, PointCloud
 from geometry_msgs.msg import Point32
 from visualization_msgs.msg import Marker, MarkerArray

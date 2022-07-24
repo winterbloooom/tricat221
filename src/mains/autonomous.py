@@ -6,8 +6,8 @@ import math
 import pymap3d as pm
 import numpy as np
 
-import sys
-sys.path.append('/home/lumos/catkin_ws/src/tricat221')
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 from std_msgs.msg import UInt16, Float64
 from sensor_msgs.msg import Imu
@@ -16,8 +16,8 @@ from visualization_msgs.msg import Marker, MarkerArray
 from tricat221.msg import Obstacle, ObstacleList
 
 
-import perception.gnss_converter as gc # src/utils/gnss_converter.py
-import point_class as pc # src/utils/point_class.py
+import perception.gnss_converter as gc
+import datatypes.point_class as pc
 import utils.rviz_viewer as rv
 
 
@@ -30,7 +30,7 @@ class Autonomous:
         self.yaw_rate_sub = rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
 
         ## publishers
-        self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0) # TODO 아두이노 쪽에서 S 수정하기
+        self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0)
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
 
         ### rviz publishers
@@ -437,6 +437,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 

@@ -17,9 +17,11 @@ from sensor_msgs.msg import Image
 
 class CameraTester:
     def __init__(self):
-        rospy.Subscriber("/usb_cam/image_raw", Image, self.camera_callback)
+        rospy.Subscriber("/camera1/usb_cam/image_raw", Image, self.camera_callback)
+        rospy.Subscriber("/camera2/usb_cam/image_raw", Image, self.camera_callback2)
         self.bridge = CvBridge()
         self.img_raw = np.empty(shape=(480, 640)) # shape=(height, width)
+        self.img_raw2 = np.empty(shape=(480, 640))
         self.mode = rospy.get_param('~mode')
 
         cv2.namedWindow("hsv")
@@ -36,6 +38,9 @@ class CameraTester:
     def camera_callback(self,msg):
         self.img_raw = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
+    def camera_callback2(self,msg):
+        self.img_raw = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+
     def trackbar_callback(self, usrdata):
         pass
 
@@ -49,7 +54,8 @@ class CameraTester:
 
             cv2.imshow("hsv", mask)
             # cv2.imshow("hsv", hsv)
-            cv2.imshow("img_raw", self.img_raw)
+            cv2.imshow("star", self.img_raw)
+            cv2.imshow("bow", self.img_raw2)
 
             if cv2.waitKey(1) == 27:
                 break

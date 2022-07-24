@@ -1,0 +1,7 @@
+[tool.black]
+extend-exclude = "./dataset"
+line-length = 100
+target-version = ['py37']
+
+[tool.isort]
+profile = "black"

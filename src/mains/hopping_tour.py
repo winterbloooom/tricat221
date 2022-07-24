@@ -6,10 +6,12 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
-# import sys
-# sys.path.append('/home/lumos/tricat/src/tricat221/src')
+import cv2
 
-import perception.gnss_converter as gc # src/gnss_converter.py
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+
+import perception.gnss_converter as gc
 
 from std_msgs.msg import UInt16, Float64
 from geometry_msgs.msg import Point
@@ -39,13 +41,13 @@ class Hopping:
         self.goal_range = rospy.get_param("goal_range")
 
         self.error_sum_angle = 0
-        self.kp_angle = rospy.get_param("kp_angle")
-        self.ki_angle = rospy.get_param("ki_angle")
-        self.kd_angle = rospy.get_param("kd_angle")
+        self.kp_angle = rospy.get_param("kp_angle") # (0.0 ~ 1.0)
+        self.ki_angle = rospy.get_param("ki_angle") # (0.0 ~ 0.1)
+        self.kd_angle = rospy.get_param("kd_angle") # (0.0 ~ 1.0)
 
-        self.kp_distance = rospy.get_param("kp_distance")
-        self.ki_distance = rospy.get_param("ki_distance")
-        self.kd_distance = rospy.get_param("kd_distance")
+        self.kp_distance = rospy.get_param("kp_distance") # (0 ~ 100)
+        self.ki_distance = rospy.get_param("ki_distance") # (0 ~ 10)
+        self.kd_distance = rospy.get_param("kd_distance") # (0 ~ 100)
 
         self.servo_middle = rospy.get_param("servo_middle")
         self.servo_left_max = rospy.get_param("servo_left_max")
@@ -77,6 +79,16 @@ class Hopping:
         # plt.figure(figsize=(20, 20))
         plt.plot(np.array([-50, 50]), np.array([-50, -50]), color='None')
 
+        cv2.namedWindow("controller")
+        cv2.createTrackbar("p angle", "controller", 3, 10, self.trackbar_callback)
+        cv2.createTrackbar("i angle", "controller", 0, 10, self.trackbar_callback)
+        cv2.createTrackbar("d angle", "controller", 0, 10, self.trackbar_callback)
+        cv2.createTrackbar("p dist", "controller", 40, 100, self.trackbar_callback)
+        cv2.createTrackbar("i dist", "controller", 0, 10, self.trackbar_callback)
+        cv2.createTrackbar("d dist", "controller", 0, 100, self.trackbar_callback)
+
+    def trackbar_callback(self, usrdata):
+        pass
 
     # IMU z축 각속도 콜백함수
     def yaw_rate_callback(self, msg):
@@ -142,6 +154,8 @@ class Hopping:
     
 
     def error_angle_PID(self):
+        self.set_PID_value()
+
         cp_angle = self.kp_angle * self.error_angle # TODO : 부호 확인하기
 
         self.error_sum_angle += self.error_angle * 0.1 # dt = rate 
@@ -162,6 +176,15 @@ class Hopping:
         # print("u_angle : {} / u_servo : {}".format(u_angle, u_servo))
 
         return round(u_servo)
+
+    def set_PID_value(self):
+        self.kp_angle = cv2.getTrackbarPos("p angle", "controller") * 0.1
+        self.ki_angle = cv2.getTrackbarPos("i angle", "controller") * 0.1
+        self.kd_angle = cv2.getTrackbarPos("d angle", "controller") * 0.1
+        self.kp_distance = cv2.getTrackbarPos("p dist", "controller")
+        self.ki_distance = cv2.getTrackbarPos("i dist", "controller")
+        self.kd_distance = cv2.getTrackbarPos("d dist", "controller")
+
 
 
     def control_publish(self):
@@ -185,9 +208,11 @@ class Hopping:
         print("-"*20)
         print("")   # TODO : 자릿수 맞추기
         print("Boat loc : [{0}, {1}]".format(self.boat_x, self.boat_y))
-        print("Next Goal: No. {0} [{1}, {2}]".format(4-len(self.remained_waypoint)+1, self.remained_waypoint[0][0], self.remained_waypoint[0][1]))
+        print("Next Goal: # {0}  [{1}, {2}]".format(4-len(self.remained_waypoint)+1, self.remained_waypoint[0][0], self.remained_waypoint[0][1]))
         print("Error Angle  : {0} deg | Servo   : {1}".format(self.error_angle, self.u_servo))
         print("Dist. to Goal: {0} m | Thruster: {1}".format(self.distance_to_goal, self.u_thruster))
+        print("Angle PID: P = {} / I = {} / D = {}".format(self.kp_angle, self.ki_angle, self.kd_angle))
+        print("Dist  PID: P = {} / I = {} / D = {}".format(self.kp_distance, self.ki_distance, self.kd_distance))
         print("")
 
         self.cnt = 0
@@ -235,6 +260,10 @@ def main():
 
         hopping.print_state()
         # hopping.visualize()
+        # cv2.imshow("controller")
+
+        if cv2.waitKey(1) == 27:
+            break
         rate.sleep()
 
     rospy.spin()

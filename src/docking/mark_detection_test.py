@@ -6,7 +6,6 @@ import numpy as np
 
 class StarboardCam:
     def __init__(self, target):
-        # self.img_raw = cv2.imread('C:\coding\\tricat221\\src\\pic23.jpeg', cv2.IMREAD_COLOR)v ~/tricat/src/tricat221/src/pic23.jpeg
         self.img_raw = cv2.imread('pic23.jpeg', cv2.IMREAD_COLOR)
         if self.img_raw is None:
             print("Image load failed!")

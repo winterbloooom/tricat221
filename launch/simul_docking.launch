@@ -1,23 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <launch>
-    <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
-        <param name="video_device" value="/dev/video2" />
-        <param name="autoexposure" value="false" />
-        <param name="exposure" value="150" />
-        <param name="image_width" value="640" />
-        <param name="image_height" value="480" />
-        <param name="pixel_format" value="yuyv" />
-        <param name="camera_frame_id" value="usb_cam" />
-        <param name="io_method" value="mmap" />
-
-        <param name="contrast" value="0" />
-        <!-- <param name="brightness" value="32" /> -->
-        <param name="saturation" value="200" />
-    </node>
+    <group ns="camera1">
+        <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
+            <param name="video_device" value="/dev/video2" />
+            <param name="autoexposure" value="false" />
+            <param name="pixel_format" value="yuyv" />
+            <param name="camera_frame_id" value="usb_cam" />
+            <param name="io_method" value="mmap" />
+            
+            <param name="image_width" value="640" />
+            <param name="image_height" value="480" />
+            <param name="exposure" value="150" />
+            <param name="contrast" value="0" />
+            <param name="saturation" value="200" />
+            
+        </node>
+    </group>
+    <!-- <group ns="camera2">
+        <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
+            <param name="video_device" value="/dev/video4" />
+            <param name="autoexposure" value="false" />
+            <param name="exposure" value="50" />
+            <param name="image_width" value="640" />
+            <param name="image_height" value="480" />
+            <param name="pixel_format" value="yuyv" />
+            <param name="camera_frame_id" value="usb_cam" />
+            <param name="io_method" value="mmap" />
+        </node>
+    </group> -->
     
-    <!-- <include file="$(find realsense2_camera)/launch/rs_camera.launch">
-	</include> -->
+    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+	</include>
 
 	<!-- <node pkg="tricat221" type="starcam_test.py" name="docking" respawn="true" output="screen"/> -->
     <node pkg="tricat221" type="camera_test.py" name="camera_test" output="screen">
@@ -25,5 +39,28 @@
         <param name="mode" value="mark"/>
     </node>
 
-	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/>	 -->
+	<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>	
 </launch>
+
+
+<!-- <launch>
+    <node name="$(anon usb_cam)" pkg="usb_cam" type="usb_cam_node" output="screen" >
+      <param name="video_device" value="$(arg n)" />
+      <param name="image_width" value="640" />
+      <param name="image_height" value="480" />
+      <param name="pixel_format" value="yuyv" />
+      <param name="camera_frame_id" value="usb_cam" />
+      <param name="io_method" value="mmap"/>
+      <param name="exposure" value="50"/>
+    </node>
+    <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+      <remap from="image" to="/usb_cam/image_raw"/>
+      <param name="autosize" value="true" />
+    </node>
+  </launch>
+   -->
+
+   <!-- roslaunch package launchfile n:=value -->
+
+   <!-- <remap from="/camera1/usb_cam/image_raw/" to="/star_cam/image_raw"/> -->
+   <!-- <param name="frame_rate???" value="mmap" /> -->
