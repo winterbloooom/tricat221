@@ -1,0 +1,30 @@
+# range, limits
+ref_front: 0
+angle_range: [-90, 90]
+servo_range: [68, 118]
+arrival_range: 1.5 # m
+ref_dir_range: 10 # def
+arrival_target_area: 20 # X1,000
+stop_time: 3 # sec
+target_detect_time: 50 # times ( X 0.1 sec )
+target_detect_cnt: 25 # times ( X 0.1 sec )
+
+color1_lower: 0
+color1_upper: 118
+color2_lower: 144
+color2_upper: 255
+color3_lower: 72
+color3_upper: 255
+
+angle_alpha: 1
+pixel_alpha: 1 # X 100
+
+target_shape: 3 # 3: triangle, 4: rectangle, 5: circle
+speed: 0 # X 10 + 1600
+filter_queue_size: 5
+
+use_pid: False
+draw_contoure: True
+
+
+

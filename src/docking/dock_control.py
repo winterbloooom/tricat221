@@ -14,7 +14,15 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from utils.filter import *
+
+
+def dock(target_detected, target, alpha):
+    if target_detected:
+        error_angle = pixel_to_degree(target, alpha) # 타겟을 발견했으므로 그를 추종하도록 함
+        return error_angle, False
+    else:
+        error_angle = -999
+        return error_angle, True
 
 
 def avoide_station_collision():
@@ -41,7 +49,7 @@ def pixel_to_degree(target, alpha):
     return error_pixel / area * alpha
 
 
-def degree_to_servo(error_angle, angle_range, servo_range, alpha):
+def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev = False):
     """
     Args:
         error_angle (float): 왼쪽으로 틀어야 하면 -, 오른쪽으로 틀어야 하면 +, 안 움직여도 되면 0
@@ -57,33 +65,12 @@ def degree_to_servo(error_angle, angle_range, servo_range, alpha):
                   (x       - input_min     ) * (output_max     - output_min    ) / (input_max      - input_min     ) + output_min
         u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (angle_range[1] - angle_range[0]) + servo_range[0]
     """
+    if use_prev:
+        return -1
+
     angle_mid = sum(angle_range) / 2
-    u_angle = angle_mid - error_angle
+    u_angle = error_angle - angle_mid # 부호 반대여야 하는데, 서보는 왼쪽이 더 커져야 하니까 이렇게 함
     u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (
         angle_range[1] - angle_range[0]
     ) + servo_range[0]
     return u_servo * alpha
-
-
-def servo_control(filter_queue, pid=False):
-    """
-    main에서
-        타겟이 있다면
-            pixel_to_degree()
-        타겟이 없다면
-            각도로 나올 것임
-        degree_to_servo()
-        이동평균필터링
-        (필터 결과 PID)
-        퍼블리시
-
-    deg 단위를 서보 단위로 -> 목표각 이동평균필터링 -> 필터 결과 PID -> 서보값 결정 // main에서 수행할 내용임
-
-    Args:
-        filter_queue (list): 이동평균필터의 큐. 원소는 항상 n개
-        pid (bool): PID 제어 사용할 것인가
-
-    Todo:
-        * 함수 이름 조정
-        * queue 사이즈 어떻게 할지?
-    """
