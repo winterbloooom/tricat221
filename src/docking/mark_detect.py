@@ -15,8 +15,8 @@ import os
 import sys
 
 import cv2
-from cv2 import LINE_AA
 import numpy as np
+from cv2 import LINE_AA
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
@@ -70,7 +70,7 @@ def detect_target(img, target_shape, draw_contour=True):
     """detect all marks and get target information if target mark is there
 
     1. 모폴로지 연산으로 빈 공간 완화 & 노이즈 제거
-    2. 
+    2.
 
     Args:
         img (np.ndarray): image only with target color
@@ -90,7 +90,7 @@ def detect_target(img, target_shape, draw_contour=True):
             * type: numpy.ndarray
             * shape: (3, 1, 2) -> 변 개수, 1, [행, 열] 정보이므로 요소 두 개
             * 예: [[[105, 124]], [[107, 205]], [[226, 163]]]
-        * 때에 따라서는 같은 도형이 여러 개 발견될 수도 있음. 
+        * 때에 따라서는 같은 도형이 여러 개 발견될 수도 있음.
             * 다른 모양의 도형이 프레임에서 잘린다든지, 다른 물체를 오인한다든지
             * 일단 너비가 최대인 것을 따라가도록 설정
     """
@@ -100,41 +100,41 @@ def detect_target(img, target_shape, draw_contour=True):
     morph_kernel = np.ones((9, 9), np.uint8)
     morph = cv2.morphologyEx(img, cv2.MORPH_CLOSE, morph_kernel)
 
-    shape = cv2.cvtColor(morph, cv2.COLOR_GRAY2BGR) # 시각화할 image
+    shape = cv2.cvtColor(morph, cv2.COLOR_GRAY2BGR)  # 시각화할 image
 
-    _, contours, _ = cv2.findContours(morph, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE) # 발견된 도형들
-    
+    _, contours, _ = cv2.findContours(morph, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)  # 발견된 도형들
+
     # num_contours = len(contours) # 도형 개수
     # print("# of conturs : {}".format(num_contours))
 
     for contour in contours:
-        approx = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.02, True) # 도형 근사
-        area = cv2.contourArea(approx) # 도형 넓이
+        approx = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.02, True)  # 도형 근사
+        area = cv2.contourArea(approx)  # 도형 넓이
         if area < 500:
-            continue # 너무 작은 것은 제외
+            continue  # 너무 작은 것은 제외
 
         # print("-" * 30)
         # print("area : {}".format(area))
 
-        vertex_num = len(approx) # 변의 개수
+        vertex_num = len(approx)  # 변의 개수
         # print("# of vertices : {}".format(vertex_num))
 
-        if vertex_num == 3: # 삼각형이 탐지됨
+        if vertex_num == 3:  # 삼각형이 탐지됨
             print("Shape : Triangle")
-            shape, _, center_col = draw_mark(shape, target_shape, approx, vertex_num) # 도형 그리기
-            if target_shape == 3: # 타겟이 삼각형이라면
+            shape, _, center_col = draw_mark(shape, target_shape, approx, vertex_num)  # 도형 그리기
+            if target_shape == 3:  # 타겟이 삼각형이라면
                 detected = True
                 targets.append([area, center_col])
-        elif vertex_num == 4: # 사각형이 탐지됨
+        elif vertex_num == 4:  # 사각형이 탐지됨
             print("Shape : Rectangle")
             shape, _, center_col = draw_mark(shape, target_shape, approx, vertex_num)
             if target_shape == 4:
                 detected = True
                 targets.append([area, center_col])
-        else: # 원이 탐지됨
-            _, radius = cv2.minEnclosingCircle(approx) # 원으로 근사
-            ratio = radius * radius * 3.14 / area # 해당 넓이와 정원 간의 넓이 비
-            if 0.5 < ratio < 2: # 원에 가까울 때만 필터링
+        else:  # 원이 탐지됨
+            _, radius = cv2.minEnclosingCircle(approx)  # 원으로 근사
+            ratio = radius * radius * 3.14 / area  # 해당 넓이와 정원 간의 넓이 비
+            if 0.5 < ratio < 2:  # 원에 가까울 때만 필터링
                 print("Shape : Circle")
                 shape, _, center_col = draw_mark(shape, target_shape, approx, vertex_num)
                 if target_shape == 5:
@@ -145,12 +145,12 @@ def detect_target(img, target_shape, draw_contour=True):
             cv2.imshow("shape", shape)
 
     if detected:
-        if len(targets) == 1: # 타겟 마크가 하나만 검출됨
+        if len(targets) == 1:  # 타겟 마크가 하나만 검출됨
             return targets[-1]
-        else: # 타겟이 여러 개 검출됨. 0번째 요소인 넓이가 가장 큰 마크를 타겟으로 함
+        else:  # 타겟이 여러 개 검출됨. 0번째 요소인 넓이가 가장 큰 마크를 타겟으로 함
             max_area_idx = targets.index(max(targets))
             return targets[max_area_idx]
-    else: # 타겟이 검출되지 않음
+    else:  # 타겟이 검출되지 않음
         return []
 
 
@@ -167,18 +167,18 @@ def draw_mark(window, target_shape, contour, vertices):
         tuple : (numpy.ndarray, int, int) = (image after drawing, center row coord (pixel), center col coord (pixel))
 
     """
-    box_left_top = (min(contour[:, 0, 0]), min(contour[:, 0, 1])) # 도형에 박스를 그렸을 때의 좌상단
-    box_right_bottom = (max(contour[:, 0, 0]), max(contour[:, 0, 1])) # 도형에 박스를 그렸을 때의 우하단
+    box_left_top = (min(contour[:, 0, 0]), min(contour[:, 0, 1]))  # 도형에 박스를 그렸을 때의 좌상단
+    box_right_bottom = (max(contour[:, 0, 0]), max(contour[:, 0, 1]))  # 도형에 박스를 그렸을 때의 우하단
 
-    center_row = int((box_left_top[0] + box_right_bottom[0]) / 2) 
+    center_row = int((box_left_top[0] + box_right_bottom[0]) / 2)
     # 도형 중앙 세로 위치(row). sum(contour[:, 0, 0]) / vertices로 계산할 수도 있음
     center_col = int((box_left_top[1] + box_right_bottom[1]) / 2)
     # 도형 중앙 가로 위치(col). sum(contour[:, 0, 1]) / vertices로 계산할 수도 있음
 
     if target_shape == len(contour) or (vertices >= 5 and target_shape == 5):
-        color = (0, 255, 0) # target은 초록색
+        color = (0, 255, 0)  # target은 초록색
     else:
-        color = (135, 219, 250) # 그 외는 노란색
+        color = (135, 219, 250)  # 그 외는 노란색
 
     if vertices == 3:
         shape = "Triangle"
@@ -186,20 +186,24 @@ def draw_mark(window, target_shape, contour, vertices):
         shape = "Rectangle"
     else:
         shape = "Circle"
-    caption = "{} ({}, {})".format(shape, center_row, center_col) # 도형에 보일 텍스트
+    caption = "{} ({}, {})".format(shape, center_row, center_col)  # 도형에 보일 텍스트
 
-    window = cv2.drawContours(window, [contour], -1, color, -1) # 도형 그리기
-    window = cv2.rectangle(window, box_left_top, box_right_bottom, color, 1) # 박스 그리기
-    window = cv2.circle(window, (center_row, center_col), 2, (0, 0, 255), 2) # 중심점 그리기
-    window = cv2.putText(window, caption, box_left_top, cv2.FONT_HERSHEY_PLAIN, 1, color, 1, LINE_AA) # 글씨 쓰기
+    window = cv2.drawContours(window, [contour], -1, color, -1)  # 도형 그리기
+    window = cv2.rectangle(window, box_left_top, box_right_bottom, color, 1)  # 박스 그리기
+    window = cv2.circle(window, (center_row, center_col), 2, (0, 0, 255), 2)  # 중심점 그리기
+    window = cv2.putText(
+        window, caption, box_left_top, cv2.FONT_HERSHEY_PLAIN, 1, color, 1, LINE_AA
+    )  # 글씨 쓰기
 
-    return window, center_row, center_col # 잘 안그려지면 window 새로 할당하기
+    return window, center_row, center_col  # 잘 안그려지면 window 새로 할당하기
 
 
-#for test-------------------------------------------------------------------------------------------
+# for test-------------------------------------------------------------------------------------------
+
 
 def trackbar_callback(usrdata):
     pass
+
 
 def set_color_range(range):
     range[0][0] = cv2.getTrackbarPos("H lower", "hsv")
@@ -210,6 +214,7 @@ def set_color_range(range):
     range[1][2] = cv2.getTrackbarPos("V upper", "hsv")
 
     return range
+
 
 def test():
     path_prefix = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
@@ -230,7 +235,6 @@ def test():
     cv2.createTrackbar("V upper", "hsv", 255, 255, trackbar_callback)
 
     cv2.namedWindow("All counturs")
-
 
     range = np.empty((2, 3))
 

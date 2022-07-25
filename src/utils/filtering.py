@@ -5,7 +5,7 @@
 """
 
 
-def moving_avg_filter(queue, input, use_prev = False):
+def moving_avg_filter(queue, input, use_prev=False):
     """
     Args:
         queue (list): n 개 크기를 가지는 큐

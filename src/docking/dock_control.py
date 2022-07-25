@@ -18,7 +18,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 def dock(target_detected, target, alpha):
     if target_detected:
-        error_angle = pixel_to_degree(target, alpha) # 타겟을 발견했으므로 그를 추종하도록 함
+        error_angle = pixel_to_degree(target, alpha)  # 타겟을 발견했으므로 그를 추종하도록 함
         return error_angle, False
     else:
         error_angle = -999
@@ -49,7 +49,7 @@ def pixel_to_degree(target, alpha):
     return error_pixel / area * alpha
 
 
-def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev = False):
+def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False):
     """
     Args:
         error_angle (float): 왼쪽으로 틀어야 하면 -, 오른쪽으로 틀어야 하면 +, 안 움직여도 되면 0
@@ -69,7 +69,7 @@ def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev = Fal
         return -1
 
     angle_mid = sum(angle_range) / 2
-    u_angle = error_angle - angle_mid # 부호 반대여야 하는데, 서보는 왼쪽이 더 커져야 하니까 이렇게 함
+    u_angle = error_angle - angle_mid  # 부호 반대여야 하는데, 서보는 왼쪽이 더 커져야 하니까 이렇게 함
     u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (
         angle_range[1] - angle_range[0]
     ) + servo_range[0]
