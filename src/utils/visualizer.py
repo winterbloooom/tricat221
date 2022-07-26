@@ -2,19 +2,20 @@
 # -*- coding:utf-8 -*-
 
 from geometry_msgs.msg import Point, Vector3
-from visualization_msgs.msg import Marker, MarkerArray
 from std_msgs.msg import ColorRGBA
+from visualization_msgs.msg import Marker, MarkerArray
 
 
 def basic_setting(name, id, color_r, color_g, color_b):
     marker = Marker()
-    marker.header.frame_id = '/map'
+    marker.header.frame_id = "/map"
     marker.ns = name
     marker.id = id
     marker.action = Marker.ADD
-    marker.color = ColorRGBA(color_r/255.0, color_g/255.0, color_b/255.0, 1)
+    marker.color = ColorRGBA(color_r / 255.0, color_g / 255.0, color_b / 255.0, 1)
     marker.pose.orientation.w = 1.0
     return marker
+
 
 def point_rviz(name, id, x, y, color_r=0, color_g=0, color_b=0, scale=0.1):
     marker = basic_setting(name, id, color_r, color_g, color_b)
@@ -22,6 +23,7 @@ def point_rviz(name, id, x, y, color_r=0, color_g=0, color_b=0, scale=0.1):
     marker.scale = Vector3(scale, scale, 0)
     marker.points.append(Point(x, y, 0))
     return marker
+
 
 def points_rviz(name, id, points, color_r=0, color_g=0, color_b=0, scale=0.1):
     # points = [[x, y], [x, y], ...]
@@ -32,6 +34,7 @@ def points_rviz(name, id, points, color_r=0, color_g=0, color_b=0, scale=0.1):
         marker.points.append(Point(point[0], point[1], 0))
     return marker
 
+
 def arrow_rviz(name, id, x1, y1, x2, y2, color_r=0, color_g=0, color_b=0, scale_x=0.2, scale_y=0.4):
     marker = basic_setting(name, id, color_r, color_g, color_b)
     marker.type = Marker.ARROW
@@ -39,6 +42,7 @@ def arrow_rviz(name, id, x1, y1, x2, y2, color_r=0, color_g=0, color_b=0, scale_
     marker.points.append(Point(x1, y1, 0))
     marker.points.append(Point(x2, y2, 0))
     return marker
+
 
 def text_rviz(name, id, x, y, text, scale=0.5):
     marker = basic_setting(name, id, color_r=255, color_g=255, color_b=255)
@@ -48,6 +52,7 @@ def text_rviz(name, id, x, y, text, scale=0.5):
     marker.text = text
     return marker
 
+
 def linelist_rviz(name, id, lines, color_r=0, color_g=0, color_b=0, scale=0.05):
     # lines = [[begin_x, begin_y], [end_x, end_y], [...], ...]
     marker = basic_setting(name, id, color_r, color_g, color_b)
@@ -56,6 +61,7 @@ def linelist_rviz(name, id, lines, color_r=0, color_g=0, color_b=0, scale=0.05):
     for line in lines:
         marker.points.append(Point(line[0], line[1], 0))
     return marker
+
 
 def marker_array_rviz(markers):
     marker_array = MarkerArray()
