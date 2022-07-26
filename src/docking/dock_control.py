@@ -57,10 +57,6 @@ def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False
         servo_range (list): [servo_min, servo_max]
         alpha (int): 조정 상수
 
-    Todo:
-        * alpha 파라미터 이름 수정
-        * 유틸에서 하기
-
     Note:
                   (x       - input_min     ) * (output_max     - output_min    ) / (input_max      - input_min     ) + output_min
         u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (angle_range[1] - angle_range[0]) + servo_range[0]
