@@ -141,9 +141,17 @@ class Autonomous:
         print("{:>9} - {:>9} = {:>7}".format("psi", "desire", "error"))
         print("({:7.2f}) - ({:7.2f}) = ({:6.2f})".format(self.psi, self.psi_desire, error_angle))
         if self.psi_goal - self.psi > 0:
-            print("psi_goal : {:7.2f} [Right] | dist : {:6.2f} m".format(self.psi_goal, self.distance_to_goal))
+            print(
+                "psi_goal : {:7.2f} [Right] | dist : {:6.2f} m".format(
+                    self.psi_goal, self.distance_to_goal
+                )
+            )
         else:
-            print("psi_goal : {:7.2f} [ Left] | dist : {:6.2f} m".format(self.psi_goal, self.distance_to_goal))
+            print(
+                "psi_goal : {:7.2f} [ Left] | dist : {:6.2f} m".format(
+                    self.psi_goal, self.distance_to_goal
+                )
+            )
         print("Obstacle : {:2d} / {:2d}".format(len(self.inrange_obstacles), len(self.obstacles)))
         if error_angle > 0:
             print("Right | Servo: {}".format(u_servo))
@@ -152,9 +160,22 @@ class Autonomous:
 
         if visualize:
             # 목표 지점
-            goal_txt = visual.text_rviz(name="goal", id=1, x=self.goal_x, y=self.goal_y, text="({:>4.2f}, {:>4.2f})".format(self.goal_x, self.goal_y))
+            goal_txt = visual.text_rviz(
+                name="goal",
+                id=1,
+                x=self.goal_x,
+                y=self.goal_y,
+                text="({:>4.2f}, {:>4.2f})".format(self.goal_x, self.goal_y),
+            )
             goal = visual.point_rviz(
-                name="goal", id=2, x=self.goal_x, y=self.goal_y, color_r=165, color_g=242, color_b=87, scale=0.2
+                name="goal",
+                id=2,
+                x=self.goal_x,
+                y=self.goal_y,
+                color_r=165,
+                color_g=242,
+                color_b=87,
+                scale=0.2,
             )
             # 지나온 경로
             traj = visual.points_rviz(name="traj", id=3, points=self.trajectory, color_g=255)
@@ -197,7 +218,7 @@ class Autonomous:
                 name="goal_line",
                 id=8,
                 lines=[[self.boat_x, self.boat_y], [self.goal_x, self.goal_y]],
-                color_r=91, 
+                color_r=91,
                 color_g=169,
                 color_b=252,
                 scale=0.05,
@@ -248,8 +269,17 @@ class Autonomous:
             # angle_range
             ## 지금은 스킵
             # goal_range
-            goal_range = visual.cylinder_rviz(name="waypoints", id=12, x=self.goal_x, y=self.goal_y, scale=self.goal_range*2, color_r=165, color_g=242, color_b=87)
-            
+            goal_range = visual.cylinder_rviz(
+                name="waypoints",
+                id=12,
+                x=self.goal_x,
+                y=self.goal_y,
+                scale=self.goal_range * 2,
+                color_r=165,
+                color_g=242,
+                color_b=87,
+            )
+
             all_markers = visual.marker_array_rviz(
                 [
                     goal_txt,
@@ -263,7 +293,7 @@ class Autonomous:
                     obstacles,
                     axis_x,
                     axis_y,
-                    goal_range
+                    goal_range,
                 ]
             )
             self.visual_rviz_pub.publish(all_markers)

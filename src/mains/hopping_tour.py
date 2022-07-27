@@ -19,6 +19,7 @@ from visualization_msgs.msg import MarkerArray
 import perception.gnss_converter as gc
 import utils.visualizer as visual
 
+
 class Hopping:
     def __init__(self):
         rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
@@ -37,7 +38,7 @@ class Hopping:
         for idx, waypoint in enumerate(self.gnss_waypoint):
             e, n = gc.enu_convert(waypoint)
             enu_waypoint = [n, e]
-            self.remained_waypoint[idx+1] = enu_waypoint
+            self.remained_waypoint[idx + 1] = enu_waypoint
 
         self.goal_range = rospy.get_param("goal_range")
 
@@ -66,8 +67,12 @@ class Hopping:
         self.boat_y = 0  # 배의 y좌표
 
         self.waypoint_idx = 1
-        self.goal_x = self.remained_waypoint[self.waypoint_idx][0] #self.remained_waypoint[0][0]  # 다음 목표의 x좌표
-        self.goal_y = self.remained_waypoint[self.waypoint_idx][1] #self.remained_waypoint[0][1]  # 다음 목표의 y좌표
+        self.goal_x = self.remained_waypoint[self.waypoint_idx][
+            0
+        ]  # self.remained_waypoint[0][0]  # 다음 목표의 x좌표
+        self.goal_y = self.remained_waypoint[self.waypoint_idx][
+            1
+        ]  # self.remained_waypoint[0][1]  # 다음 목표의 y좌표
 
         self.trajectory = []
 
@@ -91,30 +96,24 @@ class Hopping:
             cv2.createTrackbar("i dist", "controller", 0, 10, self.trackbar_callback)
             cv2.createTrackbar("d dist", "controller", 0, 100, self.trackbar_callback)
 
-
     def trackbar_callback(self, usrdata):
         pass
-
 
     # IMU z축 각속도 콜백함수
     def yaw_rate_callback(self, msg):
         self.yaw_rate = math.degrees(msg.angular_velocity.z)  # [rad/s] -> [degree/s]
 
-
     # IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수
     def heading_callback(self, msg):
         self.psi = msg.data  # [degree]
-
 
     # GPS로 측정한 배의 ENU 변환 좌표 콜백함수
     def boat_position_callback(self, msg):
         self.boat_y = msg.x  # ENU 좌표계와 축이 반대라 바꿔줌
         self.boat_x = msg.y
 
-
     def calc_distance_to_goal(self):
         self.distance_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
-
 
     def distance_PID(self):
         cp_distance = self.kp_distance * self.distance_to_goal
@@ -133,15 +132,13 @@ class Hopping:
 
         return int(u_thruster)
 
-
     def set_next_goal(self):
         self.waypoint_idx += 1
         if len(self.gnss_waypoint) == self.waypoint_idx:
             return
-        
+
         self.goal_x = self.remained_waypoint[self.waypoint_idx][0]
         self.goal_y = self.remained_waypoint[self.waypoint_idx][1]
-
 
     def arrival_check(self):
         self.calc_distance_to_goal()  # 목적지까지 거리 다시 계산
@@ -150,14 +147,12 @@ class Hopping:
         else:
             return False
 
-
     def calc_error_angle(self):
         # psi_desire 계산(x축(North)과 goal 사이 각)
         self.psi_desire = math.degrees(
             math.atan2(self.goal_y - self.boat_y, self.goal_x - self.boat_x)
         )
         self.error_angle = self.psi_desire - self.psi
-
 
     def error_angle_PID(self):
         self.set_PID_value()
@@ -182,7 +177,6 @@ class Hopping:
 
         return int(u_servo)
 
-
     def set_PID_value(self):
         if self.controller:
             self.kp_angle = cv2.getTrackbarPos("p angle", "controller") * 0.1
@@ -191,7 +185,6 @@ class Hopping:
             self.kp_distance = cv2.getTrackbarPos("p dist", "controller")
             self.ki_distance = cv2.getTrackbarPos("i dist", "controller")
             self.kd_distance = cv2.getTrackbarPos("d dist", "controller")
-
 
     def control_publish(self):
         # 에러각 계산 -> PID로
@@ -205,7 +198,6 @@ class Hopping:
         self.servo_pub.publish(int(self.u_servo))
         self.thruster_pub.publish(int(self.u_thruster))
 
-
     def print_state(self, visualize=False):
         if self.cnt < 5:
             self.cnt += 1
@@ -215,17 +207,40 @@ class Hopping:
 
         print("-" * 40)
         print("Boat [{:>4.2f}, {:>4.2f}]".format(self.boat_x, self.boat_y))
-        print("Goal #{} / {}  [{:>4.2f}, {:>4.2f}]".format(self.waypoint_idx,len(self.gnss_waypoint), self.remained_waypoint[self.waypoint_idx][0], self.remained_waypoint[self.waypoint_idx][1]))
+        print(
+            "Goal #{} / {}  [{:>4.2f}, {:>4.2f}]".format(
+                self.waypoint_idx,
+                len(self.gnss_waypoint),
+                self.remained_waypoint[self.waypoint_idx][0],
+                self.remained_waypoint[self.waypoint_idx][1],
+            )
+        )
         print("{:>9} - {:>9} = {:>7}".format("psi", "desire", "error"))
-        
+
         if self.error_angle > 0:
-            print("({:7.2f}) - ({:7.2f}) = ({:6.2f}) [Right]".format(self.psi, self.psi_desire, self.error_angle))
+            print(
+                "({:7.2f}) - ({:7.2f}) = ({:6.2f}) [Right]".format(
+                    self.psi, self.psi_desire, self.error_angle
+                )
+            )
         else:
-            print("({:7.2f}) - ({:7.2f}) = ({:6.2f}) [ Left]".format(self.psi, self.psi_desire, self.error_angle))
-        print("Servo    : {:>4d} | P {}, I {}, D {}".format(self.u_servo, self.kp_angle, self.ki_angle, self.kd_angle))
+            print(
+                "({:7.2f}) - ({:7.2f}) = ({:6.2f}) [ Left]".format(
+                    self.psi, self.psi_desire, self.error_angle
+                )
+            )
+        print(
+            "Servo    : {:>4d} | P {}, I {}, D {}".format(
+                self.u_servo, self.kp_angle, self.ki_angle, self.kd_angle
+            )
+        )
 
         print("Distance : {:5.2f} m".format(self.distance_to_goal))
-        print("Thruster : {:>4d} | P {}, I {}, D {}".format(self.u_thruster, self.kp_distance, self.ki_distance, self.kd_distance))
+        print(
+            "Thruster : {:>4d} | P {}, I {}, D {}".format(
+                self.u_thruster, self.kp_distance, self.ki_distance, self.kd_distance
+            )
+        )
 
         if visualize:
             traj = visual.points_rviz(name="traj", id=1, points=self.trajectory, color_g=255)
@@ -265,7 +280,7 @@ class Hopping:
                 name="goal_line",
                 id=6,
                 lines=[[self.boat_x, self.boat_y], [self.goal_x, self.goal_y]],
-                color_r=91, 
+                color_r=91,
                 color_g=169,
                 color_b=252,
                 scale=0.05,
@@ -301,9 +316,34 @@ class Hopping:
                 # TODO 지난 목표점은 흐리게 표시!
                 # wpt = key
                 # remained_waypoint[wpt] = value
-                waypoint = visual.point_rviz(name="waypoints", id=id, x=self.remained_waypoint[idx][0], y=self.remained_waypoint[idx][1], color_r=165, color_g=242, color_b=87, scale=0.3)
-                goal_range = visual.cylinder_rviz(name="waypoints", id=id+1, x=self.remained_waypoint[idx][0], y=self.remained_waypoint[idx][1], scale=self.goal_range*2, color_r=165, color_g=242, color_b=87)
-                waypoint_txt = visual.text_rviz(name="waypoints", id=id+2, x=self.remained_waypoint[idx][0], y=self.remained_waypoint[idx][1], text=str(idx), scale=1.5)
+                waypoint = visual.point_rviz(
+                    name="waypoints",
+                    id=id,
+                    x=self.remained_waypoint[idx][0],
+                    y=self.remained_waypoint[idx][1],
+                    color_r=165,
+                    color_g=242,
+                    color_b=87,
+                    scale=0.3,
+                )
+                goal_range = visual.cylinder_rviz(
+                    name="waypoints",
+                    id=id + 1,
+                    x=self.remained_waypoint[idx][0],
+                    y=self.remained_waypoint[idx][1],
+                    scale=self.goal_range * 2,
+                    color_r=165,
+                    color_g=242,
+                    color_b=87,
+                )
+                waypoint_txt = visual.text_rviz(
+                    name="waypoints",
+                    id=id + 2,
+                    x=self.remained_waypoint[idx][0],
+                    y=self.remained_waypoint[idx][1],
+                    text=str(idx),
+                    scale=1.5,
+                )
                 visual.marker_array_append_rviz(all_markers, waypoint)
                 visual.marker_array_append_rviz(all_markers, goal_range)
                 visual.marker_array_append_rviz(all_markers, waypoint_txt)

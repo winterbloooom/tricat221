@@ -62,6 +62,7 @@ def linelist_rviz(name, id, lines, color_r=0, color_g=0, color_b=0, scale=0.05):
         marker.points.append(Point(line[0], line[1], 0))
     return marker
 
+
 def cylinder_rviz(name, id, x, y, scale, color_r=0, color_g=0, color_b=0):
     marker = basic_setting(name, id, color_r, color_g, color_b, color_a=0.6)
     marker.type = Marker.CYLINDER
@@ -69,11 +70,13 @@ def cylinder_rviz(name, id, x, y, scale, color_r=0, color_g=0, color_b=0):
     marker.pose.position = Point(x, y, 0)
     return marker
 
+
 def marker_array_rviz(markers):
     marker_array = MarkerArray()
     for marker in markers:
         marker_array.markers.append(marker)
     return marker_array
+
 
 def marker_array_append_rviz(marker_array, marker):
     marker_array.markers.append(marker)
