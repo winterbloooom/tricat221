@@ -95,8 +95,8 @@ def arrow_rviz(name, id, x1, y1, x2, y2, color_r=0, color_g=0, color_b=0, scale_
     marker = basic_setting(name, id, color_r, color_g, color_b)
     marker.type = Marker.ARROW
     marker.scale = Vector3(scale_x, scale_y, 0)
-    marker.points.append(Point(x1, y1, 0)) # tail
-    marker.points.append(Point(x2, y2, 0)) # head
+    marker.points.append(Point(x1, y1, 0))  # tail
+    marker.points.append(Point(x2, y2, 0))  # head
     return marker
 
 
