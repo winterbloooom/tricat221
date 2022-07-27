@@ -38,7 +38,7 @@ class CameraTester:
         self.img_raw = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
     def camera_callback2(self, msg):
-        self.img_raw = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        self.img_raw2 = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
     def trackbar_callback(self, usrdata):
         pass

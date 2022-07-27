@@ -251,3 +251,6 @@ def test():
         if cv2.waitKey(1) == 27:
             cv2.destroyAllWindows()
             break
+
+
+test()

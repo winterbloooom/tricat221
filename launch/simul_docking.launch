@@ -3,7 +3,7 @@
 <launch>
     <group ns="camera1">
         <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
-            <param name="video_device" value="/dev/video2" />
+            <param name="video_device" value="/dev/video0" />
             <param name="autoexposure" value="false" />
             <param name="pixel_format" value="yuyv" />
             <param name="camera_frame_id" value="usb_cam" />
@@ -17,9 +17,9 @@
             
         </node>
     </group>
-    <!-- <group ns="camera2">
+    <group ns="camera2">
         <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
-            <param name="video_device" value="/dev/video4" />
+            <param name="video_device" value="/dev/video2" />
             <param name="autoexposure" value="false" />
             <param name="exposure" value="50" />
             <param name="image_width" value="640" />
@@ -28,10 +28,10 @@
             <param name="camera_frame_id" value="usb_cam" />
             <param name="io_method" value="mmap" />
         </node>
-    </group> -->
+    </group>
     
-    <include file="$(find realsense2_camera)/launch/rs_camera.launch">
-	</include>
+    <!-- <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+	</include> -->
 
 	<!-- <node pkg="tricat221" type="starcam_test.py" name="docking" respawn="true" output="screen"/> -->
     <node pkg="tricat221" type="camera_test.py" name="camera_test" output="screen">

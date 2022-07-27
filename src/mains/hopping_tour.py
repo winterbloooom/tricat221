@@ -6,7 +6,6 @@ import os
 import sys
 
 import cv2
-import numpy as np
 import rospy
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
@@ -22,71 +21,66 @@ import utils.visualizer as visual
 
 class Hopping:
     def __init__(self):
+        # subscribers
         rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
         rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
         rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
 
+        # publishers
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0)
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
         self.visual_rviz_pub = rospy.Publisher("/visual_rviz", MarkerArray, queue_size=0)
 
-        ## 변수 초기화
-        ### waypoint 좌표(x, y) 리스트
-        self.remained_waypoint = {}
-        self.gnss_waypoint = rospy.get_param("waypoints")
-        # ENU 좌표로 변환
-        for idx, waypoint in enumerate(self.gnss_waypoint):
-            e, n = gc.enu_convert(waypoint)
-            enu_waypoint = [n, e]
-            self.remained_waypoint[idx + 1] = enu_waypoint
+        self.waypoint_idx = 1 # 지금 향하고 있는 waypoint 번호
 
+        # coordinates
+        self.remained_waypoint = {} # 남은 waypoints. key는 waypoint 순서, value는 [x, y] 좌표
+        self.gnss_waypoint = rospy.get_param("waypoints") # GPS 형식의 전체 waypoints
+        for idx, waypoint in enumerate(self.gnss_waypoint):
+            e, n = gc.enu_convert(waypoint) # ENU 좌표계로 변환
+            self.remained_waypoint[idx + 1] = [n, e] # 축이 반대이므로 순서 바꿔 할당.
+        self.boat_x, self.boat_y = 0, 0 # 배의 좌표
+        self.goal_x = self.remained_waypoint[self.waypoint_idx][0]  # 다음 목표 x좌표
+        self.goal_y = self.remained_waypoint[self.waypoint_idx][1]  # 다음 목표 y좌표
+        self.trajectory = [] # 지금껏 이동한 궤적
+
+        # limits, ranges
         self.goal_range = rospy.get_param("goal_range")
 
+        # PID coefficients
         self.error_sum_angle = 0
         self.kp_angle = rospy.get_param("kp_angle")  # (0.0 ~ 1.0)
         self.ki_angle = rospy.get_param("ki_angle")  # (0.0 ~ 0.1)
         self.kd_angle = rospy.get_param("kd_angle")  # (0.0 ~ 1.0)
-
         self.kp_distance = rospy.get_param("kp_distance")  # (0 ~ 100)
         self.ki_distance = rospy.get_param("ki_distance")  # (0 ~ 10)
         self.kd_distance = rospy.get_param("kd_distance")  # (0 ~ 100)
 
+        # directions
+        self.psi = 0  # 자북과 heading의 각도(자북 우측 +, 좌측 -) [degree]
+        self.psi_desire = 0 # 지구고정좌표계 기준 움직여야 할 각도
+        self.error_angle = 0 # 다음 목표까지 가기 위한 차이각
+
+        # other fix values
         self.servo_middle = rospy.get_param("servo_middle")
         self.servo_left_max = rospy.get_param("servo_left_max")
         self.servo_right_max = rospy.get_param("servo_right_max")
-
         self.thruster_max = rospy.get_param("thruster_max")
         self.thruster_min = rospy.get_param("thruster_min")
+        self.controller = rospy.get_param("controller") # PID trackbar
 
-        ### 측정값
-        self.yaw_rate = 0  # z축 각속도 [degree/s]
-        self.psi = 0  # 자북과 heading의 각도(자북 우측 +, 좌측 -) [degree]
-        self.psi_desire = 0
-
-        self.boat_x = 0  # 배의 x좌표
-        self.boat_y = 0  # 배의 y좌표
-
-        self.waypoint_idx = 1
-        self.goal_x = self.remained_waypoint[self.waypoint_idx][
-            0
-        ]  # self.remained_waypoint[0][0]  # 다음 목표의 x좌표
-        self.goal_y = self.remained_waypoint[self.waypoint_idx][
-            1
-        ]  # self.remained_waypoint[0][1]  # 다음 목표의 y좌표
-
-        self.trajectory = []
-
-        self.distance_to_goal = 100000
-        self.calc_distance_to_goal()  # 다음 목표까지 남은 거리
-        self.error_angle = 0
-        self.calc_error_angle()
-
-        self.cnt = 0
+        # other variables
+        self.yaw_rate = 0  # z축 각속도 [degree/s]        
+        self.distance_to_goal = 100000 # 다음 목표까지 남은 거리
+        self.cnt = 0 # 상태 출력을 조절할 카운터
         self.u_servo = self.servo_middle
         self.u_thruster = self.thruster_min
+        
+        # presetting
+        self.calc_distance_to_goal()
+        self.calc_error_angle()
 
-        self.controller = rospy.get_param("controller")
-
+        # make controller
         if self.controller:
             cv2.namedWindow("controller")
             cv2.createTrackbar("p angle", "controller", 3, 10, self.trackbar_callback)
@@ -96,41 +90,72 @@ class Hopping:
             cv2.createTrackbar("i dist", "controller", 0, 10, self.trackbar_callback)
             cv2.createTrackbar("d dist", "controller", 0, 100, self.trackbar_callback)
 
+
     def trackbar_callback(self, usrdata):
+        """trackar callback function. do nothing"""
         pass
 
-    # IMU z축 각속도 콜백함수
+
     def yaw_rate_callback(self, msg):
+        """IMU로 측정한 각속도
+        
+        Args:
+            msg (Imu) : Imu sensor input
+        """
         self.yaw_rate = math.degrees(msg.angular_velocity.z)  # [rad/s] -> [degree/s]
 
-    # IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수
+
     def heading_callback(self, msg):
+        """IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수
+        
+        Args:
+            msg (Float64) : heading. 0 = magnetic north, (+) = 0~180 deg to right, (-) = 0 ~ -180 deg to left
+        """
         self.psi = msg.data  # [degree]
 
-    # GPS로 측정한 배의 ENU 변환 좌표 콜백함수
+
     def boat_position_callback(self, msg):
-        self.boat_y = msg.x  # ENU 좌표계와 축이 반대라 바꿔줌
+        """GPS로 측정한 배의 ENU 변환 좌표 콜백함수
+        
+        Args:
+            msg (Point) : position of boat
+            
+        Note:
+            * ENU좌표계로 변환되어 입력을 받는데, ENU좌표계와 x, y축이 반대임
+            * 따라서 Point.x, Point.y가 각각 y, x가 됨
+        """
+        self.boat_y = msg.x
         self.boat_x = msg.y
 
+
     def calc_distance_to_goal(self):
+        """calculate distance from boat to goal"""
         self.distance_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
 
+
     def distance_PID(self):
+        """calculate thruster control value with PID Contol
+        Note
+            * thruster는 속도를 결정하므로, 거리에 비례해 속도를 조절함
+            * 한 waypoint로 점점 가까이 다가갈수록 속도가 느려짐
+            * 단, 다음 point를 찍었을 때는 거리가 멀기 때문에 급출발을 할 수 있음에 주의
+            * 여기서는 I 제어 필요 없을 듯해 일단 지워둠
+            * m 단위인 distance 쓰러스터 제어값으로 바꾸는 법: 계수값 조정 + min/max 값 더하고 빼고
+        """
         cp_distance = self.kp_distance * self.distance_to_goal
-        # ci_distance = self.ki_distance *  # dt = rate / TODO : 여기는 I 제어 필요 없을 듯?
         cd_distance = -self.kd_distance * self.distance_to_goal / 0.1  # dt = rate
 
-        u_distance = cp_distance + cd_distance  # + ci_distance
+        u_distance = cp_distance + cd_distance
         u_thruster = self.thruster_min + u_distance
-        # m 단위인 distance 쓰러스터 제어값으로 바꾸는 법: 계수값 조정 + min/max 값 더하고 빼고
 
         if u_thruster > self.thruster_max:
             u_thruster = self.thruster_max
-
         if u_thruster < self.thruster_min:
             u_thruster = self.thruster_min
 
         return int(u_thruster)
+
+
 
     def set_next_goal(self):
         self.waypoint_idx += 1
@@ -180,7 +205,7 @@ class Hopping:
     def set_PID_value(self):
         if self.controller:
             self.kp_angle = cv2.getTrackbarPos("p angle", "controller") * 0.1
-            self.ki_angle = cv2.getTrackbarPos("i angle", "controller") * 0.1
+            self.ki_angle = cv2.getTrackbarPos("i angle", "controller") * 0.01
             self.kd_angle = cv2.getTrackbarPos("d angle", "controller") * 0.1
             self.kp_distance = cv2.getTrackbarPos("p dist", "controller")
             self.ki_distance = cv2.getTrackbarPos("i dist", "controller")
@@ -208,7 +233,7 @@ class Hopping:
         print("-" * 40)
         print("Boat [{:>4.2f}, {:>4.2f}]".format(self.boat_x, self.boat_y))
         print(
-            "Goal #{} / {}  [{:>4.2f}, {:>4.2f}]".format(
+            "Goal # {} / {}  [{:>4.2f}, {:>4.2f}]".format(
                 self.waypoint_idx,
                 len(self.gnss_waypoint),
                 self.remained_waypoint[self.waypoint_idx][0],
@@ -230,14 +255,14 @@ class Hopping:
                 )
             )
         print(
-            "Servo    : {:>4d} | P {}, I {}, D {}".format(
+            "Servo    : {:>4d} | P [{:4.1f}], I [{:4.2f}], D [{:4.1f}]".format(
                 self.u_servo, self.kp_angle, self.ki_angle, self.kd_angle
             )
         )
 
         print("Distance : {:5.2f} m".format(self.distance_to_goal))
         print(
-            "Thruster : {:>4d} | P {}, I {}, D {}".format(
+            "Thruster : {:>4d} | P [{:4d}], I [{:>4.1f}], D [{:>4.1f}]".format(
                 self.u_thruster, self.kp_distance, self.ki_distance, self.kd_distance
             )
         )

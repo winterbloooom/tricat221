@@ -1,7 +1,7 @@
-goal_range: 2.0
+goal_range: 1.5
 
-kp_angle : 0.3
-ki_angle : 0 # max 0.05?
+kp_angle : 0.4
+ki_angle : 0
 kd_angle : 0
 
 kp_distance : 40
