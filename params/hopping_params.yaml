@@ -14,3 +14,5 @@ servo_right_max: 68 #93-25
 
 thruster_max : 1700
 thruster_min : 1600
+
+controller : False

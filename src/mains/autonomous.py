@@ -105,18 +105,18 @@ class Autonomous:
         """
         not_connected = ""
         if self.heading_sub.get_num_connections() == 0:
-            not_connected += "\theadingCalculator"
+            not_connected += "headingCalculator\t"
 
         if self.enu_pos_sub.get_num_connections() == 0:
-            not_connected += "\tgnssConverter"
+            not_connected += "gnssConverter\t"
 
         if self.obstacle_sub.get_num_connections() == 0:
-            not_connected += "\tlidarConverter"
+            not_connected += "lidarConverter\t"
 
         if len(not_connected) == 0:
             return True
         else:
-            print("\n\n----------...NOT CONNECTED YET...----------")  # TODO 예쁘게
+            print("\nWaiting >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")  # TODO 예쁘게
             print(not_connected)  # TODO 예쁘게
             print("\n")
             return False
@@ -137,20 +137,24 @@ class Autonomous:
         )
 
     def show(self, error_angle, u_servo, visualize=False):
-        print("-" * 20)
-        print("goal [{} ,{}]".format(self.goal_x, self.goal_y))
-        print("psi {} | psi_goal {:.2f}".format(self.psi, self.psi_goal))
-        print("psi_desire {} | error {}".format(self.psi_desire, error_angle))
-        print("danger obs : {} / {}".format(len(self.inrange_obstacles), len(self.obstacles)))
+        print("-" * 40)
+        print("{:>9} - {:>9} = {:>7}".format("psi", "desire", "error"))
+        print("({:7.2f}) - ({:7.2f}) = ({:6.2f})".format(self.psi, self.psi_desire, error_angle))
+        if self.psi_goal - self.psi > 0:
+            print("psi_goal : {:7.2f} [Right] | dist : {:6.2f} m".format(self.psi_goal, self.distance_to_goal))
+        else:
+            print("psi_goal : {:7.2f} [ Left] | dist : {:6.2f} m".format(self.psi_goal, self.distance_to_goal))
+        print("Obstacle : {:2d} / {:2d}".format(len(self.inrange_obstacles), len(self.obstacles)))
         if error_angle > 0:
-            print("Turn Right | Servo: {}".format(u_servo))
+            print("Right | Servo: {}".format(u_servo))
         elif error_angle < 0:
-            print("Turn Left | Servo: {}".format(u_servo))
+            print("Left  | Servo: {}".format(u_servo))
 
         if visualize:
             # 목표 지점
+            goal_txt = visual.text_rviz(name="goal", id=1, x=self.goal_x, y=self.goal_y, text="({:>4.2f}, {:>4.2f})".format(self.goal_x, self.goal_y))
             goal = visual.point_rviz(
-                name="goal", id=2, x=self.goal_x, y=self.goal_y, color_b=255, scale=0.2
+                name="goal", id=2, x=self.goal_x, y=self.goal_y, color_r=165, color_g=242, color_b=87, scale=0.2
             )
             # 지나온 경로
             traj = visual.points_rviz(name="traj", id=3, points=self.trajectory, color_g=255)
@@ -169,14 +173,14 @@ class Autonomous:
                 color_b=252,
             )
             psi_txt = visual.text_rviz(
-                name="psi", id=8, text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
+                name="psi", id=5, text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
             )
             # psi_desire
             desire_arrow_end_x = 2 * math.cos(math.radians(self.psi_desire)) + self.boat_x
             desire_arrow_end_y = 2 * math.sin(math.radians(self.psi_desire)) + self.boat_y
             psi_desire = visual.arrow_rviz(
                 name="psi_desire",
-                id=5,
+                id=6,
                 x1=self.boat_x,
                 y1=self.boat_y,
                 x2=desire_arrow_end_x,
@@ -186,18 +190,18 @@ class Autonomous:
                 color_b=245,
             )
             psi_desire_txt = visual.text_rviz(
-                name="psi_desire", id=9, text="desire", x=desire_arrow_end_x, y=desire_arrow_end_y
+                name="psi_desire", id=7, text="desire", x=desire_arrow_end_x, y=desire_arrow_end_y
             )
             # 골까지
             goal_line = visual.linelist_rviz(
                 name="goal_line",
-                id=6,
+                id=8,
                 lines=[[self.boat_x, self.boat_y], [self.goal_x, self.goal_y]],
-                color_b=255,
-                scale=0.04,
+                color_r=91, 
+                color_g=169,
+                color_b=252,
+                scale=0.05,
             )
-            # angle_range
-            ## 지금은 스킵
             # inrange obs
             inrange_obs_world = []  # span 미포함
             for ob in self.inrange_obstacles:
@@ -224,25 +228,31 @@ class Autonomous:
                 inrange_obs_world.append([begin_x, begin_y])
                 inrange_obs_world.append([end_x, end_y])
             obstacles = visual.linelist_rviz(
-                name="obs", id=7, lines=inrange_obs_world, color_r=237, color_g=234, color_b=74
+                name="obs", id=9, lines=inrange_obs_world, color_r=237, color_g=234, color_b=74
             )
             # axis
             axis_x = visual.linelist_rviz(
                 name="axis_x",
-                id=11,
+                id=10,
                 lines=[[self.boat_x, self.boat_y], [self.boat_x + 3, self.boat_y]],
                 color_r=255,
                 scale=0.1,
             )
             axis_y = visual.linelist_rviz(
                 name="axis_x",
-                id=12,
+                id=11,
                 lines=[[self.boat_x, self.boat_y], [self.boat_x, self.boat_y + 3]],
                 color_g=255,
                 scale=0.1,
             )
+            # angle_range
+            ## 지금은 스킵
+            # goal_range
+            goal_range = visual.cylinder_rviz(name="waypoints", id=12, x=self.goal_x, y=self.goal_y, scale=self.goal_range*2, color_r=165, color_g=242, color_b=87)
+            
             all_markers = visual.marker_array_rviz(
                 [
+                    goal_txt,
                     goal,
                     psi,
                     psi_txt,
@@ -253,6 +263,7 @@ class Autonomous:
                     obstacles,
                     axis_x,
                     axis_y,
+                    goal_range
                 ]
             )
             self.visual_rviz_pub.publish(all_markers)

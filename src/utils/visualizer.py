@@ -6,13 +6,13 @@ from std_msgs.msg import ColorRGBA
 from visualization_msgs.msg import Marker, MarkerArray
 
 
-def basic_setting(name, id, color_r, color_g, color_b):
+def basic_setting(name, id, color_r, color_g, color_b, color_a=1):
     marker = Marker()
     marker.header.frame_id = "/map"
     marker.ns = name
     marker.id = id
     marker.action = Marker.ADD
-    marker.color = ColorRGBA(color_r / 255.0, color_g / 255.0, color_b / 255.0, 1)
+    marker.color = ColorRGBA(color_r / 255.0, color_g / 255.0, color_b / 255.0, color_a)
     marker.pose.orientation.w = 1.0
     return marker
 
@@ -62,9 +62,19 @@ def linelist_rviz(name, id, lines, color_r=0, color_g=0, color_b=0, scale=0.05):
         marker.points.append(Point(line[0], line[1], 0))
     return marker
 
+def cylinder_rviz(name, id, x, y, scale, color_r=0, color_g=0, color_b=0):
+    marker = basic_setting(name, id, color_r, color_g, color_b, color_a=0.6)
+    marker.type = Marker.CYLINDER
+    marker.scale = Vector3(scale, scale, 0.01)
+    marker.pose.position = Point(x, y, 0)
+    return marker
 
 def marker_array_rviz(markers):
     marker_array = MarkerArray()
     for marker in markers:
         marker_array.markers.append(marker)
+    return marker_array
+
+def marker_array_append_rviz(marker_array, marker):
+    marker_array.markers.append(marker)
     return marker_array
