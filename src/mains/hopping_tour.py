@@ -17,6 +17,7 @@ from visualization_msgs.msg import MarkerArray
 
 import perception.gnss_converter as gc
 import utils.visualizer as visual
+import utils.filtering as filtering
 
 
 class Hopping:
@@ -68,6 +69,7 @@ class Hopping:
         self.thruster_max = rospy.get_param("thruster_max")
         self.thruster_min = rospy.get_param("thruster_min")
         self.controller = rospy.get_param("controller")  # PID trackbar
+        self.filter_queue_size = rospy.get_param("filter_queue_size")
 
         # other variables
         self.yaw_rate = 0  # z축 각속도 [degree/s]
@@ -75,6 +77,7 @@ class Hopping:
         self.cnt = 0  # 상태 출력을 조절할 카운터
         self.u_servo = self.servo_middle
         self.u_thruster = self.thruster_min
+        self.heading_queue = [] # 헤딩을 필터링할 이동평균필터 큐
 
         # presetting
         self.calc_distance_to_goal()
@@ -107,8 +110,11 @@ class Hopping:
 
         Args:
             msg (Float64) : heading. 0 = magnetic north, (+) = 0~180 deg to right, (-) = 0 ~ -180 deg to left
+
+        Notes:
+            * IMU의 예민성으로 인하여 heading 값에 noise가 있음. 따라서 이동평균필터를 적용함.
         """
-        self.psi = msg.data  # [degree]
+        self.psi = filtering.moving_avg_filter(self.heading_queue, self.filter_queue_size, msg.data) #[deg]
 
     def boat_position_callback(self, msg):
         """GPS로 측정한 배의 ENU 변환 좌표 콜백함수

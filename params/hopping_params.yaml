@@ -16,3 +16,4 @@ thruster_max : 1700
 thruster_min : 1600
 
 controller : False
+filter_queue_size : 5

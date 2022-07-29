@@ -70,7 +70,8 @@ class Autonomous:
         self.angle_alpha = rospy.get_param("angle_alpha")  # angle_to_servo 함수에서 사용할 상수
 
         # other variables
-        self.filter_queue = [0] * self.filter_queue_size  # 서보모터값을 필터링할 이동평균필터 큐
+        self.filter_queue = []  # 서보모터값을 필터링할 이동평균필터 큐
+        self.heading_queue = [] # 헤딩을 필터링할 이동평균필터 큐
         self.distance_to_goal = 100000  # 배~목적지 거리. max 연산이므로 큰 값을 초기 할당
         self.print_cnt = 0  # 출력 속도를 조정할 카운터.
         self.obstacles = []  # 장애물 전체
@@ -80,13 +81,18 @@ class Autonomous:
         # pre-setting
         self.arrival_check()  # 다음 목표까지 남은 거리
 
+
     def heading_callback(self, msg):
         """IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수
 
         Args:
             msg (Float64) : heading. 0 = magnetic north, (+) = 0~180 deg to right, (-) = 0 ~ -180 deg to left
+
+        Notes:
+            * IMU의 예민성으로 인하여 heading 값에 noise가 있음. 따라서 이동평균필터를 적용함.
         """
-        self.psi = msg.data  # [degree]
+        self.psi = filtering.moving_avg_filter(self.heading_queue, self.filter_queue_size, msg.data) #[deg]
+
 
     def boat_position_callback(self, msg):
         """GPS로 측정한 배의 ENU 변환 좌표 콜백함수
@@ -101,6 +107,7 @@ class Autonomous:
         self.boat_y = msg.x
         self.boat_x = msg.y
 
+
     def obstacle_callback(self, msg):
         """lidar_converter에서 받아온 장애물 정보 저장
 
@@ -111,6 +118,7 @@ class Autonomous:
             * 개당 [msg.obstacle.begin.x, msg.obstacle.begin.y, msg.obstacle.end.x, msg.obstacle.end.y]
         """
         self.obstacles = msg.obstacle
+
 
     def is_all_connected(self):
         """make sure all subscribers(nodes) are connected to this node
@@ -134,6 +142,7 @@ class Autonomous:
             print("\n")
             return False  # 아직 다 연결되지는 않음
 
+
     def arrival_check(self):
         """calculate distance from boat to the next goal of current state
 
@@ -142,6 +151,7 @@ class Autonomous:
         """
         self.distance_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
         return self.distance_to_goal <= self.goal_range
+
 
     def show(self, error_angle, u_servo, visualize=False):
         """print current state and visualize them
@@ -314,6 +324,7 @@ class Autonomous:
             )
             self.visual_rviz_pub.publish(all_markers)
 
+
     def degree_to_servo(self, error_angle):
         """
         Args:
@@ -371,7 +382,7 @@ def main():
             auto.psi_desire = auto.psi + error_angle  # 월드좌표계로 '가야 할 각도'를 계산함
 
             u_servo = auto.degree_to_servo(error_angle)  # degree 단위를 servo moter 단위로 변경
-            u_servo = filtering.moving_avg_filter(auto.filter_queue, u_servo)  # 이동평균필터링
+            u_servo = filtering.moving_avg_filter(auto.filter_queue, auto.filter_queue_size, u_servo)  # 이동평균필터링
 
             auto.servo_pub.publish(u_servo)
             auto.thruster_pub.publish(auto.thruster_speed)
