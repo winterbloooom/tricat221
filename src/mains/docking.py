@@ -437,7 +437,9 @@ def main():
             docking.angle_alpha,
             use_prev_servo,
         )
-        u_servo = filtering.moving_avg_filter(docking.filter_queue, docking.filter_queue_size, u_servo, use_prev_servo)
+        u_servo = filtering.moving_avg_filter(
+            docking.filter_queue, docking.filter_queue_size, u_servo, use_prev_servo
+        )
         if docking.use_pid:
             pass
 

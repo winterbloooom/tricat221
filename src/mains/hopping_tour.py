@@ -16,8 +16,8 @@ from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
 
 import perception.gnss_converter as gc
-import utils.visualizer as visual
 import utils.filtering as filtering
+import utils.visualizer as visual
 
 
 class Hopping:
@@ -77,7 +77,7 @@ class Hopping:
         self.cnt = 0  # 상태 출력을 조절할 카운터
         self.u_servo = self.servo_middle
         self.u_thruster = self.thruster_min
-        self.heading_queue = [] # 헤딩을 필터링할 이동평균필터 큐
+        self.heading_queue = []  # 헤딩을 필터링할 이동평균필터 큐
 
         # presetting
         self.calc_distance_to_goal()
@@ -114,7 +114,9 @@ class Hopping:
         Notes:
             * IMU의 예민성으로 인하여 heading 값에 noise가 있음. 따라서 이동평균필터를 적용함.
         """
-        self.psi = filtering.moving_avg_filter(self.heading_queue, self.filter_queue_size, msg.data) #[deg]
+        self.psi = filtering.moving_avg_filter(
+            self.heading_queue, self.filter_queue_size, msg.data
+        )  # [deg]
 
     def boat_position_callback(self, msg):
         """GPS로 측정한 배의 ENU 변환 좌표 콜백함수
