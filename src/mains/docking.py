@@ -31,7 +31,7 @@ from std_msgs.msg import Float64, UInt16
 
 import docking.dock_control as dock_control
 import docking.mark_detect as mark_detect
-import docking.obstacle_avoidance as ob_avoid
+import obstacle.obstacle_avoidance as oa
 import perception.gnss_converter as gc
 import utils.filtering as filtering
 from tricat221.msg import Obstacle, ObstacleList
@@ -71,8 +71,9 @@ class Docking:
             "dock": [0, 0],
         }  # "enterence", "station1", "station2", "station3", "dock"
         # self.next_goal = [[self.enterence_x, self.enterence_y],[self.station1_x, self.station1_y],[self.station2_x, self.station2_y],[self.station3_x, self.station3_y],[0, 0]]
+        self.trajectory = []
 
-        # =data
+        # data
         self.psi = 0  # 자북과 선수 사이 각
         self.star_img = None
         self.bow_img = None
@@ -119,6 +120,9 @@ class Docking:
         self.speed = rospy.get_param("speed")
         self.rate = rospy.Rate(10)  # 10hz, 1초에 10번, 한 번에 0.1초
         self.filter_queue_size = rospy.get_param("filter_queue_size")
+        self.span_angle = rospy.get_param("span_angle")
+        self.ob_angle_range = rospy.get_param("ob_angle_range")
+        self.ob_dist_range = rospy.get_param("ob_dist_range")
 
         # current status
         self.state = (
@@ -178,7 +182,7 @@ class Docking:
         self.boat_x = msg.y
 
     def obstacle_callback(self, msg):
-        self.obstacle = (
+        self.obstacles = (
             msg.obstacle
         )  # [msg.obstacle.begin.x, msg.obstacle.begin.y, msg.obstacle.end.x, msg.obstacle.end.y]
 
@@ -412,11 +416,27 @@ def main():
         cv2.moveWindow("controller", 0, 0)
         docking.get_trackbar_pos()
 
+        docking.trajectory.append([docking.boat_x, docking.boat_y])  # 이동 경로 추가
+
         checked, docked = docking.check_state()  # 모드 바뀜
 
         if docking.state == "enterence":
             # 장애물 회피 계속하면서 시작점으로 이동하기
-            error_angle = ob_avoid.calc_error_angle()
+            psi_goal = math.degrees(
+                math.atan2(docking.next_goal["enterence"][1] - docking.boat_y, docking.next_goal["enterence"][0] - docking.boat_x)
+            )  # 목표까지 떨어진 각도 갱신
+            inrange_obstacles, danger_angles = oa.ob_filtering(
+                docking.obstacles,
+                docking.distance_to_goal,
+                psi_goal - docking.psi,
+                docking.span_angle,
+                docking.ob_angle_range,
+                docking.ob_dist_range,
+            )  # 범위 내에 있는 장애물을 필터링하고, 장애물이 있는 각도 리스트를 만듦
+            error_angle = oa.calc_desire_angle(
+                danger_angles, psi_goal - docking.psi, docking.ob_angle_range
+            )  # 목표각과 현 헤딩 사이 상대적 각도 계산. 선박고정좌표계로 '가야 할 각도'에 해당
+            psi_desire = docking.psi + error_angle  # 월드좌표계로 '가야 할 각도'를 계산함
         elif docking.state in ["station1", "station2", "station3"]:
             # 다음 station으로 가야 함
             error_angle = docking.calc_error_angle_to_goal()

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <launch>
+    <!-- sensors -->
     <group ns="camera1">
         <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
             <param name="video_device" value="/dev/video0" />
@@ -29,17 +30,24 @@
             <param name="io_method" value="mmap" />
         </node>
     </group>
-    
     <!-- <include file="$(find realsense2_camera)/launch/rs_camera.launch">
 	</include> -->
-
-	<!-- <node pkg="tricat221" type="starcam_test.py" name="docking" respawn="true" output="screen"/> -->
+	
     <node pkg="tricat221" type="camera_test.py" name="camera_test" output="screen">
-        <!-- <param name="mode" value="raw"/> -->
         <param name="mode" value="mark"/>
     </node>
+    <node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/>
+	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true"/>
+	<node pkg="tricat221" type="docking.py" name="docking" respawn="true" output="screen"/>
 
+    <!-- visulize -->
 	<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>	
+    <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" /> -->
+
+    <!--PARAMETER-->
+	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
+	<rosparam command="load" file="$(find tricat221)/params/docking_params.yaml"/>
+	<rosparam command="load" file="$(find tricat221)/params/coordinates.yaml"/>
 </launch>
 
 

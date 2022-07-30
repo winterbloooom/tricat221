@@ -26,5 +26,7 @@ filter_queue_size: 5
 use_pid: False
 draw_contoure: True
 
-
+span_angle : 5 # deg
+ob_dist_range : 10 # m
+ob_angle_range : [-90, 90] # deg
 
