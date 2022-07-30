@@ -6,7 +6,7 @@ arrival_range: 1.5 # m
 ref_dir_range: 10 # def
 arrival_target_area: 20 # X1,000
 stop_time: 3 # sec
-target_detect_time: 50 # times ( X 0.1 sec )
+target_detect_time: 500 # times ( X 0.1 sec ) -> No
 target_detect_cnt: 25 # times ( X 0.1 sec )
 
 color1_lower: 0

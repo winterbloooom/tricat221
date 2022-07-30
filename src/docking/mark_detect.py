@@ -284,9 +284,9 @@ def check_target(img, target_shape):
         return False
 
 
-star_img = None
-bow_img = None
-bridge = CvBridge()
+# star_img = None
+# bow_img = None
+# bridge = CvBridge()
 
 
 def star_callback(msg):
@@ -343,4 +343,4 @@ def two_cam_test():
 
 
 # test()
-two_cam_test()
+# two_cam_test()

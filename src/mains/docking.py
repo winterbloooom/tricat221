@@ -49,8 +49,8 @@ class Docking:
         self.obstacle_sub = rospy.Subscriber(
             "/obstacles", ObstacleList, self.obstacle_callback, queue_size=1
         )
-        self.star_cam_sub = rospy.Subscriber("", Image, self.star_cam_callback)  # TODO topic name!
-        self.bow_cam_sub = rospy.Subscriber("", Image, self.bow_cam_callback)  # TODO topic name!
+        self.star_cam_sub = rospy.Subscriber("/camera1/usb_cam/image_raw", Image, self.star_cam_callback)
+        self.bow_cam_sub = rospy.Subscriber("/camera2/usb_cam/image_raw", Image, self.bow_cam_callback)
         self.bridge = CvBridge()
 
         # publishers
