@@ -15,6 +15,7 @@ from sensor_msgs.msg import Image
 
 import docking.mark_detect as mark_detect
 
+
 class CameraTester:
     def __init__(self):
         rospy.Subscriber("/camera1/usb_cam/image_raw", Image, self.camera_callback)
