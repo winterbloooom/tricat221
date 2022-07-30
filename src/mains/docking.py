@@ -423,7 +423,10 @@ def main():
         if docking.state == "enterence":
             # 장애물 회피 계속하면서 시작점으로 이동하기
             psi_goal = math.degrees(
-                math.atan2(docking.next_goal["enterence"][1] - docking.boat_y, docking.next_goal["enterence"][0] - docking.boat_x)
+                math.atan2(
+                    docking.next_goal["enterence"][1] - docking.boat_y,
+                    docking.next_goal["enterence"][0] - docking.boat_x,
+                )
             )  # 목표까지 떨어진 각도 갱신
             inrange_obstacles, danger_angles = oa.ob_filtering(
                 docking.obstacles,
