@@ -13,6 +13,7 @@ from cv2 import LINE_AA
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 
+import docking.mark_detect as mark_detect
 
 class CameraTester:
     def __init__(self):
@@ -143,6 +144,9 @@ class CameraTester:
         )
 
         return output_hsv
+
+    def two_cam_test(self):
+        pass
 
 
 if __name__ == "__main__":

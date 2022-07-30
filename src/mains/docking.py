@@ -375,14 +375,22 @@ class Docking:
         """
         target_found = 0
         for _ in range(self.target_detect_time):
-            preprocessed = mark_detect.preprocess_image(self.star_img)  # 영상 전처리
+            self.get_trackbar_pos()
+
+            if dir == "front":
+                preprocessed = mark_detect.preprocess_image(self.bow_img)  # 영상 전처리
+                cv2.imshow("camera", self.bow_img)
+            else:
+                preprocessed = mark_detect.preprocess_image(self.star_img)  # 영상 전처리
+                cv2.imshow("camera", self.star_img)
             color_picked = mark_detect.select_color(preprocessed, self.color_range)  # 원하는 색만 필터링
             target = mark_detect.detect_target(
                 color_picked, self.target_shape, self.draw_contour
             )  # target = [area, center_col] 형태로 타겟의 정보를 받음
             if len(target) == 0:
                 target_found += 1  # 타겟이 검출되었다면 검출 횟수 +1
-            self.rate.sleep()
+
+            # self.rate.sleep()
 
         if target_found > self.target_detect_cnt:
             if dir == "front":  # self.state == "dock"과 같은 의미

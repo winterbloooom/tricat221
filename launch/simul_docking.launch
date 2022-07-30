@@ -33,15 +33,14 @@
     <!-- <include file="$(find realsense2_camera)/launch/rs_camera.launch">
 	</include> -->
 	
-    <node pkg="tricat221" type="camera_test.py" name="camera_test" output="screen">
-        <param name="mode" value="mark"/>
+    <node pkg="tricat221" type="mark_detect.py" name="camera_test" output="screen">
     </node>
-    <node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/>
+    <!-- <node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/>
 	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true"/>
-	<node pkg="tricat221" type="docking.py" name="docking" respawn="true" output="screen"/>
+	<node pkg="tricat221" type="docking.py" name="docking" respawn="true" output="screen"/> -->
 
     <!-- visulize -->
-	<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>	
+	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/>	 -->
     <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" /> -->
 
     <!--PARAMETER-->

@@ -11,12 +11,17 @@ Todo
     * 테스트 파일 모드를 ros 실시간 모드 혹은 이미지 모드 두 개로 선택해 구현
 """
 
+
 import os
 import sys
+import rospy
 
 import cv2
 import numpy as np
 from cv2 import LINE_AA
+from cv_bridge import CvBridge
+from sensor_msgs.msg import Image
+
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
@@ -252,5 +257,90 @@ def test():
             cv2.destroyAllWindows()
             break
 
+def check_target(img, target_shape):
+    target_detect_time = 3000
+    target_detect_cnt = 20
 
-test()
+    target_found = 0
+    color_range = np.empty((2, 3))   
+
+    for _ in range(target_detect_time):
+        preprocessed = preprocess_image(img)  # 영상 전처리
+        color_range = set_color_range(color_range)
+        color_picked = select_color(preprocessed, color_range)  # 원하는 색만 필터링
+        target = detect_target(
+            color_picked, target_shape
+        )  # target = [area, center_col] 형태로 타겟의 정보를 받음
+        if len(target) == 0:
+            target_found += 1  # 타겟이 검출되었다면 검출 횟수 +1
+
+        cv2.imshow("All counturs", img)
+
+        # rospy.sleep(0.1)
+
+    if target_found > target_detect_cnt:
+        return True
+    else:
+        return False
+
+
+star_img = None
+bow_img = None
+bridge = CvBridge()
+
+def star_callback(msg):
+    global star_img, bridge
+    star_img = bridge.imgmsg_to_cv2(msg, "bgr8")
+
+def bow_callback(msg):
+    global bow_img, bridge
+    bow_img = bridge.imgmsg_to_cv2(msg, "bgr8")
+
+
+def two_cam_test():
+    global star_img, bow_img
+
+    rospy.init_node("TwoCamTest", anonymous=True)
+    rospy.Subscriber("/camera1/usb_cam/image_raw", Image, star_callback)
+    rospy.Subscriber("/camera2/usb_cam/image_raw", Image, bow_callback)
+
+    rospy.sleep(3)
+
+    mode = "front" # "front", "side"
+    
+    cv2.namedWindow("hsv")
+
+    cv2.createTrackbar("H lower", "hsv", 0, 180, trackbar_callback)
+    cv2.createTrackbar("H upper", "hsv", 118, 180, trackbar_callback)
+    cv2.createTrackbar("S lower", "hsv", 144, 255, trackbar_callback)
+    cv2.createTrackbar("S upper", "hsv", 255, 255, trackbar_callback)
+    cv2.createTrackbar("V lower", "hsv", 72, 255, trackbar_callback)
+    cv2.createTrackbar("V upper", "hsv", 255, 255, trackbar_callback)
+
+    cv2.namedWindow("All counturs")
+
+    while not rospy.is_shutdown():
+        cv2.moveWindow("All counturs", 0, 0)
+        cv2.moveWindow("hsv", 750, 0)
+
+        if mode == "front":
+            img = bow_img
+        elif mode == "side":
+            img = star_img
+
+        found = check_target(img, target_shape=3)
+        print("mode: "+mode)
+        if found and mode == "front":
+            mode = "side"
+        elif not found:
+            print("=================No Target=================")
+
+        if cv2.waitKey(1) == 27:
+            cv2.destroyAllWindows()
+            break
+
+
+
+
+# test()
+two_cam_test()
