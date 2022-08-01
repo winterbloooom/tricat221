@@ -23,10 +23,7 @@ def dock(target_detected, target, alpha):
     else:
         error_angle = -999
         return error_angle, True
-
-
-def avoide_station_collision():
-    """스테이션 회피각 리턴"""
+    
 
 
 def pixel_to_degree(target, alpha):
@@ -40,10 +37,10 @@ def pixel_to_degree(target, alpha):
 
     Returns:
         float: 스테이션 회피 안할거면 이대로 서보 각으로 변환할 것
-
-    Todo:
-        * alpha 파라미터 이름 수정
     """
+    if len(target) == 0:
+        # 진입 중 타겟 잃어버림
+        return 0
     area = target[0]
     error_pixel = 320 - target[1]
     return error_pixel / area * alpha
@@ -70,3 +67,4 @@ def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False
         angle_range[1] - angle_range[0]
     ) + servo_range[0]
     return u_servo * alpha
+

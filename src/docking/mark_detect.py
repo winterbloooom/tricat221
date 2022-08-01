@@ -9,6 +9,7 @@ mark_detector.py
 Todo
     * 코드 정리하기
     * 테스트 파일 모드를 ros 실시간 모드 혹은 이미지 모드 두 개로 선택해 구현
+    * imshow를 main에서 하도록 통합
 """
 
 
@@ -124,13 +125,13 @@ def detect_target(img, target_shape, draw_contour=True):
         # print("# of vertices : {}".format(vertex_num))
 
         if vertex_num == 3:  # 삼각형이 탐지됨
-            print("Shape : Triangle")
+            # print("Shape : Triangle")
             shape, _, center_col = draw_mark(shape, target_shape, approx, vertex_num)  # 도형 그리기
             if target_shape == 3:  # 타겟이 삼각형이라면
                 detected = True
                 targets.append([area, center_col])
         elif vertex_num == 4:  # 사각형이 탐지됨
-            print("Shape : Rectangle")
+            # print("Shape : Rectangle")
             shape, _, center_col = draw_mark(shape, target_shape, approx, vertex_num)
             if target_shape == 4:
                 detected = True
@@ -139,23 +140,23 @@ def detect_target(img, target_shape, draw_contour=True):
             _, radius = cv2.minEnclosingCircle(approx)  # 원으로 근사
             ratio = radius * radius * 3.14 / area  # 해당 넓이와 정원 간의 넓이 비
             if 0.5 < ratio < 2:  # 원에 가까울 때만 필터링
-                print("Shape : Circle")
+                # print("Shape : Circle")
                 shape, _, center_col = draw_mark(shape, target_shape, approx, vertex_num)
                 if target_shape == 5:
                     detected = True
                     targets.append([area, center_col])
 
-        if draw_contour:
-            cv2.imshow("shape", shape)
+        # if draw_contour:
+        #     cv2.imshow("controller", shape)
 
     if detected:
         if len(targets) == 1:  # 타겟 마크가 하나만 검출됨
-            return targets[-1]
+            return targets[-1], shape
         else:  # 타겟이 여러 개 검출됨. 0번째 요소인 넓이가 가장 큰 마크를 타겟으로 함
             max_area_idx = targets.index(max(targets))
-            return targets[max_area_idx]
+            return targets[max_area_idx], shape
     else:  # 타겟이 검출되지 않음
-        return []
+        return [], shape
 
 
 def draw_mark(window, target_shape, contour, vertices):
@@ -174,13 +175,15 @@ def draw_mark(window, target_shape, contour, vertices):
     box_left_top = (min(contour[:, 0, 0]), min(contour[:, 0, 1]))  # 도형에 박스를 그렸을 때의 좌상단
     box_right_bottom = (max(contour[:, 0, 0]), max(contour[:, 0, 1]))  # 도형에 박스를 그렸을 때의 우하단
 
-    center_row = int((box_left_top[0] + box_right_bottom[0]) / 2)
+    center_col = int((box_left_top[0] + box_right_bottom[0]) / 2)
     # 도형 중앙 세로 위치(row). sum(contour[:, 0, 0]) / vertices로 계산할 수도 있음
-    center_col = int((box_left_top[1] + box_right_bottom[1]) / 2)
+    center_row = int((box_left_top[1] + box_right_bottom[1]) / 2)
     # 도형 중앙 가로 위치(col). sum(contour[:, 0, 1]) / vertices로 계산할 수도 있음
 
     if target_shape == len(contour) or (vertices >= 5 and target_shape == 5):
         color = (0, 255, 0)  # target은 초록색
+        window = cv2.line(window, (center_col, 0), (center_col, 480), (0, 0, 255), 2)
+        # TODO 검출된 모든 정답값에 그림 -> 최댓값의 크기만 그리고 싶은데..
     else:
         color = (135, 219, 250)  # 그 외는 노란색
 
@@ -194,7 +197,8 @@ def draw_mark(window, target_shape, contour, vertices):
 
     window = cv2.drawContours(window, [contour], -1, color, -1)  # 도형 그리기
     window = cv2.rectangle(window, box_left_top, box_right_bottom, color, 1)  # 박스 그리기
-    window = cv2.circle(window, (center_row, center_col), 2, (0, 0, 255), 2)  # 중심점 그리기
+    window = cv2.circle(window, (center_col, center_row), 2, (0, 0, 255), 2)  # 중심점 그리기
+    window = cv2.line(window, (320, 0), (320, 480), (255, 0, 0), 2)
     window = cv2.putText(
         window, caption, box_left_top, cv2.FONT_HERSHEY_PLAIN, 1, color, 1, LINE_AA
     )  # 글씨 쓰기

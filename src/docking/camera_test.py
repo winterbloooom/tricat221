@@ -1,19 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-"""
-Todo
-    * 비디오도 시뮬링크 고정
-    * 파라미터 추가
-        hsv? rgb? -> select color의 hsv/rgb도 맞춰주기!
-        가우시안 블러 할 건가?
-        가우시안 블러 커널 사이즈
-        평균밝기 할 건가?
-        HSV별로 각각 나타내볼 것인가?
-        탐지된 마크 전부 contour 그릴 것인가? 타겟만 그릴 것인가?
-    * 트랙바에 인식 크기도 추가
-"""
-
 import math
 import os
 import sys
@@ -30,8 +17,8 @@ from geometry_msgs.msg import Point
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64, UInt16
 
-import docking.dock_control as dock_control
-import docking.mark_detect as mark_detect
+import dock_control
+import mark_detect
 import obstacle.obstacle_avoidance as oa
 import perception.gnss_converter as gc
 import utils.filtering as filtering
@@ -41,16 +28,16 @@ from tricat221.msg import Obstacle, ObstacleList
 class Docking:
     def __init__(self):
         # subscribers
-        self.heading_sub = rospy.Subscriber(
-            "/heading", Float64, self.heading_callback, queue_size=1
-        )
-        self.enu_pos_sub = rospy.Subscriber(
-            "/enu_position", Point, self.boat_position_callback, queue_size=1
-        )
-        self.obstacle_sub = rospy.Subscriber(
-            "/obstacles", ObstacleList, self.obstacle_callback, queue_size=1
-        )
-        self.cam_sub = rospy.Subscriber("/camera2/usb_cam/image_raw", Image, self.cam_callback)
+        # self.heading_sub = rospy.Subscriber(
+        #     "/heading", Float64, self.heading_callback, queue_size=1
+        # )
+        # self.enu_pos_sub = rospy.Subscriber(
+        #     "/enu_position", Point, self.boat_position_callback, queue_size=1
+        # )
+        # self.obstacle_sub = rospy.Subscriber(
+        #     "/obstacles", ObstacleList, self.obstacle_callback, queue_size=1
+        # )
+        self.cam_sub = rospy.Subscriber("/usb_cam/image_raw", Image, self.cam_callback)
         self.bridge = CvBridge()
 
         # publishers
@@ -116,7 +103,7 @@ class Docking:
         self.ob_dist_range = rospy.get_param("ob_dist_range")
 
         # current status
-        self.state = 0
+        self.state = 5
         # 0: 장애물 회피
         # 1: 스테이션1로 이동 중
         # 2: 스테이션2로 이동 중
@@ -214,14 +201,14 @@ class Docking:
             bool : True(if all connected) / False(not ALL connected yet)
         """
         not_connected = ""
-        if self.heading_sub.get_num_connections() == 0:
-            not_connected += "\theadingCalculator"
+        # if self.heading_sub.get_num_connections() == 0:
+        #     not_connected += "\theadingCalculator"
 
-        if self.enu_pos_sub.get_num_connections() == 0:
-            not_connected += "\tgnssConverter"
+        # if self.enu_pos_sub.get_num_connections() == 0:
+        #     not_connected += "\tgnssConverter"
 
-        if self.obstacle_sub.get_num_connections() == 0:
-            not_connected += "\tlidarConverter"
+        # if self.obstacle_sub.get_num_connections() == 0:
+        #     not_connected += "\tlidarConverter"
 
         if not self.raw_img.size == (640 * 480 * 3):
             not_connected += "\tCamera"
@@ -273,7 +260,7 @@ class Docking:
     def check_heading(self):
         return abs(self.station_dir - self.psi) > self.ref_dir_range
 
-    def check_target(self, return_target=False):
+    def check_target(self, return_target=False):    
         self.show_window()
         preprocessed = mark_detect.preprocess_image(self.raw_img)
         self.hsv_img = mark_detect.select_color(preprocessed, self.color_range)  # 원하는 색만 필터링
@@ -316,10 +303,11 @@ class Docking:
 
 
 def main():
-    rospy.init_node("Docking", anonymous=True)
+    rospy.init_node("DockingTest", anonymous=True)
     docking = Docking()
     mark_check_cnt = 0
     detected_cnt = 0
+    # docking.target_found = False # TODO 이전 값이 잘못 사용되는 경우 없는지 체크
 
     while not docking.is_all_connected():
         rospy.sleep(0.2)
@@ -327,7 +315,6 @@ def main():
     print("\n----------All Connected----------\n")
 
     while not rospy.is_shutdown():
-        docking.trajectory.append([docking.boat_x, docking.boat_y])  # 이동 경로 추가
         docking.show_window()
         change_state = docking.check_state() # TODO 프린트 할 때 바뀌는 지점 알려주기
 

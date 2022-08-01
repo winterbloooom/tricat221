@@ -1,3 +1,4 @@
 # ignore *.pyc files
 *.pyc
 *.swap
+*.bag
