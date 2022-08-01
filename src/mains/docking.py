@@ -18,8 +18,8 @@ import math
 import os
 import sys
 
-import pymap3d as pm
 import numpy as np
+import pymap3d as pm
 import rospy
 
 sys.path += os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
@@ -63,32 +63,39 @@ class Docking:
         self.station2_y, self.station2_x = gc.enu_convert(rospy.get_param("station2"))
         self.station3_y, self.station3_x = gc.enu_convert(rospy.get_param("station3"))
         self.boat_x, self.boat_y = 0, 0
-        self.waypoints = [[self.enterence_x, self.enterence_y],[self.station1_x, self.station1_y],[self.station2_x, self.station2_y],[self.station3_x, self.station3_y]]
+        self.waypoints = [
+            [self.enterence_x, self.enterence_y],
+            [self.station1_x, self.station1_y],
+            [self.station2_x, self.station2_y],
+            [self.station3_x, self.station3_y],
+        ]
         self.trajectory = []
 
         # data
         self.psi = 0  # 자북과 선수 사이 각
-        self.raw_img = np.zeros((480, 640, 3), dtype=np.uint8) # row, col, channel
+        self.raw_img = np.zeros((480, 640, 3), dtype=np.uint8)  # row, col, channel
         # self.hsv_img = np.zeros((480, 640), dtype=np.uint8)
         self.shape_img = np.zeros((480, 640, 3), dtype=np.uint8)
 
         # ranges, limits
         self.angle_range = rospy.get_param("angle_range")  # 배열! [min, max]
         self.servo_range = rospy.get_param("servo_range")  # 배열! [min, max]
-        self.servo_middle = (self.servo_range[0] + self.servo_range[1])/2
+        self.servo_middle = (self.servo_range[0] + self.servo_range[1]) / 2
         self.arrival_range = rospy.get_param("arrival_range")  # 도착여부 판단할 범위
-        self.color_range = np.array([
+        self.color_range = np.array(
             [
-                rospy.get_param("color1_lower"),
-                rospy.get_param("color2_lower"),
-                rospy.get_param("color3_lower"),
-            ],
-            [
-                rospy.get_param("color1_upper"),
-                rospy.get_param("color2_upper"),
-                rospy.get_param("color3_upper"),
-            ],
-        ])
+                [
+                    rospy.get_param("color1_lower"),
+                    rospy.get_param("color2_lower"),
+                    rospy.get_param("color3_lower"),
+                ],
+                [
+                    rospy.get_param("color1_upper"),
+                    rospy.get_param("color2_upper"),
+                    rospy.get_param("color3_upper"),
+                ],
+            ]
+        )
         self.ref_dir_range = rospy.get_param("ref_dir_range")  # 좌우로 얼마나 각도 허용할 건가
         self.arrival_target_area = rospy.get_param("arrival_target_area")  # 도착이라 판단할 타겟 도형의 넓이
         self.stop_time = rospy.get_param("stop_time")  # 회전/도착 전후 멈춰서 기다리는 시간
@@ -96,7 +103,7 @@ class Docking:
         self.target_detect_cnt = rospy.get_param(
             "target_detect_cnt"
         )  # target_detect_time동안 몇 번 발겼했나
-        self.station_dir = rospy.get_param("station_dir") # [-180, 180]
+        self.station_dir = rospy.get_param("station_dir")  # [-180, 180]
 
         # constants
         self.angle_alpha = rospy.get_param("angle_alpha")
@@ -243,28 +250,28 @@ class Docking:
         change_state = False
         if self.state == 0:
             # 변경지점 도착 여부 판단
-            change_state = self.calc_distance(self.waypoints[0]) # TODO 맞는지 확인
+            change_state = self.calc_distance(self.waypoints[0])  # TODO 맞는지 확인
         elif self.state == 1:
             # 스테이션1 도착 여부 판단
-            change_state = self.calc_distance(self.waypoints[1]) # TODO 맞는지 확인
+            change_state = self.calc_distance(self.waypoints[1])  # TODO 맞는지 확인
         elif self.state == 2:
             # 스테이션3 도착 여부 판단
-            change_state = self.calc_distance(self.waypoints[2]) # TODO 맞는지 확인
+            change_state = self.calc_distance(self.waypoints[2])  # TODO 맞는지 확인
         elif self.state == 3:
             # 스테이션3 도착 여부 판단
-            change_state = self.calc_distance(self.waypoints[3]) # TODO 맞는지 확인
+            change_state = self.calc_distance(self.waypoints[3])  # TODO 맞는지 확인
         elif self.state == 4:
             # heading 스테이션쪽인지 판단
-            change_state = self.check_heading() # TODO 맞는지 확인
+            change_state = self.check_heading()  # TODO 맞는지 확인
         elif self.state == 5:
             # 마크 발견했는지 확인
-            change_state = self.target_found # TODO 맞는지 확인
+            change_state = self.target_found  # TODO 맞는지 확인
         elif self.state == 6:
             # 도킹 완료했는지 확인
-            change_state = self.check_docked() # TODO 맞는지 확인
+            change_state = self.check_docked()  # TODO 맞는지 확인
 
         if change_state:
-            print("=" * 18 + " Change State " + "=" * 18) 
+            print("=" * 18 + " Change State " + "=" * 18)
             self.state += 1
             return True
         else:
@@ -281,10 +288,10 @@ class Docking:
             self.hsv_img, self.target_shape, self.draw_contour
         )  # target = [area, center_col] 형태로 타겟의 정보를 받음
 
-        if return_target==True:
+        if return_target == True:
             return target
         else:
-            return False if len(target) == 0 else True # TODO 작동 확인
+            return False if len(target) == 0 else True  # TODO 작동 확인
 
     def check_docked(self):
         if len(self.target) != 0:
@@ -293,7 +300,16 @@ class Docking:
             return False
 
     def print_status(self, error_angle, u_servo, u_thruster):
-        state_str = ["Avoiding Obstacles", "Going to Station #1", "Going to Station #2", "Going to Station #3", "Rotating Heading", "Detecting Target", "Docking", "End"]
+        state_str = [
+            "Avoiding Obstacles",
+            "Going to Station #1",
+            "Going to Station #2",
+            "Going to Station #3",
+            "Rotating Heading",
+            "Detecting Target",
+            "Docking",
+            "End",
+        ]
         print("State: # {} - {}".format(str(self.state), state_str[self.state]))
         print("psi  {:7.2f}  =>  error  {:6.2f} (0 if state #5)".format(self.psi, error_angle))
         if error_angle > 0:
@@ -329,9 +345,9 @@ def main():
     while not rospy.is_shutdown():
         docking.trajectory.append([docking.boat_x, docking.boat_y])  # 이동 경로 추가
         docking.show_window()
-        change_state = docking.check_state() # TODO 프린트 할 때 바뀌는 지점 알려주기
+        change_state = docking.check_state()  # TODO 프린트 할 때 바뀌는 지점 알려주기
 
-        if docking.state in [0, 1, 2, 3]: # TODO 문법 점검
+        if docking.state in [0, 1, 2, 3]:  # TODO 문법 점검
             psi_goal = math.degrees(
                 math.atan2(
                     docking.waypoints[docking.state][1] - docking.boat_y,
@@ -346,7 +362,7 @@ def main():
             print("-" * 20)
             print("Finished!")
             return
-        
+
         elif docking.state == 0:
             # 시작점으로 이동하며 장애물 회피 # TODO 확인 필
             inrange_obstacles, danger_angles = oa.ob_filtering(
@@ -364,13 +380,13 @@ def main():
 
         elif docking.state in [1, 2, 3]:
             # 다음 스테이션으로 이동
-            error_angle = psi_goal # TODO 맞는지 확인
+            error_angle = psi_goal  # TODO 맞는지 확인
             u_thruster = docking.thruster_default
 
         elif docking.state == 4:
             # 헤딩 돌리기
             # TODO 정지 명령 몇 초간 내려줘야 하는지 테스트
-            error_angle = docking.station_dir - docking.psi # TODO 잘 작동하나?
+            error_angle = docking.station_dir - docking.psi  # TODO 잘 작동하나?
             u_thruster = docking.thruster_stop
 
         elif docking.state == 5:
@@ -389,10 +405,10 @@ def main():
                 detected = docking.check_target()
                 if detected:
                     detected_cnt += 1
-            
+
             error_angle = 0
             u_thruster = docking.thruster_stop
-        
+
         elif docking.state == 6:
             # 스테이션 진입
             docking.target = docking.check_target(return_target=True)
@@ -400,15 +416,12 @@ def main():
             u_thruster = docking.thruster_default
 
         u_servo = dock_control.degree_to_servo(
-            error_angle,
-            docking.angle_range,
-            docking.servo_range,
-            docking.angle_alpha
+            error_angle, docking.angle_range, docking.servo_range, docking.angle_alpha
         )
-        u_servo = int(filtering.moving_avg_filter(
-            docking.filter_queue, docking.filter_queue_size, u_servo
-        ))
-        
+        u_servo = int(
+            filtering.moving_avg_filter(docking.filter_queue, docking.filter_queue_size, u_servo)
+        )
+
         if docking.state == 5:
             u_servo = docking.servo_middle
         docking.servo_pub.publish(u_servo)
@@ -419,6 +432,7 @@ def main():
         if cv2.waitKey(1) == 27:
             cv2.destroyAllWindows()
             break
+
 
 if __name__ == "__main__":
     main()

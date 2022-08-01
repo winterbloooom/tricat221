@@ -23,7 +23,6 @@ def dock(target_detected, target, alpha):
     else:
         error_angle = -999
         return error_angle, True
-    
 
 
 def pixel_to_degree(target, alpha):
@@ -67,4 +66,3 @@ def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False
         angle_range[1] - angle_range[0]
     ) + servo_range[0]
     return u_servo * alpha
-
