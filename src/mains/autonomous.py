@@ -61,7 +61,7 @@ class Autonomous:
         self.goal_range = rospy.get_param("goal_range")  # 도착이라 판단할 거리(반지름)
         self.ob_dist_range = rospy.get_param("ob_dist_range")  # 라이다로 장애물을 탐지할 최대거리
         self.ob_angle_range = rospy.get_param("ob_angle_range")  # 장애물 탐지 각도
-        self.rotate_angle_range = rospy.get_param("rotate_angle_range") # 회전할 각도 범위
+        self.rotate_angle_range = rospy.get_param("rotate_angle_range")  # 회전할 각도 범위
         self.servo_range = rospy.get_param("servo_range")  # 서보모터 최대/최소값
         self.thruster_speed = rospy.get_param("thruster_speed")  # 쓰러스터 고정값
         self.span_angle = rospy.get_param("span_angle")  # 장애물 양쪽에 더해줄 각도 여유분. 충돌 방지용
@@ -185,12 +185,23 @@ class Autonomous:
             # danger_angles
             dangers = []
             for angle in self.danger_angles:
-                end_point_x = self.ob_dist_range * math.cos(math.radians(self.psi + angle)) + self.boat_x
-                end_point_y = self.ob_dist_range * math.sin(math.radians(self.psi + angle)) + self.boat_y
+                end_point_x = (
+                    self.ob_dist_range * math.cos(math.radians(self.psi + angle)) + self.boat_x
+                )
+                end_point_y = (
+                    self.ob_dist_range * math.sin(math.radians(self.psi + angle)) + self.boat_y
+                )
                 dangers.append([self.boat_x, self.boat_y])
                 dangers.append([end_point_x, end_point_y])
             danger_angles = visual.linelist_rviz(
-                name="obs", id=0, lines=dangers, color_r=255, color_g=255, color_b=255, color_a=100, scale=0.02
+                name="obs",
+                id=0,
+                lines=dangers,
+                color_r=255,
+                color_g=255,
+                color_b=255,
+                color_a=100,
+                scale=0.02,
             )
 
             # 목표 지점
@@ -283,7 +294,13 @@ class Autonomous:
                 inrange_obs_world.append([begin_x, begin_y])
                 inrange_obs_world.append([end_x, end_y])
             obstacles = visual.linelist_rviz(
-                name="obs", id=9, lines=inrange_obs_world, color_r=0, color_g=0, color_b=255, scale=0.1
+                name="obs",
+                id=9,
+                lines=inrange_obs_world,
+                color_r=0,
+                color_g=0,
+                color_b=255,
+                scale=0.1,
             )
             # 배와 함께 이동할 X, Y축
             axis_x = visual.linelist_rviz(
@@ -300,7 +317,7 @@ class Autonomous:
                 color_g=255,
                 scale=0.1,
             )
-            
+
             # goal_range (도착 인정 범위)
             goal_range = visual.cylinder_rviz(
                 name="waypoints",
@@ -314,14 +331,31 @@ class Autonomous:
             )
 
             # angle_range (탐색 범위)
-            min_angle_x = self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[0])) + self.boat_x
-            min_angle_y = self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[0])) + self.boat_y
-            max_angle_x = self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[1])) + self.boat_x
-            max_angle_y = self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[1])) + self.boat_y
+            min_angle_x = (
+                self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[0]))
+                + self.boat_x
+            )
+            min_angle_y = (
+                self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[0]))
+                + self.boat_y
+            )
+            max_angle_x = (
+                self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[1]))
+                + self.boat_x
+            )
+            max_angle_y = (
+                self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[1]))
+                + self.boat_y
+            )
             angle_range = visual.linelist_rviz(
                 name="angle_range",
                 id=13,
-                lines=[[self.boat_x, self.boat_y], [min_angle_x, min_angle_y], [self.boat_x, self.boat_y], [max_angle_x, max_angle_y]],
+                lines=[
+                    [self.boat_x, self.boat_y],
+                    [min_angle_x, min_angle_y],
+                    [self.boat_x, self.boat_y],
+                    [max_angle_x, max_angle_y],
+                ],
                 color_b=255,
                 scale=0.05,
             )
@@ -361,14 +395,14 @@ class Autonomous:
         # angle_mid = sum(self.ob_angle_range) / 2  # 중앙 각도
         # u_angle = angle_mid - error_angle  # 중앙(heading=0으로 두고)으로부터 돌려야 할 각도
 
-        u_angle = -error_angle # 왼쪽이 더 큰 값을 가져야 하므로
+        u_angle = -error_angle  # 왼쪽이 더 큰 값을 가져야 하므로
 
         u_servo = (u_angle - self.rotate_angle_range[0]) * (
             self.servo_range[1] - self.servo_range[0]
         ) / (self.rotate_angle_range[1] - self.rotate_angle_range[0]) + self.servo_range[
             0
         ]  # degree에서 servo로 mapping
-        u_servo *= self.angle_alpha # 조절 상수 곱해 감도 조절
+        u_servo *= self.angle_alpha  # 조절 상수 곱해 감도 조절
 
         if u_servo > self.servo_range[1]:
             u_servo = self.servo_range[1]

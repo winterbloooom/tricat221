@@ -73,5 +73,5 @@ def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False
         u_servo = servo_range[1]
     elif u_servo < servo_range[0]:
         u_servo = servo_range[0]
-    
+
     return u_servo * alpha

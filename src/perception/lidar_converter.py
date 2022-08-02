@@ -4,8 +4,8 @@
 import os
 import sys
 
-import rospy
 import cv2
+import rospy
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
@@ -45,22 +45,46 @@ class Lidar_Converter:
         # trackbar
         cv2.namedWindow("controller")
         cv2.createTrackbar(
-            "point ~ point in group", "controller", rospy.get_param("max_gap_in_set"), 5, self.trackbar_callback
-        ) # X 0.1
+            "point ~ point in group",
+            "controller",
+            rospy.get_param("max_gap_in_set"),
+            5,
+            self.trackbar_callback,
+        )  # X 0.1
         cv2.createTrackbar(
-            "# of points in group", "controller", rospy.get_param("min_point_set_size"), 30, self.trackbar_callback
+            "# of points in group",
+            "controller",
+            rospy.get_param("min_point_set_size"),
+            30,
+            self.trackbar_callback,
         )
         cv2.createTrackbar(
-            "point ~ group", "controller", rospy.get_param("max_dist_to_ps_line"), 5, self.trackbar_callback
-        ) # X 0.1
+            "point ~ group",
+            "controller",
+            rospy.get_param("max_dist_to_ps_line"),
+            5,
+            self.trackbar_callback,
+        )  # X 0.1
         cv2.createTrackbar(
-            "wall should splitted", "controller", rospy.get_param("min_wall_length"), 50, self.trackbar_callback
-        ) # X 0.1
+            "wall should splitted",
+            "controller",
+            rospy.get_param("min_wall_length"),
+            50,
+            self.trackbar_callback,
+        )  # X 0.1
         cv2.createTrackbar(
-            "wall particle len", "controller", rospy.get_param("min_wall_particle_length"), 50, self.trackbar_callback
-        ) # X 0.1
+            "wall particle len",
+            "controller",
+            rospy.get_param("min_wall_particle_length"),
+            50,
+            self.trackbar_callback,
+        )  # X 0.1
         cv2.createTrackbar(
-            "# of input points", "controller", rospy.get_param("min_input_points_size"), 50, self.trackbar_callback
+            "# of input points",
+            "controller",
+            rospy.get_param("min_input_points_size"),
+            50,
+            self.trackbar_callback,
         )
 
     def trackbar_callback(self, usrdata):

@@ -18,6 +18,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 import datatypes.point_class as pc
 
+
 def ob_filtering(obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range, distance_range):
     """filter dangerous obstacles among all of them
 
@@ -68,12 +69,12 @@ def ob_filtering(obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range
 
         # dist_to_ob = math.sqrt(middle_x**2 + middle_y**2)
         begin = pc.Point(ob.begin.x, ob.begin.y)
-        end =  pc.Point(ob.begin.x, ob.begin.y)
+        end = pc.Point(ob.begin.x, ob.begin.y)
         boat = pc.Point(0, 0)
         a = end - begin
         b = boat - begin
         if a.dist_squared_from_origin() != 0:
-            projection = begin + a * (a.dot(b) / a.dist_squared_from_origin()) 
+            projection = begin + a * (a.dot(b) / a.dist_squared_from_origin())
         else:
             projection = begin
         dist_to_ob = (boat - projection).dist_from_origin()
@@ -81,10 +82,12 @@ def ob_filtering(obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range
         # 장애물이 목표점보다 뒤에 있어 고려할 필요 없음
         if (begin_ang <= angle_to_goal <= end_ang) and (dist_to_ob >= dist_to_goal):
             print("ob is behind the goal -> don't count")
-            continue  
+            continue
 
         # 장애물이 각도&거리 범위 내에 있음
-        if (angle_range[0] <= begin_ang <= angle_range[1]) or (angle_range[0] <= end_ang <= angle_range[1]):
+        if (angle_range[0] <= begin_ang <= angle_range[1]) or (
+            angle_range[0] <= end_ang <= angle_range[1]
+        ):
             if dist_to_ob <= distance_range:
                 inrange_obstacles.append(ob)  # [begin.x, begin.y, end.x, end.y]
 
@@ -93,11 +96,12 @@ def ob_filtering(obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range
     # angle_range 넘는 부분은 제외하고 그 안쪽 danger_angles만 남겨둠.
     # 참고 URL: https://appia.tistory.com/101
     danger_angles = set(danger_angles)
-    all_angles_in_range = set(range(angle_range[0], angle_range[1]+1))
+    all_angles_in_range = set(range(angle_range[0], angle_range[1] + 1))
     out_of_range = set(danger_angles) - all_angles_in_range
     danger_angles = sorted(list(danger_angles - out_of_range))
 
     return inrange_obstacles, danger_angles
+
 
 def calc_desire_angle(danger_angles, angle_to_goal, angle_range):
     """calculate safe and efficient rotation angle considering danger angles
