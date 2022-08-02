@@ -79,7 +79,6 @@ class Hopping:
         self.cnt = 0  # 상태 출력을 조절할 카운터
         self.u_servo = self.servo_middle
         self.u_thruster = self.thruster_min
-        
 
         # presetting
         self.calc_distance_to_goal()
