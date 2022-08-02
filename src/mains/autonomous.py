@@ -223,7 +223,9 @@ class Autonomous:
                 scale=0.2,
             )
             # 지나온 경로
-            traj = visual.points_rviz(name="traj", id=3, points=self.trajectory, color_g=180, scale=0.05)
+            traj = visual.points_rviz(
+                name="traj", id=3, points=self.trajectory, color_g=180, scale=0.05
+            )
 
             # heading
             psi_arrow_end_x = 2 * math.cos(math.radians(self.psi)) + self.boat_x
@@ -301,7 +303,9 @@ class Autonomous:
                 name="obs",
                 id=9,
                 lines=inrange_obs_world,
-                color_r=237, color_g=234, color_b=74,
+                color_r=237,
+                color_g=234,
+                color_b=74,
                 scale=0.1,
             )
 
