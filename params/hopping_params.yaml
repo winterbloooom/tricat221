@@ -8,11 +8,11 @@ kp_distance : 40
 ki_distance : 0
 kd_distance : 0
 
-servo_middle: 93
-servo_left_max: 118 #93+25
-servo_right_max: 68 #93-25
+servo_middle: 96
+servo_left_max: 121 #93+25
+servo_right_max: 71 #93-25
 
-thruster_max : 1700
+thruster_max : 1650
 thruster_min : 1600
 
 controller : False

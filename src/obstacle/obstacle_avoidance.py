@@ -91,18 +91,22 @@ def calc_desire_angle(danger_angles, angle_to_goal, angle_range):
     """
     safe_angle = 0
     if len(danger_angles) == (angle_range[1] - angle_range[0]) + 1:
+        print("all obs")
         return angle_to_goal  # 범위 내 모두 장애물임
     elif len(danger_angles) == 0:
+        print("no obs")
         return angle_to_goal  # 범위 내 장애물 없음
     else:
         delta_goal = 10000  # goal까지 차이각 (절댓값)
         delta_heading = 10000  # heading까지 차이각 (절댓값)
         for angle in range(angle_range[0], angle_range[1] + 1):
             if angle in danger_angles:
+                print("'angle {} in danger".format(angle))
                 continue  # 장애물이 있는 각도
             if (delta_goal > abs(angle_to_goal - angle)) or (
                 delta_goal == abs(angle_to_goal - angle) and delta_heading > abs(angle)
             ):
+                print("reset best angle: {}".format(angle))
                 safe_angle = angle
                 delta_goal = abs(angle_to_goal - angle)
                 delta_heading = abs(angle)

@@ -22,6 +22,8 @@ import utils.visualizer as visual
 
 class Hopping:
     def __init__(self):
+        self.heading_queue = []  # 헤딩을 필터링할 이동평균필터 큐
+
         # subscribers
         rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
         rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
@@ -40,7 +42,7 @@ class Hopping:
         for idx, waypoint in enumerate(self.gnss_waypoint):
             e, n = gc.enu_convert(waypoint)  # ENU 좌표계로 변환
             self.remained_waypoint[idx + 1] = [n, e]  # 축이 반대이므로 순서 바꿔 할당.
-        self.boat_x, self.boat_y = 0, 0  # 배의 좌표
+        self.boat_y, self.boat_x = gc.enu_convert(rospy.get_param("origin"))  # 배의 좌표
         self.goal_x = self.remained_waypoint[self.waypoint_idx][0]  # 다음 목표 x좌표
         self.goal_y = self.remained_waypoint[self.waypoint_idx][1]  # 다음 목표 y좌표
         self.trajectory = []  # 지금껏 이동한 궤적
@@ -77,7 +79,7 @@ class Hopping:
         self.cnt = 0  # 상태 출력을 조절할 카운터
         self.u_servo = self.servo_middle
         self.u_thruster = self.thruster_min
-        self.heading_queue = []  # 헤딩을 필터링할 이동평균필터 큐
+        
 
         # presetting
         self.calc_distance_to_goal()
@@ -161,7 +163,7 @@ class Hopping:
         self.waypoint_idx += 1
         if len(self.gnss_waypoint) == self.waypoint_idx:
             return
-
+        print("waypoint_idx", self.waypoint_idx)
         self.goal_x = self.remained_waypoint[self.waypoint_idx][0]
         self.goal_y = self.remained_waypoint[self.waypoint_idx][1]
 

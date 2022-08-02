@@ -28,7 +28,7 @@
 	<node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>
 
 	<node pkg="rviz" type="rviz" name="rviz_auto" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" />
-	<node name="rqt" pkg="rqt_graph" type="rqt_graph"/>
+	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/> -->
 	
 	<!--PARAMETER-->
 	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>

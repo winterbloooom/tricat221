@@ -1,4 +1,3 @@
-# ignore *.pyc files
 *.pyc
 *.swap
-*.bag
+etc/rosbag/cam-rosbag/*.bag
