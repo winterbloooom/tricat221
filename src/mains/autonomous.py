@@ -197,9 +197,9 @@ class Autonomous:
                 name="obs",
                 id=0,
                 lines=dangers,
-                color_r=255,
-                color_g=255,
-                color_b=255,
+                color_r=217,
+                color_g=217,
+                color_b=43,
                 color_a=100,
                 scale=0.02,
             )
@@ -223,7 +223,8 @@ class Autonomous:
                 scale=0.2,
             )
             # 지나온 경로
-            traj = visual.points_rviz(name="traj", id=3, points=self.trajectory, color_g=255)
+            traj = visual.points_rviz(name="traj", id=3, points=self.trajectory, color_g=180, scale=0.05)
+
             # heading
             psi_arrow_end_x = 2 * math.cos(math.radians(self.psi)) + self.boat_x
             psi_arrow_end_y = 2 * math.sin(math.radians(self.psi)) + self.boat_y
@@ -241,9 +242,10 @@ class Autonomous:
             psi_txt = visual.text_rviz(
                 name="psi", id=5, text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
             )
+
             # psi_desire (가고 싶은 각도)
-            desire_arrow_end_x = 2 * math.cos(math.radians(self.psi_desire)) + self.boat_x
-            desire_arrow_end_y = 2 * math.sin(math.radians(self.psi_desire)) + self.boat_y
+            desire_arrow_end_x = 3 * math.cos(math.radians(self.psi_desire)) + self.boat_x
+            desire_arrow_end_y = 3 * math.sin(math.radians(self.psi_desire)) + self.boat_y
             psi_desire = visual.arrow_rviz(
                 name="psi_desire",
                 id=6,
@@ -258,6 +260,7 @@ class Autonomous:
             psi_desire_txt = visual.text_rviz(
                 name="psi_desire", id=7, text="desire", x=desire_arrow_end_x, y=desire_arrow_end_y
             )
+
             # 배로부터 목표지점까지 이은 선분
             goal_line = visual.linelist_rviz(
                 name="goal_line",
@@ -268,6 +271,7 @@ class Autonomous:
                 color_b=252,
                 scale=0.05,
             )
+
             # inrange obstacles
             inrange_obs_world = []  # span 미포함
             for ob in self.inrange_obstacles:
@@ -297,25 +301,30 @@ class Autonomous:
                 name="obs",
                 id=9,
                 lines=inrange_obs_world,
-                color_r=0,
-                color_g=0,
-                color_b=255,
+                color_r=237, color_g=234, color_b=74,
                 scale=0.1,
             )
+
             # 배와 함께 이동할 X, Y축
             axis_x = visual.linelist_rviz(
-                name="axis_x",
+                name="axis",
                 id=10,
                 lines=[[self.boat_x, self.boat_y], [self.boat_x + 3, self.boat_y]],
                 color_r=255,
                 scale=0.1,
             )
             axis_y = visual.linelist_rviz(
-                name="axis_x",
+                name="axis",
                 id=11,
                 lines=[[self.boat_x, self.boat_y], [self.boat_x, self.boat_y + 3]],
                 color_g=255,
                 scale=0.1,
+            )
+            axis_x_txt = visual.text_rviz(
+                name="axis", id=14, text="X", x=self.boat_x + 3.3, y=self.boat_y
+            )
+            axis_y_txt = visual.text_rviz(
+                name="axis", id=15, text="Y", x=self.boat_x, y=self.boat_y + 3.3
             )
 
             # goal_range (도착 인정 범위)
@@ -356,7 +365,9 @@ class Autonomous:
                     [self.boat_x, self.boat_y],
                     [max_angle_x, max_angle_y],
                 ],
-                color_b=255,
+                color_r=160,
+                color_g=90,
+                color_b=227,
                 scale=0.05,
             )
 
@@ -374,6 +385,8 @@ class Autonomous:
                     obstacles,
                     axis_x,
                     axis_y,
+                    axis_x_txt,
+                    axis_y_txt,
                     goal_range,
                     angle_range,
                 ]

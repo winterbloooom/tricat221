@@ -155,7 +155,7 @@ def cylinder_rviz(name, id, x, y, scale, color_r=0, color_g=0, color_b=0):
     Returns:
         Marker : Cylinder Marker object
     """
-    marker = basic_setting(name, id, color_r, color_g, color_b, color_a=200)
+    marker = basic_setting(name, id, color_r, color_g, color_b, color_a=100)
     marker.type = Marker.CYLINDER
     marker.scale = Vector3(scale, scale, 0.01)
     marker.pose.position = Point(x, y, 0)
