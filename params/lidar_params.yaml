@@ -1,6 +1,15 @@
-max_gap_in_set: 0.1 # meter
-min_point_set_size: 10
-max_dist_to_ps_line: 0.1 # meter
-min_wall_length: 0.3 # meter
-min_wall_particle_length: 0.7 # meter
+# max_gap_in_set: 0.1 # meter
+# min_point_set_size: 10
+# max_dist_to_ps_line: 0.1 # meter
+# min_wall_length: 2 # meter
+# min_wall_particle_length: 2 # meter
+# min_input_points_size: 3
+
+# trackbar----------------------------------
+
+max_gap_in_set: 1 # * 0.1 meter
+min_point_set_size: 20
+max_dist_to_ps_line: 3 # *0.1 meter
+min_wall_length: 40 # * 0.1 meter
+min_wall_particle_length: 40 # * 0.1 meter
 min_input_points_size: 3

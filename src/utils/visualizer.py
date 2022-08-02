@@ -12,7 +12,7 @@ from std_msgs.msg import ColorRGBA
 from visualization_msgs.msg import Marker, MarkerArray
 
 
-def basic_setting(name, id, color_r, color_g, color_b, color_a=1):
+def basic_setting(name, id, color_r, color_g, color_b, color_a=255):
     """make Marker object with basic settings
 
     Args:
@@ -33,7 +33,7 @@ def basic_setting(name, id, color_r, color_g, color_b, color_a=1):
     marker.ns = name
     marker.id = id
     marker.action = Marker.ADD
-    marker.color = ColorRGBA(color_r / 255.0, color_g / 255.0, color_b / 255.0, color_a)
+    marker.color = ColorRGBA(color_r / 255.0, color_g / 255.0, color_b / 255.0, color_a / 255.0)
     marker.pose.orientation.w = 1.0
     return marker
 
@@ -121,7 +121,7 @@ def text_rviz(name, id, x, y, text, scale=0.5):
     return marker
 
 
-def linelist_rviz(name, id, lines, color_r=0, color_g=0, color_b=0, scale=0.05):
+def linelist_rviz(name, id, lines, color_r=0, color_g=0, color_b=0, color_a=255, scale=0.05):
     """make a Line List Marker
 
     Args:
@@ -134,7 +134,7 @@ def linelist_rviz(name, id, lines, color_r=0, color_g=0, color_b=0, scale=0.05):
     Returns:
         Marker : Line List Marker object
     """
-    marker = basic_setting(name, id, color_r, color_g, color_b)
+    marker = basic_setting(name, id, color_r, color_g, color_b, color_a=color_a)
     marker.type = Marker.LINE_LIST
     marker.scale.x = scale
     for line in lines:
@@ -155,7 +155,7 @@ def cylinder_rviz(name, id, x, y, scale, color_r=0, color_g=0, color_b=0):
     Returns:
         Marker : Cylinder Marker object
     """
-    marker = basic_setting(name, id, color_r, color_g, color_b, color_a=0.6)
+    marker = basic_setting(name, id, color_r, color_g, color_b, color_a=200)
     marker.type = Marker.CYLINDER
     marker.scale = Vector3(scale, scale, 0.01)
     marker.pose.position = Point(x, y, 0)

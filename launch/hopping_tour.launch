@@ -13,7 +13,7 @@
 	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true"/>
 	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter" respawn="true"/>
 	<!-- <node pkg="tricat221" type="moving_avg_filter.py" name="MAF_IMU" output="screen"/> -->
-	<node pkg="tricat221" type="hopping_tour.py" name="hoppingTour" respawn="true" output="screen"/>
+	<node pkg="tricat221" type="hopping_tour.py" name="hoppingTour" output="screen"/>
 	<node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>
 
 	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/> -->

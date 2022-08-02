@@ -16,6 +16,7 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
+import datatypes.point_class as pc
 
 def ob_filtering(obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range, distance_range):
     """filter dangerous obstacles among all of them
@@ -39,31 +40,64 @@ def ob_filtering(obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range
 
     Todo:
         * 필터링하는 방식
-            * 방법1 : 시작이나 끝점이 안쪽에 있는 것만 inrange로 저장 -> lidar converter에서 심하게 잘게 쪼갤 필요는 없음
-            * 방법2 : (현재 사용중) 장애물 중앙점만 사용 -> 잘게 쪼개야 함
+            * 방법1 : (현재 사용중) 시작이나 끝점이 안쪽에 있는 것만 inrange로 저장 -> lidar converter에서 심하게 잘게 쪼갤 필요는 없음
+            * 방법2 : 장애물 중앙점만 사용 -> 잘게 쪼개야 함
         * 목표점과 장애물의 거리 비교 방법
             * 방법1 : 시작/끝/중간 점의 거리만 비교하는 방법
-            * 방법2 : (현재 사용중) 중간 점의 거리만 비교하는 방법
+            * 방법2 : 중간 점의 거리만 비교하는 방법
             * 방법3 : 시작과 끝을 연장한 직선을 그리고, 목표점과 현위치(0, 0)이 직선의 각각 양 쪽에 위치하는지(부등식에서 하나는 +, 하나는 -)
+            * 방법4 : (현재 사용중) 장애물의 첫점과 끝점을 이은 직선으로 현 보트 위치에서 수선의 발을 내리고, 수선의 발까지 길이(내적 이용)
     """
     inrange_obstacles = []
     danger_angles = []
     for ob in obstacles:
-        begin_ang = int(math.degrees(math.atan2(ob.begin.y, -ob.begin.x))) - span_angle
-        end_ang = int(math.degrees(math.atan2(ob.end.y, -ob.end.x))) + span_angle
+        # 주의! 항상 begin의 각도가 더 작지 않음!!!
+        begin_ang = int(math.degrees(math.atan2(ob.begin.y, -ob.begin.x)))
+        end_ang = int(math.degrees(math.atan2(ob.end.y, -ob.end.x)))
+        if begin_ang > end_ang:
+            temp = end_ang
+            end_ang = begin_ang
+            begin_ang = temp
+
+        begin_ang -= span_angle
+        end_ang += span_angle
+
         middle_x = -(ob.begin.x + ob.end.x) / 2
         middle_y = (ob.begin.y + ob.end.y) / 2
         middle_angle = math.degrees(math.atan2(middle_y, middle_x))
-        dist_to_ob = math.sqrt(middle_x**2 + middle_y**2)
-        if (angle_range[0] <= middle_angle <= angle_range[1]) and (dist_to_ob <= distance_range):
-            if (begin_ang <= angle_to_goal <= end_ang) and (dist_to_ob >= dist_to_goal):
-                continue  # 장애물이 목표점보다 뒤에 있어 고려할 필요 없음
-            inrange_obstacles.append(ob)  # [begin.x, begin.y, end.x, end.y]
-            danger_angles.extend(list(range(begin_ang, end_ang + 1)))  # 장애물이 있는 각도 리스트
-    danger_angles = sorted(list(set(danger_angles)))  # 중복 제거, 오름차순 정렬
+
+        # dist_to_ob = math.sqrt(middle_x**2 + middle_y**2)
+        begin = pc.Point(ob.begin.x, ob.begin.y)
+        end =  pc.Point(ob.begin.x, ob.begin.y)
+        boat = pc.Point(0, 0)
+        a = end - begin
+        b = boat - begin
+        if a.dist_squared_from_origin() != 0:
+            projection = begin + a * (a.dot(b) / a.dist_squared_from_origin()) 
+        else:
+            projection = begin
+        dist_to_ob = (boat - projection).dist_from_origin()
+
+        # 장애물이 목표점보다 뒤에 있어 고려할 필요 없음
+        if (begin_ang <= angle_to_goal <= end_ang) and (dist_to_ob >= dist_to_goal):
+            print("ob is behind the goal -> don't count")
+            continue  
+
+        # 장애물이 각도&거리 범위 내에 있음
+        if (angle_range[0] <= begin_ang <= angle_range[1]) or (angle_range[0] <= end_ang <= angle_range[1]):
+            if dist_to_ob <= distance_range:
+                inrange_obstacles.append(ob)  # [begin.x, begin.y, end.x, end.y]
+
+                danger_angles.extend(list(range(begin_ang, end_ang + 1)))  # 장애물이 있는 각도 리스트
+
+    # angle_range 넘는 부분은 제외하고 그 안쪽 danger_angles만 남겨둠.
+    # 참고 URL: https://appia.tistory.com/101
+    danger_angles = set(danger_angles)
+    all_angles_in_range = set(range(angle_range[0], angle_range[1]+1))
+    out_of_range = set(danger_angles) - all_angles_in_range
+    danger_angles = sorted(list(danger_angles - out_of_range))
 
     return inrange_obstacles, danger_angles
-
 
 def calc_desire_angle(danger_angles, angle_to_goal, angle_range):
     """calculate safe and efficient rotation angle considering danger angles
@@ -91,22 +125,21 @@ def calc_desire_angle(danger_angles, angle_to_goal, angle_range):
     """
     safe_angle = 0
     if len(danger_angles) == (angle_range[1] - angle_range[0]) + 1:
-        print("all obs")
+        print("**** all obs ****")
         return angle_to_goal  # 범위 내 모두 장애물임
     elif len(danger_angles) == 0:
-        print("no obs")
+        # inrange_ob가 0이 아닌데 no ob가 되는 경우가 -> 시작점 끝점 대소 관계 재정의해서 해결한 듯
+        print("**** no obs ****")
         return angle_to_goal  # 범위 내 장애물 없음
     else:
         delta_goal = 10000  # goal까지 차이각 (절댓값)
         delta_heading = 10000  # heading까지 차이각 (절댓값)
         for angle in range(angle_range[0], angle_range[1] + 1):
             if angle in danger_angles:
-                print("'angle {} in danger".format(angle))
                 continue  # 장애물이 있는 각도
             if (delta_goal > abs(angle_to_goal - angle)) or (
                 delta_goal == abs(angle_to_goal - angle) and delta_heading > abs(angle)
             ):
-                print("reset best angle: {}".format(angle))
                 safe_angle = angle
                 delta_goal = abs(angle_to_goal - angle)
                 delta_heading = abs(angle)

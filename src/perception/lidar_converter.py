@@ -5,6 +5,7 @@ import os
 import sys
 
 import rospy
+import cv2
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
@@ -41,6 +42,39 @@ class Lidar_Converter:
         self.point_sets_list = []  # point_set들의 리스트 [ps1, ps2, ...]
         self.obstacles = []  # 최종적으로 합쳐지고 나눠인 set들 저장 (wall + buoy)
 
+        # trackbar
+        cv2.namedWindow("controller")
+        cv2.createTrackbar(
+            "point ~ point in group", "controller", rospy.get_param("max_gap_in_set"), 5, self.trackbar_callback
+        ) # X 0.1
+        cv2.createTrackbar(
+            "# of points in group", "controller", rospy.get_param("min_point_set_size"), 30, self.trackbar_callback
+        )
+        cv2.createTrackbar(
+            "point ~ group", "controller", rospy.get_param("max_dist_to_ps_line"), 5, self.trackbar_callback
+        ) # X 0.1
+        cv2.createTrackbar(
+            "wall should splitted", "controller", rospy.get_param("min_wall_length"), 50, self.trackbar_callback
+        ) # X 0.1
+        cv2.createTrackbar(
+            "wall particle len", "controller", rospy.get_param("min_wall_particle_length"), 50, self.trackbar_callback
+        ) # X 0.1
+        cv2.createTrackbar(
+            "# of input points", "controller", rospy.get_param("min_input_points_size"), 50, self.trackbar_callback
+        )
+
+    def trackbar_callback(self, usrdata):
+        pass
+
+    def get_trackbar_pos(self):
+        """get trackbar poses and set each values"""
+        self.max_gap_in_set = cv2.getTrackbarPos("point ~ point in group", "controller") * 0.1
+        self.min_point_set_size = cv2.getTrackbarPos("# of points in group", "controller")
+        self.max_dist_to_ps_line = cv2.getTrackbarPos("point ~ group", "controller") * 0.1
+        self.min_wall_length = cv2.getTrackbarPos("wall should splitted", "controller") * 0.1
+        self.min_wall_particle_length = cv2.getTrackbarPos("wall particle len", "controller") * 0.1
+        self.min_input_points_size = cv2.getTrackbarPos("# of input points", "controller")
+
     def lidar_raw_callback(self, msg):
         self.input_points = []
         self.point_sets_list = []
@@ -55,6 +89,7 @@ class Lidar_Converter:
                 self.input_points.append(p)
             phi += msg.angle_increment
 
+        self.get_trackbar_pos()
         self.process_points()
 
     def process_points(self):
@@ -159,6 +194,7 @@ class Lidar_Converter:
                 self.split_wall(ps)  # 어느 정도 길이로 벽을 쪼개서 obstacle에 넣음
             else:
                 self.obstacles.append(ps)  # 부표로 인식하고 바로 obstacle에 넣어줌
+            # self.obstacles.append(ps)
 
     def split_wall(self, ps):
         wall_particle = Point_Set()
@@ -291,8 +327,9 @@ def main():
     rate = rospy.Rate(10)
 
     while not rospy.is_shutdown():
-        # TODO 중간에 들어갈 것이 없는데????
-
+        if cv2.waitKey(1) == 27:
+            cv2.destroyAllWindows()
+            break
         rate.sleep()
 
     rospy.spin()

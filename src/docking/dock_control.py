@@ -46,6 +46,7 @@ def pixel_to_degree(target, alpha):
 
 
 def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False):
+    # TODO autonomous 보고 수정할 것!!!!!!!
     """
     Args:
         error_angle (float): 왼쪽으로 틀어야 하면 -, 오른쪽으로 틀어야 하면 +, 안 움직여도 되면 0
@@ -65,4 +66,12 @@ def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False
     u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (
         angle_range[1] - angle_range[0]
     ) + servo_range[0]
+
+    u_servo *= alpha
+
+    if u_servo > servo_range[1]:
+        u_servo = servo_range[1]
+    elif u_servo < servo_range[0]:
+        u_servo = servo_range[0]
+    
     return u_servo * alpha
