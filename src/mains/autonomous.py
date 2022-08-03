@@ -161,7 +161,9 @@ class Autonomous:
         # show in terminal
         print("-" * 50)
         print("{:>9} - {:>9} = {:>7}".format("desire", "psi", "error"))
-        print("({:7.2f}) - ({:7.2f}) = ({:6.2f})".format(self.psi_desire, self.psi, self.error_angle))
+        print(
+            "({:7.2f}) - ({:7.2f}) = ({:6.2f})".format(self.psi_desire, self.psi, self.error_angle)
+        )
         if self.psi_goal - self.psi > 0:
             print(
                 "psi_goal : {:7.2f} [Right] | dist : {:6.2f} m".format(

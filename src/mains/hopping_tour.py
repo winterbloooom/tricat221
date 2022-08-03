@@ -68,7 +68,6 @@ class Hopping:
         self.cnt = 0  # 상태 출력을 조절할 카운터
         self.u_servo = self.servo_middle
         self.u_thruster = self.thruster_min
-        
 
         # subscribers
         rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
@@ -87,12 +86,20 @@ class Hopping:
         # make controller
         if self.controller:
             cv2.namedWindow("controller")
-            cv2.createTrackbar("p angle (x 0.01)", "controller", self.kp_angle, 100, self.trackbar_callback) # 0.01
-            cv2.createTrackbar("i angle (x 0.01)", "controller", self.ki_angle, 10, self.trackbar_callback)
+            cv2.createTrackbar(
+                "p angle (x 0.01)", "controller", self.kp_angle, 100, self.trackbar_callback
+            )  # 0.01
+            cv2.createTrackbar(
+                "i angle (x 0.01)", "controller", self.ki_angle, 10, self.trackbar_callback
+            )
             cv2.createTrackbar("d angle", "controller", self.kd_angle, 10, self.trackbar_callback)
-            cv2.createTrackbar("p dist", "controller", self.kp_distance, 100, self.trackbar_callback)
+            cv2.createTrackbar(
+                "p dist", "controller", self.kp_distance, 100, self.trackbar_callback
+            )
             cv2.createTrackbar("i dist", "controller", self.ki_distance, 10, self.trackbar_callback)
-            cv2.createTrackbar("d dist", "controller", self.kd_distance, 100, self.trackbar_callback)
+            cv2.createTrackbar(
+                "d dist", "controller", self.kd_distance, 100, self.trackbar_callback
+            )
 
     def trackbar_callback(self, usrdata):
         """trackar callback function. do nothing"""
@@ -184,8 +191,8 @@ class Hopping:
         self.psi_desire = math.degrees(
             math.atan2(self.goal_y - self.boat_y, self.goal_x - self.boat_x)
         )
-        error_angle = (self.psi_desire - self.psi)
-        if error_angle >= 180: #왼쪽으로 회전이 더 이득
+        error_angle = self.psi_desire - self.psi
+        if error_angle >= 180:  # 왼쪽으로 회전이 더 이득
             self.error_angle = -180 + abs(error_angle) % 180
         elif error_angle <= -180:
             self.error_angle = 180 - abs(error_angle) % 180
@@ -266,7 +273,11 @@ class Hopping:
                 )
             )
             print("Servo : |--{:-<3d}--|-------|".format(self.u_servo))
-        print("        P [{:4.2f}], I [{:4.2f}], D [{:4.2f}]".format(self.kp_angle, self.ki_angle, self.kd_angle))
+        print(
+            "        P [{:4.2f}], I [{:4.2f}], D [{:4.2f}]".format(
+                self.kp_angle, self.ki_angle, self.kd_angle
+            )
+        )
 
         print("Distance : {:5.2f} m".format(self.distance_to_goal))
         print(
