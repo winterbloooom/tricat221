@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+	<!--IMU-->
+	<!-- <node pkg="myahrs_driver" type="myahrs_driver" name="myahrs_driver">
+		<param name="port" value="/dev/ttyIMU" />
+		<param name="baud_rate" value="115200" />
+	</node> -->
+
+	<!--tricat src-->
+	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true"/>
+	<node pkg="tricat221" type="servo_test.py" name="hoppingTour" output="screen"/>
+	<!-- <node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/> -->
+
+	<!--Visualization-->
+	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/> -->
+	
+	<!--PARAMETERS-->
+	<rosparam command="load" file="$(find tricat221)/params/servo_params.yaml"/>
+	
+</launch>

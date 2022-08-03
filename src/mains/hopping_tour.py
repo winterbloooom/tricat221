@@ -22,18 +22,6 @@ import utils.visualizer as visual
 
 class Hopping:
     def __init__(self):
-        self.heading_queue = []  # 헤딩을 필터링할 이동평균필터 큐
-
-        # subscribers
-        rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
-        rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
-        rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
-
-        # publishers
-        self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0)
-        self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
-        self.visual_rviz_pub = rospy.Publisher("/visual_rviz", MarkerArray, queue_size=0)
-
         self.waypoint_idx = 1  # 지금 향하고 있는 waypoint 번호
 
         # coordinates
@@ -63,6 +51,7 @@ class Hopping:
         self.psi = 0  # 자북과 heading의 각도(자북 우측 +, 좌측 -) [degree]
         self.psi_desire = 0  # 지구고정좌표계 기준 움직여야 할 각도
         self.error_angle = 0  # 다음 목표까지 가기 위한 차이각
+        self.heading_queue = []  # 헤딩을 필터링할 이동평균필터 큐
 
         # other fix values
         self.servo_middle = rospy.get_param("servo_middle")
@@ -79,6 +68,17 @@ class Hopping:
         self.cnt = 0  # 상태 출력을 조절할 카운터
         self.u_servo = self.servo_middle
         self.u_thruster = self.thruster_min
+        
+
+        # subscribers
+        rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
+        rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
+        rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
+
+        # publishers
+        self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0)
+        self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
+        self.visual_rviz_pub = rospy.Publisher("/visual_rviz", MarkerArray, queue_size=0)
 
         # presetting
         self.calc_distance_to_goal()
@@ -87,12 +87,12 @@ class Hopping:
         # make controller
         if self.controller:
             cv2.namedWindow("controller")
-            cv2.createTrackbar("p angle", "controller", 3, 10, self.trackbar_callback)
-            cv2.createTrackbar("i angle", "controller", 0, 10, self.trackbar_callback)
-            cv2.createTrackbar("d angle", "controller", 0, 10, self.trackbar_callback)
-            cv2.createTrackbar("p dist", "controller", 40, 100, self.trackbar_callback)
-            cv2.createTrackbar("i dist", "controller", 0, 10, self.trackbar_callback)
-            cv2.createTrackbar("d dist", "controller", 0, 100, self.trackbar_callback)
+            cv2.createTrackbar("p angle (x 0.01)", "controller", self.kp_angle, 100, self.trackbar_callback) # 0.01
+            cv2.createTrackbar("i angle (x 0.01)", "controller", self.ki_angle, 10, self.trackbar_callback)
+            cv2.createTrackbar("d angle", "controller", self.kd_angle, 10, self.trackbar_callback)
+            cv2.createTrackbar("p dist", "controller", self.kp_distance, 100, self.trackbar_callback)
+            cv2.createTrackbar("i dist", "controller", self.ki_distance, 10, self.trackbar_callback)
+            cv2.createTrackbar("d dist", "controller", self.kd_distance, 100, self.trackbar_callback)
 
     def trackbar_callback(self, usrdata):
         """trackar callback function. do nothing"""
@@ -184,7 +184,13 @@ class Hopping:
         self.psi_desire = math.degrees(
             math.atan2(self.goal_y - self.boat_y, self.goal_x - self.boat_x)
         )
-        self.error_angle = self.psi_desire - self.psi
+        error_angle = (self.psi_desire - self.psi)
+        if error_angle >= 180: #왼쪽으로 회전이 더 이득
+            self.error_angle = -180 + abs(error_angle) % 180
+        elif error_angle <= -180:
+            self.error_angle = 180 - abs(error_angle) % 180
+        else:
+            self.error_angle = error_angle
 
     def error_angle_PID(self):
         self.set_PID_value()
@@ -204,15 +210,12 @@ class Hopping:
         elif u_servo < self.servo_right_max:
             u_servo = self.servo_right_max
 
-        # print("cp_angle : {} / ci_angle : {} / cd_angle : {}".format(cp_angle, ci_angle, cd_angle))
-        # print("u_angle : {} / u_servo : {}".format(u_angle, u_servo))
-
         return int(u_servo)
 
     def set_PID_value(self):
         if self.controller:
-            self.kp_angle = cv2.getTrackbarPos("p angle", "controller") * 0.1
-            self.ki_angle = cv2.getTrackbarPos("i angle", "controller") * 0.01
+            self.kp_angle = cv2.getTrackbarPos("p angle (x 0.01)", "controller") * 0.01
+            self.ki_angle = cv2.getTrackbarPos("i angle (x 0.01)", "controller") * 0.01
             self.kd_angle = cv2.getTrackbarPos("d angle", "controller") * 0.1
             self.kp_distance = cv2.getTrackbarPos("p dist", "controller")
             self.ki_distance = cv2.getTrackbarPos("i dist", "controller")
@@ -247,25 +250,23 @@ class Hopping:
                 self.remained_waypoint[self.waypoint_idx][1],
             )
         )
-        print("{:>9} - {:>9} = {:>7}".format("psi", "desire", "error"))
+        print("{:>9} - {:>9} = {:>7}".format("desire", "psi", "error"))
 
         if self.error_angle > 0:
             print(
                 "({:7.2f}) - ({:7.2f}) = ({:6.2f}) [Right]".format(
-                    self.psi, self.psi_desire, self.error_angle
+                    self.psi_desire, self.psi, self.error_angle
                 )
             )
+            print("Servo : |-------|--{:->3d}--|".format(self.u_servo))
         else:
             print(
                 "({:7.2f}) - ({:7.2f}) = ({:6.2f}) [ Left]".format(
-                    self.psi, self.psi_desire, self.error_angle
+                    self.psi_desire, self.psi, self.error_angle
                 )
             )
-        print(
-            "Servo    : {:>4d} | P [{:4.1f}], I [{:4.2f}], D [{:4.1f}]".format(
-                self.u_servo, self.kp_angle, self.ki_angle, self.kd_angle
-            )
-        )
+            print("Servo : |--{:-<3d}--|-------|".format(self.u_servo))
+        print("        P [{:4.2f}], I [{:4.2f}], D [{:4.2f}]".format(self.kp_angle, self.ki_angle, self.kd_angle))
 
         print("Distance : {:5.2f} m".format(self.distance_to_goal))
         print(
@@ -273,6 +274,7 @@ class Hopping:
                 self.u_thruster, self.kp_distance, self.ki_distance, self.kd_distance
             )
         )
+        print("")
 
         if visualize:
             traj = visual.points_rviz(name="traj", id=1, points=self.trajectory, color_g=255)
@@ -345,7 +347,6 @@ class Hopping:
             )
             id = 9
             for idx in self.remained_waypoint:
-                # TODO 지난 목표점은 흐리게 표시!
                 # wpt = key
                 # remained_waypoint[wpt] = value
                 waypoint = visual.point_rviz(
@@ -411,8 +412,6 @@ def main():
             if cv2.waitKey(1) == 27:
                 break
         rate.sleep()
-
-    rospy.spin()
 
 
 if __name__ == "__main__":

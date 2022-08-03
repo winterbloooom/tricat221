@@ -160,8 +160,8 @@ class Autonomous:
         """
         # show in terminal
         print("-" * 50)
-        print("{:>9} - {:>9} = {:>7}".format("psi", "desire", "error"))
-        print("({:7.2f}) - ({:7.2f}) = ({:6.2f})".format(self.psi, self.psi_desire, error_angle))
+        print("{:>9} - {:>9} = {:>7}".format("desire", "psi", "error"))
+        print("({:7.2f}) - ({:7.2f}) = ({:6.2f})".format(self.psi_desire, self.psi, self.error_angle))
         if self.psi_goal - self.psi > 0:
             print(
                 "psi_goal : {:7.2f} [Right] | dist : {:6.2f} m".format(
@@ -460,6 +460,7 @@ def main():
             error_angle = oa.calc_desire_angle(
                 auto.danger_angles, auto.psi_goal - auto.psi, auto.ob_angle_range
             )  # 목표각과 현 헤딩 사이 상대적 각도 계산. 선박고정좌표계로 '가야 할 각도'에 해당
+            # TODO error angle이 180, -180 넘어가는 범위 나오는지 잘 체크하기!
             auto.psi_desire = auto.psi + error_angle  # 월드좌표계로 '가야 할 각도'를 계산함
 
             u_servo = auto.degree_to_servo(error_angle)  # degree 단위를 servo moter 단위로 변경
