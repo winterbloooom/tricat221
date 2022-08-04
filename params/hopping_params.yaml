@@ -1,16 +1,19 @@
-goal_range: 2.0
+goal_range: 1.5
 
-kp_angle : 0.3
-ki_angle : 0 # max 0.05?
-kd_angle : 0
+kp_angle : 40 # x0.01
+ki_angle : 0 # x0.01
+kd_angle : 1 # x0.1
 
 kp_distance : 40
 ki_distance : 0
 kd_distance : 0
 
-servo_middle: 93
-servo_left_max: 118 #93+25
-servo_right_max: 68 #93-25
+servo_middle: 95
+servo_left_max: 120
+servo_right_max: 70
 
-thruster_max : 1700
+thruster_max : 1650
 thruster_min : 1600
+
+controller : 1
+filter_queue_size : 5
