@@ -140,6 +140,8 @@ def calc_desire_angle(danger_angles, angle_to_goal, angle_range):
         delta_heading = 10000  # heading까지 차이각 (절댓값)
         for angle in range(angle_range[0], angle_range[1] + 1):
             if angle in danger_angles:
+                if angle == angle_range[1] + 1:
+                    return angle_to_goal
                 continue  # 장애물이 있는 각도
             if (delta_goal > abs(angle_to_goal - angle)) or (
                 delta_goal == abs(angle_to_goal - angle) and delta_heading > abs(angle)

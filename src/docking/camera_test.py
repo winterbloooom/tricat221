@@ -28,12 +28,12 @@ from tricat221.msg import Obstacle, ObstacleList
 class Docking:
     def __init__(self):
         # subscribers
-        # self.heading_sub = rospy.Subscriber(
-        #     "/heading", Float64, self.heading_callback, queue_size=1
-        # )
-        # self.enu_pos_sub = rospy.Subscriber(
-        #     "/enu_position", Point, self.boat_position_callback, queue_size=1
-        # )
+        self.heading_sub = rospy.Subscriber(
+            "/heading", Float64, self.heading_callback, queue_size=1
+        )
+        self.enu_pos_sub = rospy.Subscriber(
+            "/enu_position", Point, self.boat_position_callback, queue_size=1
+        )
         # self.obstacle_sub = rospy.Subscriber(
         #     "/obstacles", ObstacleList, self.obstacle_callback, queue_size=1
         # )
@@ -90,7 +90,7 @@ class Docking:
         self.target_detect_cnt = rospy.get_param(
             "target_detect_cnt"
         )  # target_detect_time동안 몇 번 발겼했나
-        self.station_dir = rospy.get_param("station_dir")  # [-180, 180]
+        self.station_dir = rospy.get_param("station_dir")
 
         # constants
         self.angle_alpha = rospy.get_param("angle_alpha")
@@ -208,11 +208,11 @@ class Docking:
             bool : True(if all connected) / False(not ALL connected yet)
         """
         not_connected = ""
-        # if self.heading_sub.get_num_connections() == 0:
-        #     not_connected += "\theadingCalculator"
+        if self.heading_sub.get_num_connections() == 0:
+            not_connected += "\theadingCalculator"
 
-        # if self.enu_pos_sub.get_num_connections() == 0:
-        #     not_connected += "\tgnssConverter"
+        if self.enu_pos_sub.get_num_connections() == 0:
+            not_connected += "\tgnssConverter"
 
         # if self.obstacle_sub.get_num_connections() == 0:
         #     not_connected += "\tlidarConverter"
@@ -265,7 +265,7 @@ class Docking:
             return False
 
     def check_heading(self):
-        return abs(self.station_dir - self.psi) > self.ref_dir_range
+        return abs(self.station_dir - self.psi) < self.ref_dir_range
 
     def check_target(self, return_target=False):
         self.show_window()
@@ -297,6 +297,9 @@ class Docking:
             "Docking",
             "End",
         ]
+        # print(abs(self.station_dir - self.psi))
+        # if self.target_found:
+        #     print(self.target[0])
         print("State: # {} - {}".format(str(self.state), state_str[self.state]))
         print("psi  {:7.2f}  =>  error  {:6.2f} (0 if state #5)".format(self.psi, error_angle))
         if error_angle > 0:

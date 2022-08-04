@@ -60,30 +60,19 @@ def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False
     if use_prev:
         return -1
 
-    # angle_mid = sum(angle_range) / 2
-    # u_angle = error_angle - angle_mid  # 부호 반대여야 하는데, 서보는 왼쪽이 더 커져야 하니까 이렇게 함
-    # u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (
-    #     angle_range[1] - angle_range[0]
-    # ) + servo_range[0]
+    u_angle = (-error_angle) * alpha  # 조절 상수 곱해 감도 조절  # 왼쪽이 더 큰 값을 가져야 하므로
 
-    # u_servo *= alpha
+    # degree에서 servo로 mapping
+    u_servo = (u_angle - angle_range[0]) * (
+        servo_range[1] - servo_range[0]
+    ) / (angle_range[1] - angle_range[0]) + servo_range[0]  
 
-    # if u_servo > servo_range[1]:
-    #     u_servo = servo_range[1]
-    # elif u_servo < servo_range[0]:
-    #     u_servo = servo_range[0]
+    # 중앙값 근처는 전부 중앙값으로 publish
+    servo_middle = (servo_range[0] + servo_range[1]) / 2
+    if servo_middle - 2 <= u_servo <= servo_middle + 2:
+        u_servo = servo_middle
 
-    # return u_servo * alpha
-
-    u_angle = -error_angle  # 왼쪽이 더 큰 값을 가져야 하므로
-
-    u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (
-        angle_range[1] - angle_range[0]
-    ) + servo_range[
-        0
-    ]  # degree에서 servo로 mapping
-    u_servo *= alpha  # 조절 상수 곱해 감도 조절
-
+    # servo motor 제어 가능 범위 내부에 머무르도록 함
     if u_servo > servo_range[1]:
         u_servo = servo_range[1]
     elif u_servo < servo_range[0]:

@@ -16,7 +16,7 @@ def moving_avg_filter(queue, queue_size, input, use_prev=False):
         if len(queue) >= queue_size:
             queue.pop(0)
         queue.append(input)
-    return sum(queue) / len(queue)
+    return sum(queue) / float(len(queue))
 
     # # 마지막 서보 값을 추가하고 새 평균을 사용하는 버전
     # if use_prev:

@@ -91,9 +91,10 @@ class Autonomous:
         Notes:
             * IMU의 예민성으로 인하여 heading 값에 noise가 있음. 따라서 이동평균필터를 적용함.
         """
-        self.psi = filtering.moving_avg_filter(
-            self.heading_queue, self.filter_queue_size, msg.data
-        )  # [deg]
+        # self.psi = filtering.moving_avg_filter(
+        #     self.heading_queue, self.filter_queue_size, msg.data
+        # )  # [deg]
+        self.psi = msg.data
 
     def boat_position_callback(self, msg):
         """GPS로 측정한 배의 ENU 변환 좌표 콜백함수
@@ -411,17 +412,19 @@ class Autonomous:
                       (x       - input_min        ) * (output_max     - output_min    ) / (input_max         - input_min        ) + output_min
             u_servo = (u_angle - ob_angle_range[0]) * (servo_range[1] - servo_range[0]) / (ob_angle_range[1] - ob_angle_range[0]) + servo_range[0]
         """
-        # angle_mid = sum(self.ob_angle_range) / 2  # 중앙 각도
-        # u_angle = angle_mid - error_angle  # 중앙(heading=0으로 두고)으로부터 돌려야 할 각도
-
         u_angle = (-error_angle) * self.angle_alpha  # 조절 상수 곱해 감도 조절  # 왼쪽이 더 큰 값을 가져야 하므로
 
+        # degree에서 servo로 mapping
         u_servo = (u_angle - self.rotate_angle_range[0]) * (
             self.servo_range[1] - self.servo_range[0]
-        ) / (self.rotate_angle_range[1] - self.rotate_angle_range[0]) + self.servo_range[
-            0
-        ]  # degree에서 servo로 mapping
+        ) / (self.rotate_angle_range[1] - self.rotate_angle_range[0]) + self.servo_range[0]  
 
+        # 중앙값 근처는 전부 중앙값으로 publish
+        servo_middle = (self.servo_range[0] + self.servo_range[1]) / 2
+        if servo_middle - 2 <= u_servo <= servo_middle + 2:
+            u_servo = servo_middle
+
+        # servo motor 제어 가능 범위 내부에 머무르도록 함
         if u_servo > self.servo_range[1]:
             u_servo = self.servo_range[1]
         elif u_servo < self.servo_range[0]:

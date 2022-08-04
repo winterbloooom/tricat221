@@ -4,23 +4,23 @@ angle_range: [-80, 80]
 servo_range: [70, 120]
 arrival_range: 1.5 # m
 ref_dir_range: 10 # def
-station_dir: 0 # temp, deg
-arrival_target_area: 20 # X1,000
+station_dir: -157 # deg
+arrival_target_area: 20 # X1,000 # 5ho station2000
 stop_time: 3 # sec
 target_detect_time: 400 # times
 target_detect_cnt: 300 # times
 
-color1_lower: 0
-color1_upper: 118
-color2_lower: 144
+color1_lower: 78
+color1_upper: 180
+color2_lower: 145
 color2_upper: 255
-color3_lower: 72
+color3_lower: 216
 color3_upper: 255
 
 angle_alpha: 1
 pixel_alpha: 10 # X 100
 
-target_shape: 4 # 3: triangle, 4: rectangle, 5: circle
+target_shape: 3 # 3: triangle, 4: rectangle, 5: circle
 thruster_default: 1600
 thruster_stop: 1500 
 filter_queue_size: 5
