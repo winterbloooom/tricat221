@@ -29,11 +29,11 @@
 # New Algorithm ------------------------
 
 goal_range: 1.5 # m
-ob_dist_range : 10 # m
-ob_angle_range : [-50, 50] # deg
+ob_dist_range : 4 # m
+ob_angle_range : [-90, 90] # deg
 rotate_angle_range : [-80, 80] #deg
-servo_range : [68, 118]
+servo_range : [70, 120]
 thruster_speed : 1600
-span_angle : 5 # deg
-filter_queue_size : 30
-angle_alpha : 1
+span_angle : 15 # deg
+filter_queue_size : 5
+angle_alpha : 1.5 # 그냥 

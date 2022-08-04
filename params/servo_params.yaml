@@ -1,4 +1,4 @@
 rotate_angle_range : [-80, 80] #deg
-servo_range : [68, 118]
+servo_range : [70, 120] # mid=95
 filter_queue_size : 5
 angle_alpha : 1

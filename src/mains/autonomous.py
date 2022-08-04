@@ -414,14 +414,13 @@ class Autonomous:
         # angle_mid = sum(self.ob_angle_range) / 2  # 중앙 각도
         # u_angle = angle_mid - error_angle  # 중앙(heading=0으로 두고)으로부터 돌려야 할 각도
 
-        u_angle = -error_angle  # 왼쪽이 더 큰 값을 가져야 하므로
+        u_angle = (-error_angle) * self.angle_alpha  # 조절 상수 곱해 감도 조절  # 왼쪽이 더 큰 값을 가져야 하므로
 
         u_servo = (u_angle - self.rotate_angle_range[0]) * (
             self.servo_range[1] - self.servo_range[0]
         ) / (self.rotate_angle_range[1] - self.rotate_angle_range[0]) + self.servo_range[
             0
         ]  # degree에서 servo로 mapping
-        u_servo *= self.angle_alpha  # 조절 상수 곱해 감도 조절
 
         if u_servo > self.servo_range[1]:
             u_servo = self.servo_range[1]
@@ -466,9 +465,9 @@ def main():
             auto.psi_desire = auto.psi + error_angle  # 월드좌표계로 '가야 할 각도'를 계산함
 
             u_servo = auto.degree_to_servo(error_angle)  # degree 단위를 servo moter 단위로 변경
-            u_servo = filtering.moving_avg_filter(
-                auto.filter_queue, auto.filter_queue_size, u_servo
-            )  # 이동평균필터링
+            # u_servo = filtering.moving_avg_filter(
+            #     auto.filter_queue, auto.filter_queue_size, u_servo
+            # )  # 이동평균필터링
 
             auto.servo_pub.publish(u_servo)
             auto.thruster_pub.publish(auto.thruster_speed)

@@ -1,10 +1,10 @@
 # range, limits
 ref_front: 0
-angle_range: [-90, 90]
-servo_range: [68, 118]
+angle_range: [-80, 80]
+servo_range: [70, 120]
 arrival_range: 1.5 # m
 ref_dir_range: 10 # def
-station_dir: 50 # temp, deg
+station_dir: 0 # temp, deg
 arrival_target_area: 20 # X1,000
 stop_time: 3 # sec
 target_detect_time: 400 # times

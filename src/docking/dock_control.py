@@ -46,7 +46,6 @@ def pixel_to_degree(target, alpha):
 
 
 def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False):
-    # TODO autonomous 보고 수정할 것!!!!!!!
     """
     Args:
         error_angle (float): 왼쪽으로 틀어야 하면 -, 오른쪽으로 틀어야 하면 +, 안 움직여도 되면 0
@@ -61,17 +60,32 @@ def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False
     if use_prev:
         return -1
 
-    angle_mid = sum(angle_range) / 2
-    u_angle = error_angle - angle_mid  # 부호 반대여야 하는데, 서보는 왼쪽이 더 커져야 하니까 이렇게 함
-    u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (
-        angle_range[1] - angle_range[0]
-    ) + servo_range[0]
+    # angle_mid = sum(angle_range) / 2
+    # u_angle = error_angle - angle_mid  # 부호 반대여야 하는데, 서보는 왼쪽이 더 커져야 하니까 이렇게 함
+    # u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (
+    #     angle_range[1] - angle_range[0]
+    # ) + servo_range[0]
 
-    u_servo *= alpha
+    # u_servo *= alpha
+
+    # if u_servo > servo_range[1]:
+    #     u_servo = servo_range[1]
+    # elif u_servo < servo_range[0]:
+    #     u_servo = servo_range[0]
+
+    # return u_servo * alpha
+
+    u_angle = -error_angle  # 왼쪽이 더 큰 값을 가져야 하므로
+
+    u_servo = (u_angle - angle_range[0]) * (
+        servo_range[1] - servo_range[0]
+    ) / (angle_range[1] - angle_range[0]) + servo_range[
+        0
+    ]  # degree에서 servo로 mapping
+    u_servo *= alpha  # 조절 상수 곱해 감도 조절
 
     if u_servo > servo_range[1]:
         u_servo = servo_range[1]
     elif u_servo < servo_range[0]:
         u_servo = servo_range[0]
-
-    return u_servo * alpha
+    return int(u_servo)

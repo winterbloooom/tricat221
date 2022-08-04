@@ -19,16 +19,18 @@ import utils.filtering as filtering
 class ServoTest:
     def __init__(self):
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0)
+        self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
         self.angle_range = rospy.get_param("rotate_angle_range")  # 회전할 각도 범위
         self.servo_range = rospy.get_param("servo_range")  # 서보모터 최대/최소값
+        print(self.servo_range)
         self.angle_alpha = rospy.get_param("angle_alpha")  # angle_to_servo 함수에서 사용할 상수
         self.filter_queue = []  # 서보모터값을 필터링할 이동평균필터 큐
         self.error_angle = 0
 
         cv2.namedWindow("trackbar")
         cv2.createTrackbar("angle_range", "trackbar", 80, 90, lambda x: x)
-        cv2.createTrackbar("servo_right (low)   [68 or 71]", "trackbar", 68, 80, lambda x: x)
-        cv2.createTrackbar("servo_left (high) [118 or 121]", "trackbar", 118, 130, lambda x: x)
+        cv2.createTrackbar("servo_right (low)   [68 or 71]", "trackbar", self.servo_range[0], 80, lambda x: x)
+        cv2.createTrackbar("servo_left (high) [118 or 121]", "trackbar", self.servo_range[1], 130, lambda x: x)
         cv2.createTrackbar("ROTATE HEADING", "trackbar", 90, 180, lambda x: x)  # - 90 해서 연산
 
     def degree_to_servo(self, error_angle):
@@ -72,10 +74,10 @@ if __name__ == "__main__":
 
         st.angle_range[0] = cv2.getTrackbarPos("angle_range", "trackbar") * (-1)
         st.angle_range[1] = cv2.getTrackbarPos("angle_range", "trackbar")
-        st.servo_range[0] = cv2.getTrackbarPos("servo_right (low)", "trackbar")
-        st.servo_range[1] = cv2.getTrackbarPos("servo_left (high)", "trackbar")
+        st.servo_range[0] = cv2.getTrackbarPos("servo_right (low)   [68 or 71]", "trackbar")
+        st.servo_range[1] = cv2.getTrackbarPos("servo_left (high) [118 or 121]", "trackbar")
         st.error_angle = cv2.getTrackbarPos("ROTATE HEADING", "trackbar") - 90
-        u_servo = st.degree_to_servo(st.error_angle)
+        u_servo = int(st.degree_to_servo(st.error_angle))
 
         print("-" * 50)
         print(
@@ -99,4 +101,5 @@ if __name__ == "__main__":
         print("")
 
         st.servo_pub.publish(u_servo)
+        # st.thruster_pub.publish(1600)
         rate.sleep()

@@ -27,7 +27,7 @@ Servo servo2;    //서보모터
 
 void Servo_cb( const std_msgs::UInt16& cmd_msg){
   servo1.write(cmd_msg.data);
-  servo2.write(cmd_msg.data-2);
+  servo2.write(cmd_msg.data-1);
 }                             //0-300
 
 void thruster_cb( const std_msgs::UInt16& cmd_msg){
@@ -54,8 +54,8 @@ void setup()
   thruster2.writeMicroseconds(1500); 
   servo1.attach(8); //서보모터 8번핀
   servo2.attach(9); //서보모터 9번핀
-  servo1.writeMicroseconds(93); // initial state is Neutral
-  servo2.writeMicroseconds(93); 
+  servo1.writeMicroseconds(95); // initial state is Neutral
+  servo2.writeMicroseconds(95); 
   
   //delay(1000);
   //Serial.begin(9600);

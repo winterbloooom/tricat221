@@ -347,7 +347,7 @@ def main():
         docking.show_window()
         change_state = docking.check_state()  # TODO 프린트 할 때 바뀌는 지점 알려주기
 
-        if docking.state in [0, 1, 2, 3]:  # TODO 문법 점검
+        if docking.state in [0, 1, 2, 3]:
             psi_goal = math.degrees(
                 math.atan2(
                     docking.waypoints[docking.state][1] - docking.boat_y,

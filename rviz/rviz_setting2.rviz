@@ -60,7 +60,7 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         angle_range: true
-        axis_x: true
+        axis: true
         goal: true
         goal_line: true
         obs: true
@@ -98,25 +98,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 21.431020736694336
+      Distance: 30.02759552001953
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 4.90378999710083
-        Y: 15.492338180541992
-        Z: -3.688987970352173
+        X: -4.996376037597656
+        Y: 0.3489883840084076
+        Z: -3.6867682933807373
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0010000000474974513
       Invert Z Axis: true
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5647963285446167
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.009995937347412
+      Yaw: 3.064997434616089
     Saved:
       - Class: rviz/Orbit
         Distance: 20
