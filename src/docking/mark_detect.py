@@ -25,6 +25,7 @@ from sensor_msgs.msg import Image
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
+
 def mean_brightness(img):
     fixed = 100
 
@@ -34,6 +35,7 @@ def mean_brightness(img):
     dst = cv2.add(img, scalar)
 
     return dst
+
 
 def preprocess_image(raw_img, hsv=True, blur=False, brightness=False):
     """preprocess the raw input image
@@ -61,7 +63,6 @@ def preprocess_image(raw_img, hsv=True, blur=False, brightness=False):
     if hsv == True:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         cv2.imshow("cvtColor", img)
-    
 
     return img
 
@@ -245,7 +246,7 @@ def test():
 
     raw_img = cv2.imread(path_prefix + "/pic1.jpeg", cv2.IMREAD_COLOR)
     raw_img = cv2.rotate(raw_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-    raw_img = cv2.resize(raw_img, (640, 480)) #(504, 672))
+    raw_img = cv2.resize(raw_img, (640, 480))  # (504, 672))
     if raw_img is None:
         print("Image load failed!")
         exit(1)
@@ -266,7 +267,9 @@ def test():
     while True:
         cv2.moveWindow("All counturs", 0, 0)
         cv2.moveWindow("hsv", 750, 0)
-        processed_img = preprocess_image(raw_img, blur=True, brightness=True)  # , hsv=True, blur=True
+        processed_img = preprocess_image(
+            raw_img, blur=True, brightness=True
+        )  # , hsv=True, blur=True
         range = set_color_range(range)
         mask = select_color(
             processed_img, range
