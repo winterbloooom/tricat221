@@ -417,7 +417,7 @@ class Autonomous:
         # degree에서 servo로 mapping
         u_servo = (u_angle - self.rotate_angle_range[0]) * (
             self.servo_range[1] - self.servo_range[0]
-        ) / (self.rotate_angle_range[1] - self.rotate_angle_range[0]) + self.servo_range[0]  
+        ) / (self.rotate_angle_range[1] - self.rotate_angle_range[0]) + self.servo_range[0]
 
         # 중앙값 근처는 전부 중앙값으로 publish
         servo_middle = (self.servo_range[0] + self.servo_range[1]) / 2
