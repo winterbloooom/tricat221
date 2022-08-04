@@ -77,9 +77,9 @@ def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False
 
     u_angle = -error_angle  # 왼쪽이 더 큰 값을 가져야 하므로
 
-    u_servo = (u_angle - angle_range[0]) * (
-        servo_range[1] - servo_range[0]
-    ) / (angle_range[1] - angle_range[0]) + servo_range[
+    u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (
+        angle_range[1] - angle_range[0]
+    ) + servo_range[
         0
     ]  # degree에서 servo로 mapping
     u_servo *= alpha  # 조절 상수 곱해 감도 조절
