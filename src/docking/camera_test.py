@@ -28,12 +28,12 @@ from tricat221.msg import Obstacle, ObstacleList
 class Docking:
     def __init__(self):
         # subscribers
-        self.heading_sub = rospy.Subscriber(
-            "/heading", Float64, self.heading_callback, queue_size=1
-        )
-        self.enu_pos_sub = rospy.Subscriber(
-            "/enu_position", Point, self.boat_position_callback, queue_size=1
-        )
+        # self.heading_sub = rospy.Subscriber(
+        #     "/heading", Float64, self.heading_callback, queue_size=1
+        # )
+        # self.enu_pos_sub = rospy.Subscriber(
+        #     "/enu_position", Point, self.boat_position_callback, queue_size=1
+        # )
         # self.obstacle_sub = rospy.Subscriber(
         #     "/obstacles", ObstacleList, self.obstacle_callback, queue_size=1
         # )
@@ -208,11 +208,11 @@ class Docking:
             bool : True(if all connected) / False(not ALL connected yet)
         """
         not_connected = ""
-        if self.heading_sub.get_num_connections() == 0:
-            not_connected += "\theadingCalculator"
+        # if self.heading_sub.get_num_connections() == 0:
+        #     not_connected += "\theadingCalculator"
 
-        if self.enu_pos_sub.get_num_connections() == 0:
-            not_connected += "\tgnssConverter"
+        # if self.enu_pos_sub.get_num_connections() == 0:
+        #     not_connected += "\tgnssConverter"
 
         # if self.obstacle_sub.get_num_connections() == 0:
         #     not_connected += "\tlidarConverter"

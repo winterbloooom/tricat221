@@ -105,6 +105,9 @@ class Lidar_Converter:
         self.obstacles = []
         self.lidar_header_stamp = msg.header.stamp
         self.lidar_header_frameid = msg.header.frame_id
+        # print(self.lidar_header_stamp)
+        if int(str(self.lidar_header_stamp)) > 1651207343593234463: #1659356681634095032: #1659356677774594514: #
+            return
 
         phi = msg.angle_min  # 각 점의 각도 계산 위해 계속 누적해갈 각도
         for r in msg.ranges:
@@ -239,9 +242,6 @@ class Lidar_Converter:
     def publish_obstacles(self):
         ob_list = ObstacleList()
 
-        # ob_list.lidar_header.stamp = self.lidar_header_stamp
-        # ob_list.lidar_header.frame_id = self.lidar_header_frameid
-
         for ob in self.obstacles:
             obstacle = Obstacle()
             obstacle.begin.x = ob.begin.x
@@ -256,53 +256,53 @@ class Lidar_Converter:
     def publish_rviz(self):
         marker_array = MarkerArray()
 
-        # input_points = Marker() #input_points가 잘 받아지고 변환 잘 되었는지 확인용
-        # input_points.header.frame_id = "/map"
-        # input_points.header.stamp = rospy.Time.now()
-        # input_points.ns = "inputPoints"
-        # input_points.action = 0 #ADD
-        # input_points.pose.orientation.w = 0.0 #???
-        # input_points.id = 0
-        # input_points.type = 8 #POINTS
-        # input_points.scale.x = 0.05
-        # input_points.scale.y = 0.05
-        # input_points.color.r = 1.0 # Red
-        # input_points.color.a = 1.0 # 투명도 0
-        # for p in self.input_points:
-        #     point = Point32()
-        #     point.x = p.x
-        #     point.y = p.y
-        #     input_points.points.append(point)
+        input_points = Marker() #input_points가 잘 받아지고 변환 잘 되었는지 확인용
+        input_points.header.frame_id = "/laser"
+        input_points.header.stamp = rospy.Time.now()
+        input_points.ns = "inputPoints"
+        input_points.action = 0 #ADD
+        input_points.pose.orientation.w = 0.0 #???
+        input_points.id = 0
+        input_points.type = 8 #POINTS
+        input_points.scale.x = 0.1
+        input_points.scale.y = 0.1
+        input_points.color.r = 1.0 # Red
+        input_points.color.a = 1.0 # 투명도 0
+        for p in self.input_points:
+            point = Point32()
+            point.x = p.x
+            point.y = p.y
+            input_points.points.append(point)
 
-        # filtered_points = Marker() #input_points 중 따로 노는 점을 제거한 후 확인용
-        # filtered_points.header.frame_id = "/map"
-        # filtered_points.header.stamp = rospy.Time.now()
-        # filtered_points.ns = "filteredPoints"
-        # filtered_points.action = 0 #ADD
-        # filtered_points.pose.orientation.w = 0.0 #???
-        # filtered_points.id = 1
-        # filtered_points.type = 8 #POINTS
-        # filtered_points.scale.x = 0.05
-        # filtered_points.scale.y = 0.05
-        # filtered_points.color.g = 1.0 # Green
-        # filtered_points.color.a = 1.0 # 투명도 0
-        # for ps in self.point_sets_list:
-        #     for p in ps.point_set:
-        #         point = Point32()
-        #         point.x = p.x
-        #         point.y = p.y
-        #         filtered_points.points.append(point)
+        filtered_points = Marker() #input_points 중 따로 노는 점을 제거한 후 확인용
+        filtered_points.header.frame_id = "/laser"
+        filtered_points.header.stamp = rospy.Time.now()
+        filtered_points.ns = "filteredPoints"
+        filtered_points.action = 0 #ADD
+        filtered_points.pose.orientation.w = 0.0 #???
+        filtered_points.id = 1
+        filtered_points.type = 8 #POINTS
+        filtered_points.scale.x = 0.1
+        filtered_points.scale.y = 0.1
+        filtered_points.color.r, filtered_points.color.g, filtered_points.color.b = 235/255.0, 128/255.0, 52/255.0
+        filtered_points.color.a = 1.0 # 투명도 0
+        for ps in self.point_sets_list:
+            for p in ps.point_set:
+                point = Point32()
+                point.x = p.x
+                point.y = p.y
+                filtered_points.points.append(point)
 
         point_set = Marker()  # 각 point_set을 확인용
-        point_set.header.frame_id = "/map"
+        point_set.header.frame_id = "/laser"
         point_set.header.stamp = rospy.Time.now()
         point_set.ns = "pointSet"
         point_set.action = 0  # ADD
         point_set.pose.orientation.w = 1.0  # ???
         point_set.id = 2
         point_set.type = 5  # LINE_LIST
-        point_set.scale.x = 0.05
-        point_set.color.b = 1.0  # Blue
+        point_set.scale.x = 0.1
+        point_set.color.r, point_set.color.g, point_set.color.b = 55/255.0, 158/255.0, 54/255.0
         point_set.color.a = 1.0  # 투명도 0
         for ps in self.point_sets_list:
             point = Point32()
@@ -315,7 +315,7 @@ class Lidar_Converter:
             point_set.points.append(point)
 
         obstacle = Marker()  # 벽까지 다 구분된 파티클 확인용
-        obstacle.header.frame_id = "/map"
+        obstacle.header.frame_id = "/laser"
         obstacle.header.stamp = rospy.Time.now()
         obstacle.ns = "obstacle"
         obstacle.action = 0  # ADD
@@ -323,8 +323,7 @@ class Lidar_Converter:
         obstacle.id = 3
         obstacle.type = 5  # LINE_LIST
         obstacle.scale.x = 0.1
-        obstacle.color.r = 1.0  # Yellow
-        obstacle.color.g = 1.0  # Yellow
+        obstacle.color.r, obstacle.color.g, obstacle.color.b = 10/255.0, 81/255.0, 204/255.0
         obstacle.color.a = 1.0  # 투명도 0
         for ob in self.obstacles:
             point = Point32()
@@ -336,8 +335,8 @@ class Lidar_Converter:
             point.y = ob.end.y
             obstacle.points.append(point)
 
-        # marker_array.markers.append(input_points)
-        # marker_array.markers.append(filtered_points)
+        marker_array.markers.append(input_points)
+        marker_array.markers.append(filtered_points)
         marker_array.markers.append(point_set)
         marker_array.markers.append(obstacle)
 

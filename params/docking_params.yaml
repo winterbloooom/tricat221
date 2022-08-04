@@ -10,11 +10,11 @@ stop_time: 3 # sec
 target_detect_time: 400 # times
 target_detect_cnt: 300 # times
 
-color1_lower: 78
-color1_upper: 180
-color2_lower: 145
-color2_upper: 255
-color3_lower: 216
+color1_lower: 46 #78
+color1_upper: 94 #180
+color2_lower: 26 #145
+color2_upper: 187 #255
+color3_lower: 97 #216
 color3_upper: 255
 
 angle_alpha: 1

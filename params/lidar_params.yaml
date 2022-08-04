@@ -7,9 +7,9 @@
 
 # trackbar----------------------------------
 
-max_gap_in_set: 1 # * 0.1 meter
-min_point_set_size: 5
+max_gap_in_set: 5 # * 0.1 meter /////1
+min_point_set_size: 5 # 5
 max_dist_to_ps_line: 3 # *0.1 meter
-min_wall_length: 40 # * 0.1 meter
-min_wall_particle_length: 40 # * 0.1 meter
+min_wall_length: 10 # * 0.1 meter///// 40
+min_wall_particle_length: 5 # * 0.1 meter
 min_input_points_size: 3

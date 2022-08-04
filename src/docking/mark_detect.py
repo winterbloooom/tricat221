@@ -25,6 +25,15 @@ from sensor_msgs.msg import Image
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
+def mean_brightness(img):
+    fixed = 100
+
+    m = cv2.mean(img)
+    scalar = (-int(m[0]) + fixed, -int(m[1]) + fixed, -int(m[2]) + fixed, 0)
+    # TODO 이 방법 맞나...?
+    dst = cv2.add(img, scalar)
+
+    return dst
 
 def preprocess_image(raw_img, hsv=True, blur=False, brightness=False):
     """preprocess the raw input image
@@ -41,13 +50,18 @@ def preprocess_image(raw_img, hsv=True, blur=False, brightness=False):
         np.ndarray: preprocessed image
     """
     img = raw_img
+    cv2.imshow("raw", raw_img)
 
     if brightness == True:
-        pass
+        img = mean_brightness(img)
+        cv2.imshow("brightness", img)
     if blur == True:
         img = cv2.GaussianBlur(img, (5, 5), 0)
+        cv2.imshow("gaussian", img)
     if hsv == True:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        cv2.imshow("cvtColor", img)
+    
 
     return img
 
@@ -68,6 +82,7 @@ def select_color(img, range, color_space="hsv"):
         * gray-scale인지 확인하기
     """
     selceted = cv2.inRange(img, range[0], range[1])
+    cv2.imshow("selected", selceted)
     return selceted
 
 
@@ -104,6 +119,7 @@ def detect_target(img, target_shape, draw_contour=True):
 
     morph_kernel = np.ones((9, 9), np.uint8)
     morph = cv2.morphologyEx(img, cv2.MORPH_CLOSE, morph_kernel)
+    cv2.imshow("morph", morph)
 
     shape = cv2.cvtColor(morph, cv2.COLOR_GRAY2BGR)  # 시각화할 image
 
@@ -146,8 +162,8 @@ def detect_target(img, target_shape, draw_contour=True):
                     detected = True
                     targets.append([area, center_col])
 
-        # if draw_contour:
-        #     cv2.imshow("controller", shape)
+        if draw_contour:
+            cv2.imshow("controller", shape)
 
     if detected:
         if len(targets) == 1:  # 타겟 마크가 하나만 검출됨
@@ -227,19 +243,20 @@ def set_color_range(range):
 def test():
     path_prefix = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 
-    raw_img = cv2.imread(path_prefix + "/pic23.jpeg", cv2.IMREAD_COLOR)
-    raw_img = cv2.resize(raw_img, (640, 480))
+    raw_img = cv2.imread(path_prefix + "/pic1.jpeg", cv2.IMREAD_COLOR)
+    raw_img = cv2.rotate(raw_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    raw_img = cv2.resize(raw_img, (640, 480)) #(504, 672))
     if raw_img is None:
         print("Image load failed!")
         exit(1)
 
     cv2.namedWindow("hsv")
 
-    cv2.createTrackbar("H lower", "hsv", 0, 180, trackbar_callback)
-    cv2.createTrackbar("H upper", "hsv", 118, 180, trackbar_callback)
-    cv2.createTrackbar("S lower", "hsv", 144, 255, trackbar_callback)
-    cv2.createTrackbar("S upper", "hsv", 255, 255, trackbar_callback)
-    cv2.createTrackbar("V lower", "hsv", 72, 255, trackbar_callback)
+    cv2.createTrackbar("H lower", "hsv", 46, 180, trackbar_callback)
+    cv2.createTrackbar("H upper", "hsv", 88, 180, trackbar_callback)
+    cv2.createTrackbar("S lower", "hsv", 26, 255, trackbar_callback)
+    cv2.createTrackbar("S upper", "hsv", 187, 255, trackbar_callback)
+    cv2.createTrackbar("V lower", "hsv", 97, 255, trackbar_callback)
     cv2.createTrackbar("V upper", "hsv", 255, 255, trackbar_callback)
 
     cv2.namedWindow("All counturs")
@@ -249,12 +266,13 @@ def test():
     while True:
         cv2.moveWindow("All counturs", 0, 0)
         cv2.moveWindow("hsv", 750, 0)
-        processed_img = preprocess_image(raw_img)  # , hsv=True, blur=True
+        processed_img = preprocess_image(raw_img, blur=True, brightness=True)  # , hsv=True, blur=True
         range = set_color_range(range)
         mask = select_color(
             processed_img, range
         )  # [[100, 200], [100, 200], [100, 200]]  np.array([[100, 0, 100], [255, 150, 255]])
-        print(detect_target(mask, 3))
+
+        detect_target(mask, 4)
 
         if cv2.waitKey(1) == 27:
             cv2.destroyAllWindows()
@@ -346,5 +364,5 @@ def two_cam_test():
             break
 
 
-# test()
+test()
 # two_cam_test()
