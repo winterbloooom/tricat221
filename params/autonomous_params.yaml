@@ -29,11 +29,12 @@
 # New Algorithm ------------------------
 
 goal_range: 1.5 # m
-ob_dist_range : 4 # m
+ob_dist_range : 4 # m : 가까이 있는 것을 우선적으로 피하고 싶다면 작아야 함
 ob_angle_range : [-90, 90] # deg
 rotate_angle_range : [-80, 80] #deg
 servo_range : [70, 120]
 thruster_speed : 1650
-span_angle : 15 # deg
-filter_queue_size : 5
-angle_alpha : 1.5 # 그냥 
+span_angle : 10 # deg
+filter_queue_size : 3
+angle_alpha : 1.5
+show_raw_pcd : True

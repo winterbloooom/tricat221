@@ -1,34 +1,63 @@
-# range, limits
-ref_front: 0
-angle_range: [-80, 80]
-servo_range: [70, 120]
+# 장애물 회피 및 서보, 쓰러스터 제어
 arrival_range: 1.5 # m
-ref_dir_range: 10 # def
-station_dir: -157 # deg
-arrival_target_area: 20 # X1,000 # 5ho station2000
-stop_time: 3 # sec
-target_detect_time: 400 # times
-target_detect_cnt: 300 # times
-
-color1_lower: 46 #78
-color1_upper: 94 #180
-color2_lower: 26 #145
-color2_upper: 187 #255
-color3_lower: 97 #216
-color3_upper: 255
-
-angle_alpha: 1
-pixel_alpha: 10 # X 100
-
-target_shape: 3 # 3: triangle, 4: rectangle, 5: circle
-thruster_default: 1600
-thruster_stop: 1500 
-filter_queue_size: 5
-
-use_pid: False
-draw_contour: True
-
+angle_range: [-80, 80]
 span_angle : 5 # deg
 ob_dist_range : 10 # m
 ob_angle_range : [-90, 90] # deg
 
+servo_range: [70, 120]
+angle_alpha: 1
+filter_queue_size: 5
+
+thruster_default: 1600
+thruster_stop: 1500
+
+
+# 선수각 방향 회전
+stop_time: 3 # sec # 스테이션 앞 도착 후 이만큼 기다렸다가 헤딩 돌림
+ref_dir_range: 10 # def
+station_dir: -157 # deg
+
+
+# 표지 인식
+## RED
+color_range : {
+  red: {
+    color1_lower: 46, #78
+    color1_upper: 94, #180
+    color2_lower: 26, #145
+    color2_upper: 187, #255
+    color3_lower: 97, #216
+    color3_upper: 255
+  },
+  green: {
+    color1_lower: 47, #78
+    color1_upper: 95, #180
+    color2_lower: 26, #145
+    color2_upper: 187, #255
+    color3_lower: 97, #216
+    color3_upper: 254
+  },
+  blue: {
+    color1_lower: 48, #78
+    color1_upper: 96, #180
+    color2_lower: 26, #145
+    color2_upper: 187, #255
+    color3_lower: 97, #216
+    color3_upper: 253
+  }
+}
+
+target_shape: 3 # 3: triangle, 4: rectangle, 5: circle
+target_color: red #blue, green
+
+mark_detect_area: 20 # X 100 # 최소 이만큼은 되어야 타겟인지 판단 들어감
+target_detect_time: 400 # times
+target_detect_cnt: 300 # times
+
+draw_contour: True
+
+
+# 스테이션 진입
+arrival_target_area: 20 # X1,000 # 이만큼 이상 넓이면 도착임
+pixel_alpha: 10 # X 100

@@ -2,7 +2,7 @@
 
 <launch>
     <!-- sensors -->
-    <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
+    <!-- <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
         <param name="video_device" value="/dev/video0" />
         <param name="autoexposure" value="false" />
         <param name="pixel_format" value="yuyv" />
@@ -14,7 +14,7 @@
         <param name="exposure" value="10" />
         <param name="contrast" value="0" />
         <param name="saturation" value="100" />
-    </node>
+    </node> -->
     
     <!--LiDAR-->
 	<!-- <node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
@@ -27,24 +27,24 @@
 	</node> -->
 
 	<!--GPS-->
-	<include file="$(find ntrip_ros)/launch/ntrip_ros.launch"></include>
+	<!-- <include file="$(find ntrip_ros)/launch/ntrip_ros.launch"></include> -->
 
 	<!--IMU-->
-	<node pkg="myahrs_driver" type="myahrs_driver" name="myahrs_driver">
+	<!-- <node pkg="myahrs_driver" type="myahrs_driver" name="myahrs_driver">
 		<param name="port" value="/dev/ttyIMU" />
 		<param name="baud_rate" value="115200" />
-	</node>
+	</node> -->
 
-    <node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true"/>
-	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter" respawn="true"/>
-	<!-- <node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/> -->
-	<node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>
+    <node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator"/>
+	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter"/>
+	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" output="screen"/>
+	<!-- <node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO"/> -->
 
-    <!-- <node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/cam-rosbag/one_mark.bag -l --><!--topics /usb_cam/image_raw"/> -->
+    <node pkg="rosbag" type="play" name="rosbag_others" required="true" args="$(find tricat221)/etc/rosbag/0804_fountain_wrong_psi.bag --topics /imu/mag /scan /ublox_gps/fix"/>
+    <node pkg="rosbag" type="play" name="rosbag_cam" required="true" args="$(find tricat221)/etc/rosbag/cam-rosbag/one_mark.bag -l --topics /usb_cam/image_raw"/>
 	
-    <!-- <node pkg="tricat221" type="mark_detect.py" name="camera_test" output="screen" /> -->
-    <node pkg="tricat221" type="camera_test.py" name="camera_test" output="screen" />
-	<!-- <node pkg="tricat221" type="docking.py" name="docking" respawn="true" output="screen"/> -->
+    <!-- <node pkg="tricat221" type="camera_test.py" name="camera_test" output="screen" /> -->
+	<node pkg="tricat221" type="docking.py" name="Docking" output="screen"/>
 
     <!-- visulize -->
 	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/>	 -->

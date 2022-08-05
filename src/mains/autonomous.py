@@ -3,10 +3,7 @@
 
 """
 Todo:
-    * 장애물이 따라가는 것 같음
-    * rviz에 텍스트 추가
     * 장애물도 cylinder로 처리. split 단위 알아보고
-    * 목표점보다 장애물이 멀리 있을 때(바로 목표점으로 가도 될 때)의 처리가 미완
 """
 
 import math
@@ -20,6 +17,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from geometry_msgs.msg import Point
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
+from sensor_msgs.msg import LaserScan
 
 import obstacle.obstacle_avoidance as oa
 import perception.gnss_converter as gc
@@ -27,9 +25,14 @@ import utils.filtering as filtering
 import utils.visualizer as visual
 from tricat221.msg import ObstacleList
 
+import datatypes.point_class
+
 
 class Autonomous:
     def __init__(self):
+        # ON/OFF
+        self.show_raw_pcd = rospy.get_param("show_raw_pcd") # 라이다 raw 데이터 보이기
+
         # subscribers
         self.heading_sub = rospy.Subscriber(
             "/heading", Float64, self.heading_callback, queue_size=1
@@ -40,6 +43,8 @@ class Autonomous:
         self.obstacle_sub = rospy.Subscriber(
             "/obstacles", ObstacleList, self.obstacle_callback, queue_size=1
         )
+        if self.show_raw_pcd:
+            self.scan_sub = rospy.Subscriber("/scan", LaserScan, self.scan_callback, queue_size=1)
 
         # publishers
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0)
@@ -50,12 +55,13 @@ class Autonomous:
         self.boat_x, self.boat_y = 0, 0
         self.goal_y, self.goal_x = gc.enu_convert(rospy.get_param("autonomous_goal"))
         self.trajectory = []  # 지금까지 이동한 궤적
+        self.input_points = [] # lidar raw data
 
         # directions
         self.psi = 0  # 자북과 heading의 각도(자북 우측 +, 좌측 -) [degree]
         self.psi_goal = 0  # 의미 변화함: 나로부터 goal이 떨어진 각도. (+)면 오른쪽, (-)면 왼쪽에 있음
         self.psi_desire = 0  # 이번에 가야 할 각도
-        self.error_angle = 0  # psi와 psi_desire 사이의 각도
+        # self.error_angle = 0  # psi와 psi_desire 사이의 각도 -> 그냥 error_angle을 인자로 주고 받음
 
         # ranges, limits
         self.goal_range = rospy.get_param("goal_range")  # 도착이라 판단할 거리(반지름)
@@ -63,6 +69,7 @@ class Autonomous:
         self.ob_angle_range = rospy.get_param("ob_angle_range")  # 장애물 탐지 각도
         self.rotate_angle_range = rospy.get_param("rotate_angle_range")  # 회전할 각도 범위
         self.servo_range = rospy.get_param("servo_range")  # 서보모터 최대/최소값
+        self.servo_middle = (self.servo_range[0] + self.servo_range[1]) / 2
         self.thruster_speed = rospy.get_param("thruster_speed")  # 쓰러스터 고정값
         self.span_angle = rospy.get_param("span_angle")  # 장애물 양쪽에 더해줄 각도 여유분. 충돌 방지용
 
@@ -79,8 +86,23 @@ class Autonomous:
         self.inrange_obstacles = []  # 탐지 범위 내 장애물
         self.danger_angles = []  # 장애물이 존재하는 각도 리스트
 
+        
+
         # pre-setting
         self.arrival_check()  # 다음 목표까지 남은 거리
+
+    def scan_callback(self, msg):
+        if not self.show_raw_pcd:
+            return
+        
+        self.input_points = []
+        phi = msg.angle_min  # 각 점의 각도 계산 위해 계속 누적해갈 각도
+        for r in msg.ranges:
+            if msg.range_min <= r <= msg.range_max:
+                p = datatypes.point_class.Point.polar_to_cartesian(r, phi)
+                self.input_points.append(p)
+            phi += msg.angle_increment
+
 
     def heading_callback(self, msg):
         """IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수
@@ -91,9 +113,15 @@ class Autonomous:
         Notes:
             * IMU의 예민성으로 인하여 heading 값에 noise가 있음. 따라서 이동평균필터를 적용함.
         """
+        
         # self.psi = filtering.moving_avg_filter(
         #     self.heading_queue, self.filter_queue_size, msg.data
         # )  # [deg]
+        # print("Queue : {}".format(self.heading_queue))
+        # print("{} -> {}".format(msg.data, self.psi))
+        # if (msg.data * self.psi) < 0:
+        #     print("DANGER!=============================================")
+
         self.psi = msg.data
 
     def boat_position_callback(self, msg):
@@ -160,28 +188,23 @@ class Autonomous:
             visulize (bool) : visualize with rviz or not
         """
         # show in terminal
-        print("-" * 50)
-        print("{:>9} - {:>9} = {:>7}".format("desire", "psi", "error"))
-        print(
-            "({:7.2f}) - ({:7.2f}) = ({:6.2f})".format(self.psi_desire, self.psi, self.error_angle)
-        )
-        if self.psi_goal - self.psi > 0:
-            print(
-                "psi_goal : {:7.2f} [Right] | dist : {:6.2f} m".format(
-                    self.psi_goal, self.distance_to_goal
-                )
-            )
+        print("")
+        print("Obstacle  : {:2d} / {:2d}".format(len(self.inrange_obstacles), len(self.obstacles)))
+        
+        psi_goal_dir_str = "[   | * ]" if self.psi_goal > 0 else "[ * |   ]"
+        error_angle_dir_str = "( Right )" if error_angle > 0 else "(  Left )"
+        if u_servo > self.servo_middle:
+            servo_value_str = "<" * ((self.servo_middle - u_servo)//5) # go left
         else:
-            print(
-                "psi_goal : {:7.2f} [ Left] | dist : {:6.2f} m".format(
-                    self.psi_goal, self.distance_to_goal
-                )
-            )
-        print("Obstacle : {:2d} / {:2d}".format(len(self.inrange_obstacles), len(self.obstacles)))
-        if error_angle > 0:
-            print("Move     : Right | Servo: {}".format(u_servo))
-        elif error_angle < 0:
-            print("Move     : Left  | Servo: {}".format(u_servo))
+            servo_value_str = ">" * ((self.servo_middle - u_servo)//5) # go right
+        
+        print("")
+        print("{:^9}   {:^6} - {:^6} = {:^6} {:->9} {:^5}".format("goal", "desire", "psi", "error", ">", "servo"))
+        print("{:>9}   {:>6.2f} - {:>6.2f} = {:>6.2f} {:>9} {:>5} ( {:^5} )".format(psi_goal_dir_str, self.psi_desire, self.psi, error_angle, error_angle_dir_str, u_servo, servo_value_str))
+        print("")
+        print("{:<9} : {:6.2f} m".format("distance", self.distance_to_goal))
+        print("")
+        print("-" * 70)
 
         # visualize with Rviz
         if visualize:
@@ -225,6 +248,7 @@ class Autonomous:
                 color_b=87,
                 scale=0.2,
             )
+
             # 지나온 경로
             traj = visual.points_rviz(
                 name="traj", id=3, points=self.trajectory, color_g=180, scale=0.05
@@ -378,6 +402,25 @@ class Autonomous:
                 scale=0.05,
             )
 
+            # lidar raw data
+            pcd = []
+            if self.show_raw_pcd:
+                for p in self.input_points:
+                    x_re = (
+                        self.boat_x
+                        + (-p.x) * math.cos(math.radians(self.psi))
+                        - p.y * math.sin(math.radians(self.psi))
+                    )
+                    y_re = (
+                        self.boat_y
+                        + (-p.x) * math.sin(math.radians(self.psi))
+                        + p.y * math.cos(math.radians(self.psi))
+                    )
+                    pcd.append([x_re, y_re])
+            pcd = visual.points_rviz(
+                name="pcd", id=14, points=pcd, color_r=255, scale=0.08
+            )
+
             all_markers = visual.marker_array_rviz(
                 [
                     danger_angles,
@@ -396,6 +439,7 @@ class Autonomous:
                     axis_y_txt,
                     goal_range,
                     angle_range,
+                    pcd
                 ]
             )
             self.visual_rviz_pub.publish(all_markers)
@@ -420,9 +464,8 @@ class Autonomous:
         ) / (self.rotate_angle_range[1] - self.rotate_angle_range[0]) + self.servo_range[0]
 
         # 중앙값 근처는 전부 중앙값으로 publish
-        servo_middle = (self.servo_range[0] + self.servo_range[1]) / 2
-        if servo_middle - 2 <= u_servo <= servo_middle + 2:
-            u_servo = servo_middle
+        if self.servo_middle - 2 <= u_servo <= self.servo_middle + 2:
+            u_servo = self.servo_middle
 
         # servo motor 제어 가능 범위 내부에 머무르도록 함
         if u_servo > self.servo_range[1]:
@@ -434,6 +477,7 @@ class Autonomous:
 
 def main():
     rospy.init_node("autonomous", anonymous=False)
+    start_time = rospy.get_time()
     auto = Autonomous()
     rate = rospy.Rate(10)
 
@@ -449,22 +493,20 @@ def main():
             return
         else:
             auto.trajectory.append([auto.boat_x, auto.boat_y])  # 이동 경로 추가
-            auto.psi_goal = math.degrees(
-                math.atan2(auto.goal_y - auto.boat_y, auto.goal_x - auto.boat_x)
-            )  # 목표까지 떨어진 각도 갱신
+            auto.psi_goal = math.degrees(math.atan2(auto.goal_y - auto.boat_y, auto.goal_x - auto.boat_x)) - auto.psi 
+            # 목표까지 떨어진 각도 갱신 // atan2 계산은 현재 보트 위치로 자북축을 옮겨왔을 때 목표점부터 자북축까지 떨어진 각도
 
             auto.inrange_obstacles, auto.danger_angles = oa.ob_filtering(
-                auto.obstacles,
-                auto.distance_to_goal,
-                auto.psi_goal - auto.psi,
-                auto.span_angle,
-                auto.ob_angle_range,
-                auto.ob_dist_range,
+                obstacles=auto.obstacles,
+                dist_to_goal=auto.distance_to_goal,
+                angle_to_goal=auto.psi_goal,
+                span_angle=auto.span_angle,
+                angle_range=auto.ob_angle_range,
+                distance_range=auto.ob_dist_range,
             )  # 범위 내에 있는 장애물을 필터링하고, 장애물이 있는 각도 리스트를 만듦
             error_angle = oa.calc_desire_angle(
-                auto.danger_angles, auto.psi_goal - auto.psi, auto.ob_angle_range
+                danger_angles=auto.danger_angles, angle_to_goal=auto.psi_goal, angle_range=auto.ob_angle_range
             )  # 목표각과 현 헤딩 사이 상대적 각도 계산. 선박고정좌표계로 '가야 할 각도'에 해당
-            # TODO error angle이 180, -180 넘어가는 범위 나오는지 잘 체크하기!
             auto.psi_desire = auto.psi + error_angle  # 월드좌표계로 '가야 할 각도'를 계산함
 
             u_servo = auto.degree_to_servo(error_angle)  # degree 단위를 servo moter 단위로 변경
@@ -475,6 +517,8 @@ def main():
             auto.servo_pub.publish(u_servo)
             auto.thruster_pub.publish(auto.thruster_speed)
 
+            print("")
+            print("{:<9} : {:<6.3f}".format("Run time", rospy.get_time() - start_time)) # 작동 시간
             auto.show(error_angle, u_servo, visualize=True)  # 현 상태 출력
 
         rate.sleep()

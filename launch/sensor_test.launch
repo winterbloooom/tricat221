@@ -17,15 +17,15 @@
 	<node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/> -->
 
 	<!--LiDAR Test-->
-	<!-- <node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0429.bag -l--> <!--topics /scan"/>-->
-	<!-- <node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/>
+	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0804_fountain_wrong_psi.bag -l --topics /scan"/>
+	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/>
 	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
-	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting1.rviz" /> --> -->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting1.rviz" /> -->
 
 	<!--Cam Test-->
-	<rosparam command="load" file="$(find tricat221)/params/docking_params.yaml"/>
+	<!-- <rosparam command="load" file="$(find tricat221)/params/docking_params.yaml"/>
 	<rosparam command="load" file="$(find tricat221)/params/coordinates.yaml"/>
-	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/cam-rosbag/one_mark.bag -l --topics /usb_cam/image_raw"/>
-	<node pkg="tricat221" type="camera_test.py" name="camera_test" output="screen" />
+	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/cam-rosbag/one_mark.bag -l--> <!--topics /usb_cam/image_raw"/>
+	<node pkg="tricat221" type="camera_test.py" name="camera_test" output="screen" /> -->
 
 </launch>

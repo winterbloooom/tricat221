@@ -63,11 +63,6 @@ def ob_filtering(obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range
         begin_ang -= span_angle
         end_ang += span_angle
 
-        middle_x = -(ob.begin.x + ob.end.x) / 2
-        middle_y = (ob.begin.y + ob.end.y) / 2
-        middle_angle = math.degrees(math.atan2(middle_y, middle_x))
-
-        # dist_to_ob = math.sqrt(middle_x**2 + middle_y**2)
         begin = pc.Point(ob.begin.x, ob.begin.y)
         end = pc.Point(ob.begin.x, ob.begin.y)
         boat = pc.Point(0, 0)
@@ -81,7 +76,7 @@ def ob_filtering(obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range
 
         # 장애물이 목표점보다 뒤에 있어 고려할 필요 없음
         if (begin_ang <= angle_to_goal <= end_ang) and (dist_to_ob >= dist_to_goal):
-            print("ob is behind the goal -> don't count")
+            # print("ob is behind the goal -> don't count")
             continue
 
         # 장애물이 각도&거리 범위 내에 있음
@@ -129,11 +124,9 @@ def calc_desire_angle(danger_angles, angle_to_goal, angle_range):
     """
     safe_angle = 0
     if len(danger_angles) == (angle_range[1] - angle_range[0]) + 1:
-        print("**** all obs ****")
         return angle_to_goal  # 범위 내 모두 장애물임
     elif len(danger_angles) == 0:
         # inrange_ob가 0이 아닌데 no ob가 되는 경우가 -> 시작점 끝점 대소 관계 재정의해서 해결한 듯
-        print("**** no obs ****")
         return angle_to_goal  # 범위 내 장애물 없음
     else:
         delta_goal = 10000  # goal까지 차이각 (절댓값)

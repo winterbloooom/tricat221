@@ -34,6 +34,7 @@ class Lidar_Converter:
         self.min_wall_length = rospy.get_param("min_wall_length")
         self.min_wall_particle_length = rospy.get_param("min_wall_particle_length")
         self.min_input_points_size = rospy.get_param("min_input_points_size")
+        self.controller = rospy.get_param("controller")
 
         # 변수
         self.lidar_header_stamp = 0
@@ -43,61 +44,63 @@ class Lidar_Converter:
         self.obstacles = []  # 최종적으로 합쳐지고 나눠인 set들 저장 (wall + buoy)
 
         # trackbar
-        cv2.namedWindow("controller")
-        cv2.createTrackbar(
-            "point ~ point in group",
-            "controller",
-            rospy.get_param("max_gap_in_set"),
-            5,
-            self.trackbar_callback,
-        )  # X 0.1
-        cv2.createTrackbar(
-            "# of points in group",
-            "controller",
-            rospy.get_param("min_point_set_size"),
-            30,
-            self.trackbar_callback,
-        )
-        cv2.createTrackbar(
-            "point ~ group",
-            "controller",
-            rospy.get_param("max_dist_to_ps_line"),
-            5,
-            self.trackbar_callback,
-        )  # X 0.1
-        cv2.createTrackbar(
-            "wall should splitted",
-            "controller",
-            rospy.get_param("min_wall_length"),
-            50,
-            self.trackbar_callback,
-        )  # X 0.1
-        cv2.createTrackbar(
-            "wall particle len",
-            "controller",
-            rospy.get_param("min_wall_particle_length"),
-            50,
-            self.trackbar_callback,
-        )  # X 0.1
-        cv2.createTrackbar(
-            "# of input points",
-            "controller",
-            rospy.get_param("min_input_points_size"),
-            50,
-            self.trackbar_callback,
-        )
+        if self.controller:
+            cv2.namedWindow("controller")
+            cv2.createTrackbar(
+                "point ~ point in group",
+                "controller",
+                rospy.get_param("max_gap_in_set"),
+                5,
+                self.trackbar_callback,
+            )  # X 0.1
+            cv2.createTrackbar(
+                "# of points in group",
+                "controller",
+                rospy.get_param("min_point_set_size"),
+                30,
+                self.trackbar_callback,
+            )
+            cv2.createTrackbar(
+                "point ~ group",
+                "controller",
+                rospy.get_param("max_dist_to_ps_line"),
+                5,
+                self.trackbar_callback,
+            )  # X 0.1
+            cv2.createTrackbar(
+                "wall should splitted",
+                "controller",
+                rospy.get_param("min_wall_length"),
+                50,
+                self.trackbar_callback,
+            )  # X 0.1
+            cv2.createTrackbar(
+                "wall particle len",
+                "controller",
+                rospy.get_param("min_wall_particle_length"),
+                50,
+                self.trackbar_callback,
+            )  # X 0.1
+            cv2.createTrackbar(
+                "# of input points",
+                "controller",
+                rospy.get_param("min_input_points_size"),
+                50,
+                self.trackbar_callback,
+            )
 
     def trackbar_callback(self, usrdata):
         pass
 
     def get_trackbar_pos(self):
-        """get trackbar poses and set each values"""
-        self.max_gap_in_set = cv2.getTrackbarPos("point ~ point in group", "controller") * 0.1
-        self.min_point_set_size = cv2.getTrackbarPos("# of points in group", "controller")
-        self.max_dist_to_ps_line = cv2.getTrackbarPos("point ~ group", "controller") * 0.1
-        self.min_wall_length = cv2.getTrackbarPos("wall should splitted", "controller") * 0.1
-        self.min_wall_particle_length = cv2.getTrackbarPos("wall particle len", "controller") * 0.1
-        self.min_input_points_size = cv2.getTrackbarPos("# of input points", "controller")
+        if self.controller:
+            """get trackbar poses and set each values"""
+            self.max_gap_in_set = cv2.getTrackbarPos("point ~ point in group", "controller") * 0.1
+            self.min_point_set_size = cv2.getTrackbarPos("# of points in group", "controller")
+            self.max_dist_to_ps_line = cv2.getTrackbarPos("point ~ group", "controller") * 0.1
+            self.min_wall_length = cv2.getTrackbarPos("wall should splitted", "controller") * 0.1
+            self.min_wall_particle_length = cv2.getTrackbarPos("wall particle len", "controller") * 0.1
+            self.min_input_points_size = cv2.getTrackbarPos("# of input points", "controller")
 
     def lidar_raw_callback(self, msg):
         self.input_points = []
@@ -106,10 +109,10 @@ class Lidar_Converter:
         self.lidar_header_stamp = msg.header.stamp
         self.lidar_header_frameid = msg.header.frame_id
         # print(self.lidar_header_stamp)
-        if (
-            int(str(self.lidar_header_stamp)) > 1651207343593234463
-        ):  # 1659356681634095032: #1659356677774594514: #
-            return
+        # if (
+        #     int(str(self.lidar_header_stamp)) > 1651207343593234463
+        # ):  # 1659356681634095032: #1659356677774594514: #
+        #     return
 
         phi = msg.angle_min  # 각 점의 각도 계산 위해 계속 누적해갈 각도
         for r in msg.ranges:
