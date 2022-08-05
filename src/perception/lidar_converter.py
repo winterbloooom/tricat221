@@ -99,7 +99,9 @@ class Lidar_Converter:
             self.min_point_set_size = cv2.getTrackbarPos("# of points in group", "controller")
             self.max_dist_to_ps_line = cv2.getTrackbarPos("point ~ group", "controller") * 0.1
             self.min_wall_length = cv2.getTrackbarPos("wall should splitted", "controller") * 0.1
-            self.min_wall_particle_length = cv2.getTrackbarPos("wall particle len", "controller") * 0.1
+            self.min_wall_particle_length = (
+                cv2.getTrackbarPos("wall particle len", "controller") * 0.1
+            )
             self.min_input_points_size = cv2.getTrackbarPos("# of input points", "controller")
 
     def lidar_raw_callback(self, msg):

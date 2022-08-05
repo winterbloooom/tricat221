@@ -26,8 +26,8 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 def mean_brightness(img):
     """평균 밝기로 화면 밝기 조정"""
-    fixed = 100 # 이 값 주변으로 평균 밝기 조절함
-    m = cv2.mean(img) # 평균 밝기
+    fixed = 100  # 이 값 주변으로 평균 밝기 조절함
+    m = cv2.mean(img)  # 평균 밝기
     scalar = (-int(m[0]) + fixed, -int(m[1]) + fixed, -int(m[2]) + fixed, 0)
     dst = cv2.add(img, scalar)
 
@@ -128,7 +128,9 @@ def detect_target(img, target_shape, mark_detect_area, draw_contour=True):
 
         if vertex_num == 3:  # 삼각형이 탐지됨
             # print("Shape : Triangle")
-            shape, _, center_col = draw_mark(shape, target_shape, approx, vertex_num, area)  # 도형 그리기
+            shape, _, center_col = draw_mark(
+                shape, target_shape, approx, vertex_num, area
+            )  # 도형 그리기
             if target_shape == 3:  # 타겟이 삼각형이라면
                 detected = True
                 targets.append([area, center_col])
@@ -207,6 +209,7 @@ def draw_mark(window, target_shape, contour, vertices, area):
 
     return window, center_row, center_col  # 잘 안그려지면 window 새로 할당하기
 
+
 def get_trackbar_pos(color_range):
     """for test_with_img()"""
     color_range[0][0] = cv2.getTrackbarPos("color1 min", "controller")
@@ -217,6 +220,7 @@ def get_trackbar_pos(color_range):
     color_range[1][2] = cv2.getTrackbarPos("color3 max", "controller")
     mark_detect_area = cv2.getTrackbarPos("mark_detect_area", "controller") * 100
     return color_range, mark_detect_area
+
 
 def test_with_img():
     # variables
@@ -237,25 +241,15 @@ def test_with_img():
 
     # trackbar load
     cv2.namedWindow("controller")
+    cv2.createTrackbar("color1 min", "controller", color_range[0][0], 180, lambda x: x)
+    cv2.createTrackbar("color1 max", "controller", color_range[1][0], 180, lambda x: x)
+    cv2.createTrackbar("color2 min", "controller", color_range[0][1], 255, lambda x: x)
+    cv2.createTrackbar("color2 max", "controller", color_range[1][1], 255, lambda x: x)
+    cv2.createTrackbar("color3 min", "controller", color_range[0][2], 255, lambda x: x)
+    cv2.createTrackbar("color3 max", "controller", color_range[1][2], 255, lambda x: x)
     cv2.createTrackbar(
-        "color1 min", "controller", color_range[0][0], 180, lambda x: x
-    )
-    cv2.createTrackbar(
-        "color1 max", "controller", color_range[1][0], 180, lambda x: x
-    )
-    cv2.createTrackbar(
-        "color2 min", "controller", color_range[0][1], 255, lambda x: x
-    )
-    cv2.createTrackbar(
-        "color2 max", "controller", color_range[1][1], 255, lambda x: x
-    )
-    cv2.createTrackbar(
-        "color3 min", "controller", color_range[0][2], 255, lambda x: x
-    )
-    cv2.createTrackbar(
-        "color3 max", "controller", color_range[1][2], 255, lambda x: x
-    )
-    cv2.createTrackbar("mark_detect_area", "controller", mark_detect_area, 100, lambda x: x) # X 100 하기
+        "mark_detect_area", "controller", mark_detect_area, 100, lambda x: x
+    )  # X 100 하기
 
     while True:
         cv2.moveWindow("controller", 0, 0)
@@ -270,5 +264,6 @@ def test_with_img():
         if cv2.waitKey(1) == 27:
             cv2.destroyAllWindows()
             break
+
 
 # test_with_img()
