@@ -23,8 +23,8 @@ station_dir: -157 # deg
 ## RED
 color_range : {
   red: {
-    color1_lower: 46, #78
-    color1_upper: 94, #180
+    color1_lower: 83, #46, #78
+    color1_upper: 112, #94, #180
     color2_lower: 26, #145
     color2_upper: 187, #255
     color3_lower: 97, #216
@@ -48,7 +48,7 @@ color_range : {
   }
 }
 
-target_shape: 3 # 3: triangle, 4: rectangle, 5: circle
+target_shape: 4 # 3: triangle, 4: rectangle, 5: circle
 target_color: red #blue, green
 
 mark_detect_area: 20 # X 100 # 최소 이만큼은 되어야 타겟인지 판단 들어감
@@ -59,5 +59,5 @@ draw_contour: True
 
 
 # 스테이션 진입
-arrival_target_area: 20 # X1,000 # 이만큼 이상 넓이면 도착임
+arrival_target_area: 50 # X1,000 # 이만큼 이상 넓이면 도착임
 pixel_alpha: 10 # X 100

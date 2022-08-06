@@ -27,9 +27,11 @@ from cv_bridge import CvBridge
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float64, UInt16
+from visualization_msgs.msg import MarkerArray
 
 import dock.dock_control as dock_control
 import dock.mark_detect as mark_detect
+import dock.dock_visualize as dock_visualize
 import obstacle.obstacle_avoidance as oa
 import perception.gnss_converter as gc
 import utils.filtering as filtering
@@ -54,6 +56,7 @@ class Docking:
         # publishers
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0)
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
+        self.visual_rviz_pub = rospy.Publisher("/visual_rviz", MarkerArray, queue_size=0)
 
         # coordinates
         self.enterence_y, self.enterence_x = gc.enu_convert(rospy.get_param("docking_enterence"))
@@ -127,7 +130,7 @@ class Docking:
         self.ob_dist_range = rospy.get_param("ob_dist_range")
 
         # current status
-        self.state = 0
+        self.state = 6
         # 0: 장애물 회피
         # 1: 스테이션1로 이동 중
         # 2: 스테이션2로 이동 중
@@ -171,7 +174,7 @@ class Docking:
             "arrival_target_area",
             "controller",
             self.arrival_target_area,
-            40,
+            100,
             self.trackbar_callback,
         )  # X 1000하기
         cv2.createTrackbar(
@@ -271,7 +274,7 @@ class Docking:
             change_state = self.target_found
         elif self.state == 6:
             # 도킹 완료했는지 확인
-            change_state = self.check_docked()  # TODO 맞는지 확인
+            change_state = self.check_docked()
 
         if change_state:
             print("")
@@ -307,13 +310,41 @@ class Docking:
 
     def check_docked(self):
         if len(self.target) != 0:
-            return self.target[1] >= self.arrival_target_area
+            return self.target[0] >= self.arrival_target_area
         else:
             return False
 
     def print_status(
         self, error_angle, psi_desire, u_servo, u_thruster, mark_check_cnt, detected_cnt
     ):
+
+        state_str = [
+            "Avoiding Obstacles",
+            "Going to Station #1",
+            "Going to Station #2",
+            "Going to Station #3",
+            "Rotating Heading",
+            "Detecting Target",
+            "Docking",
+            "End",
+        ]
+        print("")
+        print("State: # {} - {}".format(str(self.state), state_str[self.state]))
+        print("")
+
+        if self.state == 6:
+            print("Target Area  : {:>5,.0f} / {:>5,.0f} ({:5})".format(self.target[0] if len(self.target)!=0 else 0, self.arrival_target_area, "OOOOO" if len(self.target)!=0 else "XXXXX"))
+            print("")
+            print(
+                "mid - {:>6} = {:>11} {:->4} {:>11}".format("target", "error_pixel", ">", "error_angle")
+            )
+            print(
+                "320 - {:>6,.0f} = {:>11,.0f} {:>4} {:>11.2f}".format(
+                    self.target[0] if len(self.target)!=0 else 0, 320 - self.target[0] if len(self.target)!=0 else 0, "", error_angle
+                )
+            )
+            print("")
+            
         if self.state in [0, 1, 2, 3]:
             psi_goal_dir_str = "[   | * ]" if self.psi_goal > 0 else "[ * |   ]"
             error_angle_dir_str = "( Right )" if error_angle > 0 else "(  Left )"
@@ -338,7 +369,12 @@ class Docking:
                 )
             )
             print("{:<9} : {:6.2f} m".format("distance", self.distance_to_point))
-        elif self.state == 4:
+        elif self.state in [4, 6]:
+            error_angle_dir_str = "( Right )" if error_angle > 0 else "(  Left )"
+            if u_servo > self.servo_middle:
+                servo_value_str = "<" * ((self.servo_middle - u_servo) // 5)  # go left
+            else:
+                servo_value_str = ">" * ((self.servo_middle - u_servo) // 5)  # go right
             print(
                 "{:^6} - {:^6} = {:^6} {:->9} {:^5}".format("desire", "psi", "error", ">", "servo")
             )
@@ -348,23 +384,16 @@ class Docking:
                 )
             )
         elif self.state == 5:
-            print("Target Shape : {} | Color : {}".foramt(self.target_shape, self.target_color))
+            print("Target Shape : {} | Color : {}".format(self.target_shape, self.target_color))
             print("Waiting..... : {:>4d} / {:>4d}".format(mark_check_cnt, self.target_detect_time))
             print("Target Cnt   : {:>4d} / {:>4d}".format(detected_cnt, self.target_detect_cnt))
             # TODO 지금 보고 있는 도형의 영역 / threshold 출력하기
-        elif self.state == 6:
-            print(
-                "{:^6} - {:^6} = {:^6} {:->9} {:^5}".format("desire", "psi", "error", ">", "servo")
-            )
-            print(
-                "{:>6.2f} - {:>6.2f} = {:>6.2f} {:>9} {:>5} ( {:^5} )".format(
-                    psi_desire, self.psi, error_angle, error_angle_dir_str, u_servo, servo_value_str
-                )
-            )
 
+        
+        print("")
         print("Thruster  : {}".format(u_thruster))
         print("")
-        print("-" * 50)
+        print("-" * 70)
 
     def show_window(self):
         self.get_trackbar_pos()
@@ -389,19 +418,11 @@ def main():
     while not rospy.is_shutdown():
         docking.trajectory.append([docking.boat_x, docking.boat_y])  # 이동 경로 추가
         docking.show_window()
-        change_state = docking.check_state()  # TODO 프린트 할 때 바뀌는 지점 알려주기
+        change_state = docking.check_state()
 
-        state_str = [
-            "Avoiding Obstacles",
-            "Going to Station #1",
-            "Going to Station #2",
-            "Going to Station #3",
-            "Rotating Heading",
-            "Detecting Target",
-            "Docking",
-            "End",
-        ]
-        print("State: # {} - {}".format(str(docking.state), state_str[docking.state]))
+        # 일부 변수 초기화
+        inrange_obstacles = []
+        danger_angles = []
 
         if docking.state in [0, 1, 2, 3]:
             docking.psi_goal = (
@@ -431,8 +452,10 @@ def main():
                 angle_range=docking.ob_angle_range,
                 distance_range=docking.ob_dist_range,
             )  # 범위 내에 있는 장애물을 필터링하고, 장애물이 있는 각도 리스트를 만듦
-            print("")
-            print("Obstacle : {:2d} / {:2d}".format(len(inrange_obstacles), len(docking.obstacles)))
+
+            # print("")
+            # print("Obstacle : {:2d} / {:2d}".format(len(inrange_obstacles), len(docking.obstacles)))
+
             error_angle = oa.calc_desire_angle(
                 danger_angles=danger_angles,
                 angle_to_goal=docking.psi_goal,
@@ -495,6 +518,8 @@ def main():
         docking.print_status(
             error_angle, psi_desire, u_servo, u_thruster, mark_check_cnt, detected_cnt
         )
+        all_markers = dock_visualize.visualize(dc=docking, psi_desire=psi_desire, inrange_obstacles=inrange_obstacles, danger_angels=danger_angles)
+        docking.visual_rviz_pub.publish(all_markers)
 
         if cv2.waitKey(1) == 27:
             cv2.destroyAllWindows()

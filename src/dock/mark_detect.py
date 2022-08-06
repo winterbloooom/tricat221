@@ -121,7 +121,7 @@ def detect_target(img, target_shape, mark_detect_area, draw_contour=True):
             continue  # 너무 작은 것은 제외
 
         # print("-" * 30)
-        print("area : {} > {}".format(area, mark_detect_area))
+        # print("area : {} > {}".format(area, mark_detect_area))
 
         vertex_num = len(approx)  # 변의 개수
         # print("# of vertices : {}".format(vertex_num))

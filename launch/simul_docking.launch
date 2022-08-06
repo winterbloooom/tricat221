@@ -48,7 +48,7 @@
 
     <!-- visulize -->
 	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/>	 -->
-    <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" /> -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting3(docking).rviz" />
 
     <!--PARAMETER-->
 	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
