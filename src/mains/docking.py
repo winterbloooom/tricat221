@@ -30,8 +30,8 @@ from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
 
 import dock.dock_control as dock_control
-import dock.mark_detect as mark_detect
 import dock.dock_visualize as dock_visualize
+import dock.mark_detect as mark_detect
 import obstacle.obstacle_avoidance as oa
 import perception.gnss_converter as gc
 import utils.filtering as filtering
@@ -333,18 +333,29 @@ class Docking:
         print("")
 
         if self.state == 6:
-            print("Target Area  : {:>5,.0f} / {:>5,.0f} ({:5})".format(self.target[0] if len(self.target)!=0 else 0, self.arrival_target_area, "OOOOO" if len(self.target)!=0 else "XXXXX"))
-            print("")
             print(
-                "mid - {:>6} = {:>11} {:->4} {:>11}".format("target", "error_pixel", ">", "error_angle")
-            )
-            print(
-                "320 - {:>6,.0f} = {:>11,.0f} {:>4} {:>11.2f}".format(
-                    self.target[0] if len(self.target)!=0 else 0, 320 - self.target[0] if len(self.target)!=0 else 0, "", error_angle
+                "Target Area  : {:>5,.0f} / {:>5,.0f} ({:5})".format(
+                    self.target[0] if len(self.target) != 0 else 0,
+                    self.arrival_target_area,
+                    "OOOOO" if len(self.target) != 0 else "XXXXX",
                 )
             )
             print("")
-            
+            print(
+                "mid - {:>6} = {:>11} {:->4} {:>11}".format(
+                    "target", "error_pixel", ">", "error_angle"
+                )
+            )
+            print(
+                "320 - {:>6,.0f} = {:>11,.0f} {:>4} {:>11.2f}".format(
+                    self.target[0] if len(self.target) != 0 else 0,
+                    320 - self.target[0] if len(self.target) != 0 else 0,
+                    "",
+                    error_angle,
+                )
+            )
+            print("")
+
         if self.state in [0, 1, 2, 3]:
             psi_goal_dir_str = "[   | * ]" if self.psi_goal > 0 else "[ * |   ]"
             error_angle_dir_str = "( Right )" if error_angle > 0 else "(  Left )"
@@ -389,7 +400,6 @@ class Docking:
             print("Target Cnt   : {:>4d} / {:>4d}".format(detected_cnt, self.target_detect_cnt))
             # TODO 지금 보고 있는 도형의 영역 / threshold 출력하기
 
-        
         print("")
         print("Thruster  : {}".format(u_thruster))
         print("")
@@ -518,7 +528,12 @@ def main():
         docking.print_status(
             error_angle, psi_desire, u_servo, u_thruster, mark_check_cnt, detected_cnt
         )
-        all_markers = dock_visualize.visualize(dc=docking, psi_desire=psi_desire, inrange_obstacles=inrange_obstacles, danger_angels=danger_angles)
+        all_markers = dock_visualize.visualize(
+            dc=docking,
+            psi_desire=psi_desire,
+            inrange_obstacles=inrange_obstacles,
+            danger_angels=danger_angles,
+        )
         docking.visual_rviz_pub.publish(all_markers)
 
         if cv2.waitKey(1) == 27:

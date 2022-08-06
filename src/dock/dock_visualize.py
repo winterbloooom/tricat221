@@ -1,23 +1,22 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import os
-import sys
 import math
+import os
 import random
+import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 import utils.visualizer as visual
+
 
 def visualize(dc, psi_desire, inrange_obstacles=[], danger_angels=[]):
     """
     dc: 도킹 클래스
     """
     # 지나온 경로
-    traj = visual.points_rviz(
-        name="traj", id=0, points=dc.trajectory, color_g=180, scale=0.05
-    )
+    traj = visual.points_rviz(name="traj", id=0, points=dc.trajectory, color_g=180, scale=0.05)
 
     # heading
     psi_arrow_end_x = 2 * math.cos(math.radians(dc.psi)) + dc.boat_x
@@ -33,9 +32,7 @@ def visualize(dc, psi_desire, inrange_obstacles=[], danger_angels=[]):
         color_g=119,
         color_b=252,
     )
-    psi_txt = visual.text_rviz(
-        name="psi", id=2, text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
-    )
+    psi_txt = visual.text_rviz(name="psi", id=2, text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y)
 
     # psi_desire (가고 싶은 각도)
     desire_arrow_end_x = 3 * math.cos(math.radians(psi_desire)) + dc.boat_x
@@ -70,36 +67,28 @@ def visualize(dc, psi_desire, inrange_obstacles=[], danger_angels=[]):
         color_g=255,
         scale=0.1,
     )
-    axis_x_txt = visual.text_rviz(
-        name="axis", id=7, text="X", x=dc.boat_x + 3.3, y=dc.boat_y
+    axis_x_txt = visual.text_rviz(name="axis", id=7, text="X", x=dc.boat_x + 3.3, y=dc.boat_y)
+    axis_y_txt = visual.text_rviz(name="axis", id=8, text="Y", x=dc.boat_x, y=dc.boat_y + 3.3)
+
+    all_markers = visual.marker_array_rviz(
+        [traj, psi, psi_txt, desire, desire_txt, axis_x, axis_y, axis_x_txt, axis_y_txt]
     )
-    axis_y_txt = visual.text_rviz(
-        name="axis", id=8, text="Y", x=dc.boat_x, y=dc.boat_y + 3.3
-    )
-
-    all_markers = visual.marker_array_rviz([traj, psi, psi_txt, desire, desire_txt, axis_x, axis_y, axis_x_txt, axis_y_txt])
-
-
 
     # =========================================== apend 시키기
-    
+
     if dc.state == 0:
         # angle_range (탐색 범위)
         min_angle_x = (
-            dc.ob_dist_range * math.cos(math.radians(dc.psi + dc.ob_angle_range[0]))
-            + dc.boat_x
+            dc.ob_dist_range * math.cos(math.radians(dc.psi + dc.ob_angle_range[0])) + dc.boat_x
         )
         min_angle_y = (
-            dc.ob_dist_range * math.sin(math.radians(dc.psi + dc.ob_angle_range[0]))
-            + dc.boat_y
+            dc.ob_dist_range * math.sin(math.radians(dc.psi + dc.ob_angle_range[0])) + dc.boat_y
         )
         max_angle_x = (
-            dc.ob_dist_range * math.cos(math.radians(dc.psi + dc.ob_angle_range[1]))
-            + dc.boat_x
+            dc.ob_dist_range * math.cos(math.radians(dc.psi + dc.ob_angle_range[1])) + dc.boat_x
         )
         max_angle_y = (
-            dc.ob_dist_range * math.sin(math.radians(dc.psi + dc.ob_angle_range[1]))
-            + dc.boat_y
+            dc.ob_dist_range * math.sin(math.radians(dc.psi + dc.ob_angle_range[1])) + dc.boat_y
         )
         angle_range = visual.linelist_rviz(
             name="angle_range",
@@ -120,12 +109,8 @@ def visualize(dc, psi_desire, inrange_obstacles=[], danger_angels=[]):
         # danger angles
         dangers = []
         for angle in danger_angels:
-            end_point_x = (
-                dc.ob_dist_range * math.cos(math.radians(dc.psi + angle)) + dc.boat_x
-            )
-            end_point_y = (
-                dc.ob_dist_range * math.sin(math.radians(dc.psi + angle)) + dc.boat_y
-            )
+            end_point_x = dc.ob_dist_range * math.cos(math.radians(dc.psi + angle)) + dc.boat_x
+            end_point_y = dc.ob_dist_range * math.sin(math.radians(dc.psi + angle)) + dc.boat_y
             dangers.append([dc.boat_x, dc.boat_y])
             dangers.append([end_point_x, end_point_y])
         danger_ang = visual.linelist_rviz(
@@ -177,7 +162,7 @@ def visualize(dc, psi_desire, inrange_obstacles=[], danger_angels=[]):
         visual.marker_array_append_rviz(all_markers, obstacles)
 
     if dc.state in [0, 1, 2, 3]:
-        ids = random.sample(range(20,40),9)
+        ids = random.sample(range(20, 40), 9)
 
         # 배로부터 목표지점까지 이은 선분
         goal_line = visual.linelist_rviz(
