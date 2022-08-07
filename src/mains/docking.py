@@ -130,7 +130,7 @@ class Docking:
         self.ob_dist_range = rospy.get_param("ob_dist_range")
 
         # current status
-        self.state = 6
+        self.state = 1
         # 0: 장애물 회피
         # 1: 스테이션1로 이동 중
         # 2: 스테이션2로 이동 중
@@ -280,7 +280,10 @@ class Docking:
             print("")
             print("{:=^70}".format(" Change State "))
             print("")
-            self.state += 1
+            if self.state in [0, 4, 5, 6]:
+                self.state += 1
+            else:
+                self.state = 4
             return True
         else:
             return False

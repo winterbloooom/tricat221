@@ -1,5 +1,5 @@
 # 장애물 회피 및 서보, 쓰러스터 제어
-arrival_range: 1.5 # m
+arrival_range: 1 # m
 angle_range: [-80, 80]
 span_angle : 5 # deg
 ob_dist_range : 10 # m
@@ -23,8 +23,8 @@ station_dir: -157 # deg
 ## RED
 color_range : {
   red: {
-    color1_lower: 83, #46, #78
-    color1_upper: 112, #94, #180
+    color1_lower: 46, #78
+    color1_upper: 94, #180
     color2_lower: 26, #145
     color2_upper: 187, #255
     color3_lower: 97, #216
@@ -39,17 +39,17 @@ color_range : {
     color3_upper: 254
   },
   blue: {
-    color1_lower: 48, #78
-    color1_upper: 96, #180
-    color2_lower: 26, #145
-    color2_upper: 187, #255
-    color3_lower: 97, #216
-    color3_upper: 253
+    color1_lower: 94, #78
+    color1_upper: 130, #180
+    color2_lower: 119, #145
+    color2_upper: 193, #255
+    color3_lower: 0, #216
+    color3_upper: 255
   }
 }
 
 target_shape: 4 # 3: triangle, 4: rectangle, 5: circle
-target_color: red #blue, green
+target_color: blue #blue, green
 
 mark_detect_area: 20 # X 100 # 최소 이만큼은 되어야 타겟인지 판단 들어감
 target_detect_time: 400 # times

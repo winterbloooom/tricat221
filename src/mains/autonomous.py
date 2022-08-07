@@ -471,9 +471,9 @@ class Autonomous:
             self.servo_range[1] - self.servo_range[0]
         ) / (self.rotate_angle_range[1] - self.rotate_angle_range[0]) + self.servo_range[0]
 
-        # 중앙값 근처는 전부 중앙값으로 publish
-        if self.servo_middle - 2 <= u_servo <= self.servo_middle + 2:
-            u_servo = self.servo_middle
+        # # 중앙값 근처는 전부 중앙값으로 publish
+        # if self.servo_middle - 2 <= u_servo <= self.servo_middle + 2:
+        #     u_servo = self.servo_middle
 
         # servo motor 제어 가능 범위 내부에 머무르도록 함
         if u_servo > self.servo_range[1]:

@@ -1,10 +1,10 @@
 goal_range: 1.5
 
-kp_angle : 40 # x0.01
-ki_angle : 0 # x0.01
-kd_angle : 1 # x0.1
+kp_angle : 45 # x0.01
+ki_angle : 1 # x0.01
+kd_angle : 2 # x0.1
 
-kp_distance : 40
+kp_distance : 10
 ki_distance : 0
 kd_distance : 0
 
@@ -12,7 +12,7 @@ servo_middle: 95
 servo_left_max: 120
 servo_right_max: 70
 
-thruster_max : 1650
+thruster_max : 1700
 thruster_min : 1600
 
 controller : 1

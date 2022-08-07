@@ -122,9 +122,10 @@ class Hopping:
         Notes:
             * IMU의 예민성으로 인하여 heading 값에 noise가 있음. 따라서 이동평균필터를 적용함.
         """
-        self.psi = filtering.moving_avg_filter(
-            self.heading_queue, self.filter_queue_size, msg.data
-        )  # [deg]
+        # self.psi = filtering.moving_avg_filter(
+        #     self.heading_queue, self.filter_queue_size, msg.data
+        # )  # [deg]
+        self.psi = msg.data
 
     def boat_position_callback(self, msg):
         """GPS로 측정한 배의 ENU 변환 좌표 콜백함수
