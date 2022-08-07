@@ -482,6 +482,7 @@ class Autonomous:
             u_servo = self.servo_range[0]
         return int(u_servo)
 
+
 def rearrange_angle(input_angle):
     if input_angle >= 180:  # 왼쪽으로 회전이 더 이득
         output_angle = -180 + abs(input_angle) % 180
@@ -490,6 +491,7 @@ def rearrange_angle(input_angle):
     else:
         output_angle = input_angle
     return output_angle
+
 
 def main():
     rospy.init_node("autonomous", anonymous=False)
@@ -509,7 +511,7 @@ def main():
             return
         else:
             auto.trajectory.append([auto.boat_x, auto.boat_y])  # 이동 경로 추가
-            # 현재 heading에서 목표로 갈 때 돌려야 할 각도. 
+            # 현재 heading에서 목표로 갈 때 돌려야 할 각도.
             # 선수와 동일 선상이면 0, 우측에 있으면 +180까지 -> 180 넘을 수도 있어서 한 번 걸러줘야 함
             # TODO 잘 돌아가는지 확인할 것!
             auto.psi_goal = (
