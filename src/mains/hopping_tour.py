@@ -19,6 +19,15 @@ import perception.gnss_converter as gc
 import utils.filtering as filtering
 import utils.visualizer as visual
 
+def rearrange_angle(input_angle):
+    if input_angle >= 180:  # 왼쪽으로 회전이 더 이득
+        output_angle = -180 + abs(input_angle) % 180
+    elif input_angle <= -180:
+        output_angle = 180 - abs(input_angle) % 180
+    else:
+        output_angle = input_angle
+    return output_angle
+
 
 class Hopping:
     def __init__(self):
@@ -50,6 +59,7 @@ class Hopping:
         # directions
         self.psi = 0  # 자북과 heading의 각도(자북 우측 +, 좌측 -) [degree]
         self.psi_desire = 0  # 지구고정좌표계 기준 움직여야 할 각도
+        self.psi_goal = 0 # 현재 선수각으로부터 goal까지 가기 위해 움직여야 할 각도. 선박 기준(-180 ~ 180)
         self.error_angle = 0  # 다음 목표까지 가기 위한 차이각
         self.heading_queue = []  # 헤딩을 필터링할 이동평균필터 큐
 
@@ -188,17 +198,17 @@ class Hopping:
             return False
 
     def calc_error_angle(self):
-        # psi_desire 계산(x축(North)과 goal 사이 각)
-        self.psi_desire = math.degrees(
+        # hopping에서는 error_angle이 곧 psi_goal임
+        self.psi_goal = math.degrees(
             math.atan2(self.goal_y - self.boat_y, self.goal_x - self.boat_x)
-        )
-        error_angle = self.psi_desire - self.psi
-        if error_angle >= 180:  # 왼쪽으로 회전이 더 이득
-            self.error_angle = -180 + abs(error_angle) % 180
-        elif error_angle <= -180:
-            self.error_angle = 180 - abs(error_angle) % 180
-        else:
-            self.error_angle = error_angle
+        ) - self.psi
+        self.psi_goal = rearrange_angle(self.psi_goal)
+        self.error_angle = self.psi_goal
+
+        self.psi_desire = rearrange_angle(self.psi + self.error_angle)
+        
+        if abs(self.psi_desire) > 180 or abs(self.psi_goal) > 180:
+            sys.exit() # XXX 나중에 삭제하기
 
     def error_angle_PID(self):
         self.set_PID_value()
@@ -207,7 +217,10 @@ class Hopping:
 
         self.error_sum_angle += self.error_angle * 0.1  # dt = rate
         ci_angle = self.ki_angle * self.error_sum_angle
-        # TODO : errorsum 초기화할 위치 선정하기
+        # print(self.error_sum_angle, ci_angle)
+        if abs(ci_angle) > 1:
+            self.error_sum_angle = 0
+        # TODO : errorsum 초기화할 기준 잡아 파라미터로.
 
         cd_angle = -self.kd_angle * self.yaw_rate
 

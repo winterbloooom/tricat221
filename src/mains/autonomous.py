@@ -482,6 +482,14 @@ class Autonomous:
             u_servo = self.servo_range[0]
         return int(u_servo)
 
+def rearrange_angle(input_angle):
+    if input_angle >= 180:  # 왼쪽으로 회전이 더 이득
+        output_angle = -180 + abs(input_angle) % 180
+    elif input_angle <= -180:
+        output_angle = 180 - abs(input_angle) % 180
+    else:
+        output_angle = input_angle
+    return output_angle
 
 def main():
     rospy.init_node("autonomous", anonymous=False)
@@ -501,11 +509,14 @@ def main():
             return
         else:
             auto.trajectory.append([auto.boat_x, auto.boat_y])  # 이동 경로 추가
+            # 현재 heading에서 목표로 갈 때 돌려야 할 각도. 
+            # 선수와 동일 선상이면 0, 우측에 있으면 +180까지 -> 180 넘을 수도 있어서 한 번 걸러줘야 함
+            # TODO 잘 돌아가는지 확인할 것!
             auto.psi_goal = (
                 math.degrees(math.atan2(auto.goal_y - auto.boat_y, auto.goal_x - auto.boat_x))
                 - auto.psi
             )
-            # 목표까지 떨어진 각도 갱신 // atan2 계산은 현재 보트 위치로 자북축을 옮겨왔을 때 목표점부터 자북축까지 떨어진 각도
+            auto.psi_goal = rearrange_angle(auto.psi_goal)
 
             auto.inrange_obstacles, auto.danger_angles = oa.ob_filtering(
                 obstacles=auto.obstacles,
@@ -520,7 +531,10 @@ def main():
                 angle_to_goal=auto.psi_goal,
                 angle_range=auto.ob_angle_range,
             )  # 목표각과 현 헤딩 사이 상대적 각도 계산. 선박고정좌표계로 '가야 할 각도'에 해당
-            auto.psi_desire = auto.psi + error_angle  # 월드좌표계로 '가야 할 각도'를 계산함
+
+            auto.psi_desire = rearrange_angle(auto.psi + error_angle)
+            # 월드좌표계로 '가야 할 각도'를 계산함
+            # TODO 잘 돌아가는지 확인할 것.
 
             u_servo = auto.degree_to_servo(error_angle)  # degree 단위를 servo moter 단위로 변경
             # u_servo = filtering.moving_avg_filter(

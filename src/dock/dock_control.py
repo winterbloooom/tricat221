@@ -25,7 +25,7 @@ def dock(target_detected, target, alpha):
         return error_angle, True
 
 
-def pixel_to_degree(target, alpha):
+def pixel_to_degree(target, alpha, angle_range):
     """
     중앙 픽셀에서 얼마나 떨어졌는지 -> 몇 도로 돌려야 하는지
     alpha는 pixel에서 degree 매핑하는 관계 규정. 좀 많이 커야 함 100 이상
@@ -42,7 +42,12 @@ def pixel_to_degree(target, alpha):
         return 0
     area = target[0]
     error_pixel = 320 - target[1]
-    return error_pixel / area * alpha
+    degree = error_pixel / area * alpha
+    if degree > angle_range[1]:
+        degree = angle_range[1]
+    elif degree < angle_range[0]:
+        degree = angle_range[0]
+    return degree
 
 
 def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False):

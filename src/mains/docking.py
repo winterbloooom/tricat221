@@ -142,6 +142,7 @@ class Docking:
         # self.target = {"area": 0, "center_col": 0} # [area, center_col(pixel)] # TODO 딕셔너리로 한꺼번에 바꾸자
         self.target = [0, 0]  # [area, center_col(pixel)]
         self.target_found = False
+        self.next_to_visit = 0 # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
         self.filter_queue = [0] * self.filter_queue_size
 
         # controller
@@ -261,7 +262,7 @@ class Docking:
             # 스테이션1 도착 여부 판단
             change_state = self.calc_distance(self.waypoints[1])
         elif self.state == 2:
-            # 스테이션3 도착 여부 판단
+            # 스테이션2 도착 여부 판단
             change_state = self.calc_distance(self.waypoints[2])
         elif self.state == 3:
             # 스테이션3 도착 여부 판단
@@ -270,8 +271,8 @@ class Docking:
             # heading 스테이션쪽인지 판단
             change_state = self.check_heading()
         elif self.state == 5:
-            # 마크 발견했는지 확인
-            change_state = self.target_found
+            # 마크 발견했는지 확인 -> # TODO 발견 못했다면 다음 스테이션으로 넘어가야 하는데?
+            change_state = self.check_target()
         elif self.state == 6:
             # 도킹 완료했는지 확인
             change_state = self.check_docked()
@@ -280,12 +281,16 @@ class Docking:
             print("")
             print("{:=^70}".format(" Change State "))
             print("")
-            if self.state in [0, 4, 5, 6]:
-                self.state += 1
-            else:
+            if self.state in [0, 1, 2, 3]:
+                self.next_to_visit += 1 # state=3인데 next_to_visit=4이면 전부 찾기 실패
+            if self.state in [1, 2, 3]:
                 self.state = 4
+            else:
+                self.state += 1
             return True
         else:
+            if self.state == 5:
+                self.state == self.next_to_visit
             return False
 
     def check_heading(self):
@@ -360,6 +365,7 @@ class Docking:
             print("")
 
         if self.state in [0, 1, 2, 3]:
+            print("Next to visit")
             psi_goal_dir_str = "[   | * ]" if self.psi_goal > 0 else "[ * |   ]"
             error_angle_dir_str = "( Right )" if error_angle > 0 else "(  Left )"
             if u_servo > self.servo_middle:
@@ -417,6 +423,14 @@ class Docking:
         else:
             cv2.imshow("controller", self.raw_img)
 
+def rearrange_angle(input_angle):
+    if input_angle >= 180:  # 왼쪽으로 회전이 더 이득
+        output_angle = -180 + abs(input_angle) % 180
+    elif input_angle <= -180:
+        output_angle = 180 - abs(input_angle) % 180
+    else:
+        output_angle = input_angle
+    return output_angle
 
 def main():
     rospy.init_node("Docking", anonymous=True)
@@ -438,15 +452,9 @@ def main():
         danger_angles = []
 
         if docking.state in [0, 1, 2, 3]:
-            docking.psi_goal = (
-                math.degrees(
-                    math.atan2(
-                        docking.waypoints[docking.state][1] - docking.boat_y,
-                        docking.waypoints[docking.state][0] - docking.boat_x,
-                    )
-                )
-                - docking.psi
-            )  # 목표까지 떨어진 각도 갱신
+            # 현재 heading에서 목표로 갈 때 돌려야 할 각도. 선수와 동일 선상이면 0, 우측에 있으면 +180까지 -> 180 넘을 수도 있어서 한 번 걸러줘야 함
+            docking.psi_goal = math.degrees(math.atan2(docking.waypoints[docking.state][1] - docking.boat_y,docking.waypoints[docking.state][0] - docking.boat_x)) - docking.psi 
+            docking.psi_goal = rearrange_angle(docking.psi_goal)
 
         if docking.state == 7:
             # 정지 및 끝내기
@@ -473,7 +481,9 @@ def main():
                 danger_angles=danger_angles,
                 angle_to_goal=docking.psi_goal,
                 angle_range=docking.ob_angle_range,
-            )  # 목표각과 현 헤딩 사이 상대적 각도 계산. 선박고정좌표계로 '가야 할 각도'에 해당
+            )  
+            # 목표각과 현 헤딩 사이 상대적 각도 계산. 선박고정좌표계로 '가야 할 각도'에 해당
+            # 각도 범위가 모두 장애물이고 범위 밖에 목표지점이 있다면 psi_goal로. 
             u_thruster = docking.thruster_default
 
         elif docking.state in [1, 2, 3]:
@@ -485,7 +495,8 @@ def main():
             # 헤딩 돌리기
             # for _ in len(docking.stop_time):
             #     rospy.sleep(1) # TODO 정지 명령 몇 초간 내려줘야 하는지 테스트
-            error_angle = docking.station_dir - docking.psi
+            error_angle = docking.station_dir - docking.psi # 여기도 자칫 180 넘을 수 있으니 수정 해줌
+            error_angle = rearrange_angle(docking.psi_goal)
             u_thruster = docking.thruster_stop
 
         elif docking.state == 5:
@@ -511,10 +522,10 @@ def main():
         elif docking.state == 6:
             # 스테이션 진입
             docking.target = docking.check_target(return_target=True)
-            error_angle = dock_control.pixel_to_degree(docking.target, docking.pixel_alpha)
+            error_angle = dock_control.pixel_to_degree(docking.target, docking.pixel_alpha, docking.angle_range)
             u_thruster = docking.thruster_default
 
-        psi_desire = docking.psi + error_angle  # 월드좌표계로 '가야 할 각도'를 계산함
+        psi_desire = rearrange_angle(docking.psi + error_angle)  # 월드좌표계로 '가야 할 각도'를 계산함
 
         u_servo = dock_control.degree_to_servo(
             error_angle, docking.angle_range, docking.servo_range, docking.angle_alpha
