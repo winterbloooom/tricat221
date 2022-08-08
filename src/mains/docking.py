@@ -146,7 +146,9 @@ class Docking:
         # self.target = {"area": 0, "center_col": 0} # [area, center_col(pixel)] # TODO 딕셔너리로 한꺼번에 바꾸자
         self.target = [0, 0]  # [area, center_col(pixel)]
         self.target_found = False
-        self.next_to_visit = 1 # sstate 시작을 1로할거면 1로  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
+        self.next_to_visit = (
+            1  # sstate 시작을 1로할거면 1로  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
+        )
         self.filter_queue = [0] * self.filter_queue_size
 
         # controller
