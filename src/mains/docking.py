@@ -142,7 +142,9 @@ class Docking:
         # self.target = {"area": 0, "center_col": 0} # [area, center_col(pixel)] # TODO 딕셔너리로 한꺼번에 바꾸자
         self.target = [0, 0]  # [area, center_col(pixel)]
         self.target_found = False
-        self.next_to_visit = 1 # sstate 시작을 1로할거면 1로  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
+        self.next_to_visit = (
+            1  # sstate 시작을 1로할거면 1로  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
+        )
         self.filter_queue = [0] * self.filter_queue_size
 
         # controller
@@ -301,7 +303,7 @@ class Docking:
                 self.state += 1
             return True
         else:
-            if self.state == 5 and cnt > self.target_detect_time: # TODO 카운트 다 세고 상태 바꿔야 함
+            if self.state == 5 and cnt > self.target_detect_time:  # TODO 카운트 다 세고 상태 바꿔야 함
                 self.state = self.next_to_visit
                 # print("next", self.next_to_visit)
                 # print(self.state)
@@ -522,7 +524,7 @@ def main():
 
             error_angle = docking.station_dir - docking.psi  # 여기도 자칫 180 넘을 수 있으니 수정 해줌
             error_angle = rearrange_angle(error_angle)
-            u_thruster = 1600 #docking.thruster_default #docking.thruster_stop
+            u_thruster = 1600  # docking.thruster_default #docking.thruster_stop
 
             # for _ in range(docking.stop_time):
             #     rospy.sleep(1) # TODO 정지 명령 몇 초간 내려줘야 하는지 테스트
