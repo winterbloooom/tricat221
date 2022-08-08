@@ -77,7 +77,8 @@ def select_color(img, range, color_space="hsv"):
     selceted = cv2.inRange(img, range[0], range[1])
     return selceted
 
-def is_target(target_shape, target_detect_area, vertex_num, area): # TODO 검증 필요
+
+def is_target(target_shape, target_detect_area, vertex_num, area):  # TODO 검증 필요
     """
     target_shape: 타겟의 모양
     target_detect_area: 이 이상의 넓이 가져야 타겟임
@@ -130,7 +131,7 @@ def detect_target(img, target_shape, mark_detect_area, target_detect_area, draw_
 
     for contour in contours:
         approx = cv2.approxPolyDP(contour, cv2.arcLength(contour, True) * 0.02, True)  # 도형 근사
-        
+
         area = cv2.contourArea(approx)  # 도형 넓이
         if area < mark_detect_area:
             continue  # 너무 작은 것은 제외
@@ -156,14 +157,23 @@ def detect_target(img, target_shape, mark_detect_area, target_detect_area, draw_
                 target = [area, center_point[1]]
                 max_area = area
             else:
-                detected = False # 더 큰 마크가 있으므로 무시
+                detected = False  # 더 큰 마크가 있으므로 무시
 
-        shape = draw_mark(window=shape, contour=approx, vertices=vertex_num, area=area, box_points=box_points, center_point=center_point, is_target=detected)
+        shape = draw_mark(
+            window=shape,
+            contour=approx,
+            vertices=vertex_num,
+            area=area,
+            box_points=box_points,
+            center_point=center_point,
+            is_target=detected,
+        )
 
     if max_area != 0:
         return target, shape, max_area
     else:  # 타겟이 검출되지 않음
         return [], shape, max_area
+
 
 def contour_points(contour):
     box_left_top = (min(contour[:, 0, 0]), min(contour[:, 0, 1]))  # 도형에 박스를 그렸을 때의 좌상단
@@ -189,7 +199,7 @@ def draw_mark(window, contour, vertices, area, box_points, center_point, is_targ
         tuple : (numpy.ndarray, int, int) = (image after drawing, center row coord (pixel), center col coord (pixel))
 
     """
-    if is_target: #if target_shape == len(contour) or (vertices >= 5 and target_shape == 5):
+    if is_target:  # if target_shape == len(contour) or (vertices >= 5 and target_shape == 5):
         color = (0, 255, 0)  # target은 초록색
         window = cv2.line(window, (center_point[1], 0), (center_point[1], 480), (0, 0, 255), 2)
         # TODO 검출된 모든 정답값에 그림 -> 최댓값의 크기만 그리고 싶은데..

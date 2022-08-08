@@ -153,27 +153,13 @@ class Docking:
 
         # controller
         cv2.namedWindow("controller")
-        cv2.createTrackbar(
-            "color1 min", "controller", self.color_range[0][0], 180, lambda x: x
-        )
-        cv2.createTrackbar(
-            "color1 max", "controller", self.color_range[1][0], 180, lambda x: x
-        )
-        cv2.createTrackbar(
-            "color2 min", "controller", self.color_range[0][1], 255, lambda x: x
-        )
-        cv2.createTrackbar(
-            "color2 max", "controller", self.color_range[1][1], 255, lambda x: x
-        )
-        cv2.createTrackbar(
-            "color3 min", "controller", self.color_range[0][2], 255, lambda x: x
-        )
-        cv2.createTrackbar(
-            "color3 max", "controller", self.color_range[1][2], 255, lambda x: x
-        )
-        cv2.createTrackbar(
-            "ref_dir_range", "controller", self.ref_dir_range, 20, lambda x: x
-        )  # 10
+        cv2.createTrackbar("color1 min", "controller", self.color_range[0][0], 180, lambda x: x)
+        cv2.createTrackbar("color1 max", "controller", self.color_range[1][0], 180, lambda x: x)
+        cv2.createTrackbar("color2 min", "controller", self.color_range[0][1], 255, lambda x: x)
+        cv2.createTrackbar("color2 max", "controller", self.color_range[1][1], 255, lambda x: x)
+        cv2.createTrackbar("color3 min", "controller", self.color_range[0][2], 255, lambda x: x)
+        cv2.createTrackbar("color3 max", "controller", self.color_range[1][2], 255, lambda x: x)
+        cv2.createTrackbar("ref_dir_range", "controller", self.ref_dir_range, 20, lambda x: x)  # 10
         cv2.createTrackbar(
             "mark_detect_area", "controller", self.mark_detect_area, 100, lambda x: x
         )  # X 100 하기
@@ -283,7 +269,7 @@ class Docking:
 
             if self.state in [1, 2, 3]:
                 self.state = 4
-                for _ in range(8): # TODO 수정하기.
+                for _ in range(8):  # TODO 수정하기.
                     self.thruster_pub.publish(1425)
                     print("sleep")
                     rospy.sleep(1)
@@ -315,7 +301,11 @@ class Docking:
         preprocessed = mark_detect.preprocess_image(self.raw_img, blur=True)
         self.hsv_img = mark_detect.select_color(preprocessed, self.color_range)  # 원하는 색만 필터링
         target, self.shape_img, self.mark_area = mark_detect.detect_target(
-            self.hsv_img, self.target_shape, self.mark_detect_area, self.target_detect_area, self.draw_contour,
+            self.hsv_img,
+            self.target_shape,
+            self.mark_detect_area,
+            self.target_detect_area,
+            self.draw_contour,
         )  # target = [area, center_col] 형태로 타겟의 정보를 받음
 
         if return_target == True:
@@ -329,9 +319,7 @@ class Docking:
         else:
             return False
 
-    def print_status(
-        self, error_angle, u_servo, u_thruster, mark_check_cnt, detected_cnt
-    ):
+    def print_status(self, error_angle, u_servo, u_thruster, mark_check_cnt, detected_cnt):
 
         state_str = [
             "Avoiding Obstacles",
@@ -349,7 +337,9 @@ class Docking:
 
         if self.state == 6:
             error_angle_dir_str = "( Right )" if error_angle > 0 else "(  Left )"
-            print("Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area))
+            print(
+                "Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area)
+            )
             print(
                 "Target Area  : {:>7,.0f} / {:>7,.0f} ({:5})".format(
                     self.target[0] if len(self.target) != 0 else 0,
@@ -369,7 +359,7 @@ class Docking:
                     320 - self.target[1] if len(self.target) != 0 else 0,
                     "",
                     error_angle,
-                    error_angle_dir_str
+                    error_angle_dir_str,
                 )
             )
             print("")
@@ -410,14 +400,21 @@ class Docking:
             )
             print(
                 "{:>8.2f} - {:>8.2f} = {:>8.2f} {:>9} {:>5} ( {:^5} )".format(
-                    self.psi_desire, self.psi, error_angle, error_angle_dir_str, u_servo, servo_value_str
+                    self.psi_desire,
+                    self.psi,
+                    error_angle,
+                    error_angle_dir_str,
+                    u_servo,
+                    servo_value_str,
                 )
             )
         elif self.state == 5:
             print("Target Shape : {} | Color : {}".format(self.target_shape, self.target_color))
             print("Waiting..... : {:>4d} / {:>4d}".format(mark_check_cnt, self.target_detect_time))
             print("Target Cnt   : {:>4d} / {:>4d}".format(detected_cnt, self.target_detect_cnt))
-            print("Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area))
+            print(
+                "Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area)
+            )
 
         print("")
         print("Thruster  : {}".format(u_thruster))
@@ -527,7 +524,7 @@ def main():
             # 헤딩 돌리기
             error_angle = docking.station_dir - docking.psi  # 여기도 자칫 180 넘을 수 있으니 수정 해줌
             error_angle = rearrange_angle(error_angle)
-            u_thruster = 1600 # TODO
+            u_thruster = 1600  # TODO
 
         elif docking.state == 5:
             mark_check_cnt += 1
@@ -537,7 +534,7 @@ def main():
 
             if mark_check_cnt >= docking.target_detect_time:  # 다 기다렸는데
                 if detected_cnt >= docking.target_detect_cnt:  # 충분히 많이 검출되면
-                    docking.target = docking.check_target(return_target=True) # TODO 중복
+                    docking.target = docking.check_target(return_target=True)  # TODO 중복
                     docking.target_found = True  # 타겟 찾은 것
                 else:  # 검출 횟수가 적으면
                     docking.target = [0, 0]
@@ -547,7 +544,7 @@ def main():
 
             error_angle = docking.station_dir - docking.psi
             error_angle = rearrange_angle(error_angle)
-            u_thruster = 1550 #docking.thruster_stop 
+            u_thruster = 1550  # docking.thruster_stop
             # TODO 자꾸 파도 때문에 밀려서 정지 안하긴 했으나 계속 돌아가는 것도 문제.
 
         elif docking.state == 6:
@@ -555,7 +552,7 @@ def main():
             docking.target = docking.check_target(return_target=True)
             error_angle = dock_control.pixel_to_degree(
                 docking.target, docking.pixel_alpha, docking.angle_range
-            ) # 양수면 오른쪽으로 가야 함
+            )  # 양수면 오른쪽으로 가야 함
             u_thruster = docking.thruster_default
 
         docking.psi_desire = rearrange_angle(docking.psi + error_angle)  # 월드좌표계로 '가야 할 각도'를 계산함
@@ -569,18 +566,16 @@ def main():
 
         # if docking.state == 5:
         #     u_servo = docking.servo_middle # TODO 정지 안하도록 변경했으니 삭제
-        
+
         docking.servo_pub.publish(u_servo)
         docking.thruster_pub.publish(u_thruster)
 
         if print_cnt > 0:
-            docking.print_status(
-                error_angle, u_servo, u_thruster, mark_check_cnt, detected_cnt
-            )
+            docking.print_status(error_angle, u_servo, u_thruster, mark_check_cnt, detected_cnt)
             print_cnt = 0
         else:
             print_cnt += 1
-        
+
         all_markers = dock_visualize.visualize(
             dc=docking,
             inrange_obstacles=inrange_obstacles,

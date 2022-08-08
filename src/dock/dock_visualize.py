@@ -18,10 +18,18 @@ def visualize(dc, inrange_obstacles=[], danger_angels=[]):
     ids = list(range(0, 100))
 
     # 현재 좌표
-    boat = visual.text_rviz(name="boat", id=ids.pop(), text="({:>4.2f}, {:>4.2f})".format(dc.boat_x, dc.boat_y), x=dc.boat_x-0.3, y=dc.boat_y-0.3)
+    boat = visual.text_rviz(
+        name="boat",
+        id=ids.pop(),
+        text="({:>4.2f}, {:>4.2f})".format(dc.boat_x, dc.boat_y),
+        x=dc.boat_x - 0.3,
+        y=dc.boat_y - 0.3,
+    )
 
     # 지나온 경로
-    traj = visual.points_rviz(name="traj", id=ids.pop(), points=dc.trajectory, color_g=180, scale=0.05)
+    traj = visual.points_rviz(
+        name="traj", id=ids.pop(), points=dc.trajectory, color_g=180, scale=0.05
+    )
 
     # heading
     psi_arrow_end_x = 2 * math.cos(math.radians(dc.psi)) + dc.boat_x
@@ -37,7 +45,9 @@ def visualize(dc, inrange_obstacles=[], danger_angels=[]):
         color_g=119,
         color_b=252,
     )
-    psi_txt = visual.text_rviz(name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y)
+    psi_txt = visual.text_rviz(
+        name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
+    )
 
     # psi_desire (가고 싶은 각도)
     desire_arrow_end_x = 3 * math.cos(math.radians(dc.psi_desire)) + dc.boat_x
@@ -72,8 +82,12 @@ def visualize(dc, inrange_obstacles=[], danger_angels=[]):
         color_g=255,
         scale=0.1,
     )
-    axis_x_txt = visual.text_rviz(name="axis", id=ids.pop(), text="X", x=dc.boat_x + 3.3, y=dc.boat_y)
-    axis_y_txt = visual.text_rviz(name="axis", id=ids.pop(), text="Y", x=dc.boat_x, y=dc.boat_y + 3.3)
+    axis_x_txt = visual.text_rviz(
+        name="axis", id=ids.pop(), text="X", x=dc.boat_x + 3.3, y=dc.boat_y
+    )
+    axis_y_txt = visual.text_rviz(
+        name="axis", id=ids.pop(), text="Y", x=dc.boat_x, y=dc.boat_y + 3.3
+    )
 
     all_markers = visual.marker_array_rviz(
         [boat, traj, psi, psi_txt, desire, desire_txt, axis_x, axis_y, axis_x_txt, axis_y_txt]
@@ -205,7 +219,7 @@ def visualize(dc, inrange_obstacles=[], danger_angels=[]):
                 id=ids.pop(),
                 x=x_pos,
                 y=y_pos,
-                text="{:^10}\n({:>4.2f}, {:>4.2f})".format("#"+str(i), x_pos, y_pos),
+                text="{:^10}\n({:>4.2f}, {:>4.2f})".format("#" + str(i), x_pos, y_pos),
             )
             visual.marker_array_append_rviz(all_markers, txt)
     else:
@@ -257,7 +271,7 @@ def visualize(dc, inrange_obstacles=[], danger_angels=[]):
             color_r=122,
             color_g=114,
             color_b=237,
-            scale=0.1
+            scale=0.1,
         )
         visual.marker_array_append_rviz(all_markers, heading_range)
     else:
