@@ -15,5 +15,5 @@ servo_right_max: 70
 thruster_max : 1700
 thruster_min : 1600
 
-controller : 1
+controller : 0
 filter_queue_size : 5

@@ -142,7 +142,7 @@ class Docking:
         # self.target = {"area": 0, "center_col": 0} # [area, center_col(pixel)] # TODO 딕셔너리로 한꺼번에 바꾸자
         self.target = [0, 0]  # [area, center_col(pixel)]
         self.target_found = False
-        self.next_to_visit = 0  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
+        self.next_to_visit = 1 # sstate 시작을 1로할거면 1로  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
         self.filter_queue = [0] * self.filter_queue_size
 
         # controller
@@ -253,7 +253,7 @@ class Docking:
 
         return self.distance_to_point <= self.arrival_range
 
-    def check_state(self):
+    def check_state(self, cnt):
         change_state = False
         if self.state == 0:
             # 변경지점 도착 여부 판단
@@ -272,7 +272,13 @@ class Docking:
             change_state = self.check_heading()
         elif self.state == 5:
             # 마크 발견했는지 확인 -> # TODO 발견 못했다면 다음 스테이션으로 넘어가야 하는데?
-            change_state = self.check_target()
+            # change_state = self.check_target()
+            if self.target_found == True:
+                print("here target found", self.target_found)
+                change_state = True
+            else:
+                change_state = False
+            # print(change_state)
         elif self.state == 6:
             # 도킹 완료했는지 확인
             change_state = self.check_docked()
@@ -283,14 +289,22 @@ class Docking:
             print("")
             if self.state in [0, 1, 2, 3]:
                 self.next_to_visit += 1  # state=3인데 next_to_visit=4이면 전부 찾기 실패
+
             if self.state in [1, 2, 3]:
                 self.state = 4
+                for _ in range(8):
+                    self.thruster_pub.publish(1425)
+                    print("sleep")
+                    rospy.sleep(1)
+                    print("wake")
             else:
                 self.state += 1
             return True
         else:
-            if self.state == 5:
-                self.state == self.next_to_visit
+            if self.state == 5 and cnt > self.target_detect_time: # TODO 카운트 다 세고 상태 바꿔야 함
+                self.state = self.next_to_visit
+                # print("next", self.next_to_visit)
+                # print(self.state)
             return False
 
     def check_heading(self):
@@ -338,6 +352,7 @@ class Docking:
         ]
         print("")
         print("State: # {} - {}".format(str(self.state), state_str[self.state]))
+        print("next", self.next_to_visit)
         print("")
 
         if self.state == 6:
@@ -365,7 +380,7 @@ class Docking:
             print("")
 
         if self.state in [0, 1, 2, 3]:
-            print("Next to visit")
+            print("Next to visit", self.next_to_visit)
             psi_goal_dir_str = "[   | * ]" if self.psi_goal > 0 else "[ * |   ]"
             error_angle_dir_str = "( Right )" if error_angle > 0 else "(  Left )"
             if u_servo > self.servo_middle:
@@ -447,7 +462,7 @@ def main():
     while not rospy.is_shutdown():
         docking.trajectory.append([docking.boat_x, docking.boat_y])  # 이동 경로 추가
         docking.show_window()
-        change_state = docking.check_state()
+        change_state = docking.check_state(mark_check_cnt)
 
         # 일부 변수 초기화
         inrange_obstacles = []
@@ -502,16 +517,23 @@ def main():
             u_thruster = docking.thruster_default
 
         elif docking.state == 4:
+            print("now 4")
             # 헤딩 돌리기
-            # for _ in len(docking.stop_time):
-            #     rospy.sleep(1) # TODO 정지 명령 몇 초간 내려줘야 하는지 테스트
+
             error_angle = docking.station_dir - docking.psi  # 여기도 자칫 180 넘을 수 있으니 수정 해줌
-            error_angle = rearrange_angle(docking.psi_goal)
-            u_thruster = docking.thruster_stop
+            error_angle = rearrange_angle(error_angle)
+            u_thruster = 1600 #docking.thruster_default #docking.thruster_stop
+
+            # for _ in range(docking.stop_time):
+            #     rospy.sleep(1) # TODO 정지 명령 몇 초간 내려줘야 하는지 테스트
 
         elif docking.state == 5:
+            print("now 5")
+            docking.target_found = False
             # 마크 탐색하기
             if mark_check_cnt > docking.target_detect_time:  # 다 기다렸는데
+                print("here")
+                print(mark_check_cnt)
                 if detected_cnt >= docking.target_detect_cnt:  # 충분히 많이 검출되면
                     docking.target = docking.check_target(return_target=True)
                     docking.target_found = True  # 타겟 찾은 것

@@ -9,7 +9,7 @@ servo_range: [70, 120]
 angle_alpha: 1
 filter_queue_size: 5
 
-thruster_default: 1600
+thruster_default: 1650
 thruster_stop: 1500
 
 
@@ -51,9 +51,9 @@ color_range : {
 target_shape: 4 # 3: triangle, 4: rectangle, 5: circle
 target_color: blue #blue, green
 
-mark_detect_area: 20 # X 100 # 최소 이만큼은 되어야 타겟인지 판단 들어감
+mark_detect_area: 10 # X 100 # 최소 이만큼은 되어야 타겟인지 판단 들어감
 target_detect_time: 400 # times
-target_detect_cnt: 300 # times
+target_detect_cnt: 150 # times
 
 draw_contour: True
 
