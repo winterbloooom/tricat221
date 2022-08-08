@@ -1,12 +1,12 @@
 # 장애물 회피 및 서보, 쓰러스터 제어
 arrival_range: 1 # m
 angle_range: [-80, 80]
-span_angle : 5 # deg
-ob_dist_range : 10 # m
-ob_angle_range : [-90, 90] # deg
+span_angle : 15 # deg
+ob_dist_range : 4 # m
+ob_angle_range : [-100, 100] # deg
 
 servo_range: [70, 120]
-angle_alpha: 1
+angle_alpha: 1.5
 filter_queue_size: 5
 
 thruster_default: 1650
@@ -39,25 +39,26 @@ color_range : {
     color3_upper: 254
   },
   blue: {
-    color1_lower: 94, #78
-    color1_upper: 130, #180
-    color2_lower: 119, #145
-    color2_upper: 193, #255
-    color3_lower: 0, #216
+    color1_lower: 94,
+    color1_upper: 130,
+    color2_lower: 119,
+    color2_upper: 193,
+    color3_lower: 0,
     color3_upper: 255
   }
 }
 
 target_shape: 4 # 3: triangle, 4: rectangle, 5: circle
-target_color: blue #blue, green
+target_color: blue # red, green, blue
 
-mark_detect_area: 10 # X 100 # 최소 이만큼은 되어야 타겟인지 판단 들어감
+mark_detect_area: 20 # X 100 # 최소 이만큼은 되어야 타겟인지 판단 들어감
+target_detect_area: 35000 # 최소 이만큼은 되어야 타겟이라고 판단
 target_detect_time: 400 # times
-target_detect_cnt: 150 # times
+target_detect_cnt: 200 # times
 
 draw_contour: True
 
 
 # 스테이션 진입
-arrival_target_area: 50 # X1,000 # 이만큼 이상 넓이면 도착임
-pixel_alpha: 10 # X 100
+arrival_target_area: 70 # X1,000 # 이만큼 이상 넓이면 도착임
+pixel_alpha: 1000

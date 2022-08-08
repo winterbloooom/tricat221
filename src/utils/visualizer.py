@@ -100,7 +100,7 @@ def arrow_rviz(name, id, x1, y1, x2, y2, color_r=0, color_g=0, color_b=0, scale_
     return marker
 
 
-def text_rviz(name, id, x, y, text, scale=0.5):
+def text_rviz(name, id, x, y, text, scale=0.6):
     """make a Text Marker
 
     Args:
@@ -155,7 +155,7 @@ def cylinder_rviz(name, id, x, y, scale, color_r=0, color_g=0, color_b=0):
     Returns:
         Marker : Cylinder Marker object
     """
-    marker = basic_setting(name, id, color_r, color_g, color_b, color_a=100)
+    marker = basic_setting(name, id, color_r, color_g, color_b, color_a=150)
     marker.type = Marker.CYLINDER
     marker.scale = Vector3(scale, scale, 0.01)
     marker.pose.position = Point(x, y, 0)
