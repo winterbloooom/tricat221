@@ -1,11 +1,6 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-"""
-Todo:
-    * 장애물도 cylinder로 처리. split 단위 알아보고
-"""
-
 import math
 import os
 import sys
@@ -175,13 +170,12 @@ class Autonomous:
         self.distance_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
         return self.distance_to_goal <= self.goal_range
 
-    def show(self, error_angle, u_servo, visualize=False):
-        """print current state and visualize them
+    def show(self, error_angle, u_servo):
+        """print current state
 
         Args:
             error_angle (float) : angle between psi_desire and psi (heading to desire angle)
             u_servo (int) : servo moter publish value
-            visulize (bool) : visualize with rviz or not
         """
         # show in terminal
         print("")
@@ -216,241 +210,240 @@ class Autonomous:
         print("")
         print("-" * 70)
 
-        # visualize with Rviz
-        if visualize:
-            # danger_angles
-            dangers = []
-            for angle in self.danger_angles:
-                end_point_x = (
-                    self.ob_dist_range * math.cos(math.radians(self.psi + angle)) + self.boat_x
-                )
-                end_point_y = (
-                    self.ob_dist_range * math.sin(math.radians(self.psi + angle)) + self.boat_y
-                )
-                dangers.append([self.boat_x, self.boat_y])
-                dangers.append([end_point_x, end_point_y])
-            danger_angles = visual.linelist_rviz(
-                name="obs",
-                id=0,
-                lines=dangers,
-                color_r=217,
-                color_g=217,
-                color_b=43,
-                color_a=100,
-                scale=0.02,
+    def visualize(self):
+        # danger_angles
+        dangers = []
+        for angle in self.danger_angles:
+            end_point_x = (
+                self.ob_dist_range * math.cos(math.radians(self.psi + angle)) + self.boat_x
             )
+            end_point_y = (
+                self.ob_dist_range * math.sin(math.radians(self.psi + angle)) + self.boat_y
+            )
+            dangers.append([self.boat_x, self.boat_y])
+            dangers.append([end_point_x, end_point_y])
+        danger_angles = visual.linelist_rviz(
+            name="obs",
+            id=0,
+            lines=dangers,
+            color_r=217,
+            color_g=217,
+            color_b=43,
+            color_a=100,
+            scale=0.02,
+        )
 
-            # 목표 지점
-            goal_txt = visual.text_rviz(
-                name="goal",
-                id=1,
-                x=self.goal_x,
-                y=self.goal_y,
-                text="({:>4.2f}, {:>4.2f})".format(self.goal_x, self.goal_y),
-            )
-            goal = visual.point_rviz(
-                name="goal",
-                id=2,
-                x=self.goal_x,
-                y=self.goal_y,
-                color_r=165,
-                color_g=242,
-                color_b=87,
-                scale=0.2,
-            )
+        # 목표 지점
+        goal_txt = visual.text_rviz(
+            name="goal",
+            id=1,
+            x=self.goal_x,
+            y=self.goal_y,
+            text="({:>4.2f}, {:>4.2f})".format(self.goal_x, self.goal_y),
+        )
+        goal = visual.point_rviz(
+            name="goal",
+            id=2,
+            x=self.goal_x,
+            y=self.goal_y,
+            color_r=165,
+            color_g=242,
+            color_b=87,
+            scale=0.2,
+        )
 
-            # 지나온 경로
-            traj = visual.points_rviz(
-                name="traj", id=3, points=self.trajectory, color_g=180, scale=0.05
-            )
+        # 지나온 경로
+        traj = visual.points_rviz(
+            name="traj", id=3, points=self.trajectory, color_g=180, scale=0.05
+        )
 
-            # heading
-            psi_arrow_end_x = 2 * math.cos(math.radians(self.psi)) + self.boat_x
-            psi_arrow_end_y = 2 * math.sin(math.radians(self.psi)) + self.boat_y
-            psi = visual.arrow_rviz(
-                name="psi",
-                id=4,
-                x1=self.boat_x,
-                y1=self.boat_y,
-                x2=psi_arrow_end_x,
-                y2=psi_arrow_end_y,
-                color_r=221,
-                color_g=119,
-                color_b=252,
-            )
-            psi_txt = visual.text_rviz(
-                name="psi", id=5, text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
-            )
+        # heading
+        psi_arrow_end_x = 2 * math.cos(math.radians(self.psi)) + self.boat_x
+        psi_arrow_end_y = 2 * math.sin(math.radians(self.psi)) + self.boat_y
+        psi = visual.arrow_rviz(
+            name="psi",
+            id=4,
+            x1=self.boat_x,
+            y1=self.boat_y,
+            x2=psi_arrow_end_x,
+            y2=psi_arrow_end_y,
+            color_r=221,
+            color_g=119,
+            color_b=252,
+        )
+        psi_txt = visual.text_rviz(
+            name="psi", id=5, text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
+        )
 
-            # psi_desire (가고 싶은 각도)
-            desire_arrow_end_x = 3 * math.cos(math.radians(self.psi_desire)) + self.boat_x
-            desire_arrow_end_y = 3 * math.sin(math.radians(self.psi_desire)) + self.boat_y
-            psi_desire = visual.arrow_rviz(
-                name="psi_desire",
-                id=6,
-                x1=self.boat_x,
-                y1=self.boat_y,
-                x2=desire_arrow_end_x,
-                y2=desire_arrow_end_y,
-                color_r=59,
-                color_g=139,
-                color_b=245,
-            )
-            psi_desire_txt = visual.text_rviz(
-                name="psi_desire", id=7, text="desire", x=desire_arrow_end_x, y=desire_arrow_end_y
-            )
+        # psi_desire (가고 싶은 각도)
+        desire_arrow_end_x = 3 * math.cos(math.radians(self.psi_desire)) + self.boat_x
+        desire_arrow_end_y = 3 * math.sin(math.radians(self.psi_desire)) + self.boat_y
+        psi_desire = visual.arrow_rviz(
+            name="psi_desire",
+            id=6,
+            x1=self.boat_x,
+            y1=self.boat_y,
+            x2=desire_arrow_end_x,
+            y2=desire_arrow_end_y,
+            color_r=59,
+            color_g=139,
+            color_b=245,
+        )
+        psi_desire_txt = visual.text_rviz(
+            name="psi_desire", id=7, text="desire", x=desire_arrow_end_x, y=desire_arrow_end_y
+        )
 
-            # 배로부터 목표지점까지 이은 선분
-            goal_line = visual.linelist_rviz(
-                name="goal_line",
-                id=8,
-                lines=[[self.boat_x, self.boat_y], [self.goal_x, self.goal_y]],
-                color_r=91,
-                color_g=169,
-                color_b=252,
-                scale=0.05,
-            )
+        # 배로부터 목표지점까지 이은 선분
+        goal_line = visual.linelist_rviz(
+            name="goal_line",
+            id=8,
+            lines=[[self.boat_x, self.boat_y], [self.goal_x, self.goal_y]],
+            color_r=91,
+            color_g=169,
+            color_b=252,
+            scale=0.05,
+        )
 
-            # inrange obstacles
-            inrange_obs_world = []  # span 미포함
-            for ob in self.inrange_obstacles:
-                begin_x = (
+        # inrange obstacles
+        inrange_obs_world = []  # span 미포함
+        for ob in self.inrange_obstacles:
+            begin_x = (
+                self.boat_x
+                + (-ob.begin.x) * math.cos(math.radians(self.psi))
+                - ob.begin.y * math.sin(math.radians(self.psi))
+            )
+            begin_y = (
+                self.boat_y
+                + (-ob.begin.x) * math.sin(math.radians(self.psi))
+                + ob.begin.y * math.cos(math.radians(self.psi))
+            )
+            end_x = (
+                self.boat_x
+                + (-ob.end.x) * math.cos(math.radians(self.psi))
+                - ob.end.y * math.sin(math.radians(self.psi))
+            )
+            end_y = (
+                self.boat_y
+                + (-ob.end.x) * math.sin(math.radians(self.psi))
+                + ob.end.y * math.cos(math.radians(self.psi))
+            )
+            inrange_obs_world.append([begin_x, begin_y])
+            inrange_obs_world.append([end_x, end_y])
+        obstacles = visual.linelist_rviz(
+            name="obs",
+            id=9,
+            lines=inrange_obs_world,
+            color_r=237,
+            color_g=234,
+            color_b=74,
+            scale=0.1,
+        )
+
+        # 배와 함께 이동할 X, Y축
+        axis_x = visual.linelist_rviz(
+            name="axis",
+            id=10,
+            lines=[[self.boat_x, self.boat_y], [self.boat_x + 3, self.boat_y]],
+            color_r=255,
+            scale=0.1,
+        )
+        axis_y = visual.linelist_rviz(
+            name="axis",
+            id=11,
+            lines=[[self.boat_x, self.boat_y], [self.boat_x, self.boat_y + 3]],
+            color_g=255,
+            scale=0.1,
+        )
+        axis_x_txt = visual.text_rviz(
+            name="axis", id=14, text="X", x=self.boat_x + 3.3, y=self.boat_y
+        )
+        axis_y_txt = visual.text_rviz(
+            name="axis", id=15, text="Y", x=self.boat_x, y=self.boat_y + 3.3
+        )
+
+        # goal_range (도착 인정 범위)
+        goal_range = visual.cylinder_rviz(
+            name="waypoints",
+            id=12,
+            x=self.goal_x,
+            y=self.goal_y,
+            scale=self.goal_range * 2,
+            color_r=165,
+            color_g=242,
+            color_b=87,
+        )
+
+        # angle_range (탐색 범위)
+        min_angle_x = (
+            self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[0]))
+            + self.boat_x
+        )
+        min_angle_y = (
+            self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[0]))
+            + self.boat_y
+        )
+        max_angle_x = (
+            self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[1]))
+            + self.boat_x
+        )
+        max_angle_y = (
+            self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[1]))
+            + self.boat_y
+        )
+        angle_range = visual.linelist_rviz(
+            name="angle_range",
+            id=13,
+            lines=[
+                [self.boat_x, self.boat_y],
+                [min_angle_x, min_angle_y],
+                [self.boat_x, self.boat_y],
+                [max_angle_x, max_angle_y],
+            ],
+            color_r=160,
+            color_g=90,
+            color_b=227,
+            scale=0.05,
+        )
+
+        # lidar raw data
+        pcd = []
+        if self.show_raw_pcd:
+            for p in self.input_points:
+                x_re = (
                     self.boat_x
-                    + (-ob.begin.x) * math.cos(math.radians(self.psi))
-                    - ob.begin.y * math.sin(math.radians(self.psi))
+                    + (-p.x) * math.cos(math.radians(self.psi))
+                    - p.y * math.sin(math.radians(self.psi))
                 )
-                begin_y = (
+                y_re = (
                     self.boat_y
-                    + (-ob.begin.x) * math.sin(math.radians(self.psi))
-                    + ob.begin.y * math.cos(math.radians(self.psi))
+                    + (-p.x) * math.sin(math.radians(self.psi))
+                    + p.y * math.cos(math.radians(self.psi))
                 )
-                end_x = (
-                    self.boat_x
-                    + (-ob.end.x) * math.cos(math.radians(self.psi))
-                    - ob.end.y * math.sin(math.radians(self.psi))
-                )
-                end_y = (
-                    self.boat_y
-                    + (-ob.end.x) * math.sin(math.radians(self.psi))
-                    + ob.end.y * math.cos(math.radians(self.psi))
-                )
-                inrange_obs_world.append([begin_x, begin_y])
-                inrange_obs_world.append([end_x, end_y])
-            obstacles = visual.linelist_rviz(
-                name="obs",
-                id=9,
-                lines=inrange_obs_world,
-                color_r=237,
-                color_g=234,
-                color_b=74,
-                scale=0.1,
-            )
+                pcd.append([x_re, y_re])
+        pcd = visual.points_rviz(name="pcd", id=14, points=pcd, color_r=255, scale=0.08)
 
-            # 배와 함께 이동할 X, Y축
-            axis_x = visual.linelist_rviz(
-                name="axis",
-                id=10,
-                lines=[[self.boat_x, self.boat_y], [self.boat_x + 3, self.boat_y]],
-                color_r=255,
-                scale=0.1,
-            )
-            axis_y = visual.linelist_rviz(
-                name="axis",
-                id=11,
-                lines=[[self.boat_x, self.boat_y], [self.boat_x, self.boat_y + 3]],
-                color_g=255,
-                scale=0.1,
-            )
-            axis_x_txt = visual.text_rviz(
-                name="axis", id=14, text="X", x=self.boat_x + 3.3, y=self.boat_y
-            )
-            axis_y_txt = visual.text_rviz(
-                name="axis", id=15, text="Y", x=self.boat_x, y=self.boat_y + 3.3
-            )
-
-            # goal_range (도착 인정 범위)
-            goal_range = visual.cylinder_rviz(
-                name="waypoints",
-                id=12,
-                x=self.goal_x,
-                y=self.goal_y,
-                scale=self.goal_range * 2,
-                color_r=165,
-                color_g=242,
-                color_b=87,
-            )
-
-            # angle_range (탐색 범위)
-            min_angle_x = (
-                self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[0]))
-                + self.boat_x
-            )
-            min_angle_y = (
-                self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[0]))
-                + self.boat_y
-            )
-            max_angle_x = (
-                self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[1]))
-                + self.boat_x
-            )
-            max_angle_y = (
-                self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[1]))
-                + self.boat_y
-            )
-            angle_range = visual.linelist_rviz(
-                name="angle_range",
-                id=13,
-                lines=[
-                    [self.boat_x, self.boat_y],
-                    [min_angle_x, min_angle_y],
-                    [self.boat_x, self.boat_y],
-                    [max_angle_x, max_angle_y],
-                ],
-                color_r=160,
-                color_g=90,
-                color_b=227,
-                scale=0.05,
-            )
-
-            # lidar raw data
-            pcd = []
-            if self.show_raw_pcd:
-                for p in self.input_points:
-                    x_re = (
-                        self.boat_x
-                        + (-p.x) * math.cos(math.radians(self.psi))
-                        - p.y * math.sin(math.radians(self.psi))
-                    )
-                    y_re = (
-                        self.boat_y
-                        + (-p.x) * math.sin(math.radians(self.psi))
-                        + p.y * math.cos(math.radians(self.psi))
-                    )
-                    pcd.append([x_re, y_re])
-            pcd = visual.points_rviz(name="pcd", id=14, points=pcd, color_r=255, scale=0.08)
-
-            all_markers = visual.marker_array_rviz(
-                [
-                    danger_angles,
-                    goal_txt,
-                    goal,
-                    psi,
-                    psi_txt,
-                    traj,
-                    psi_desire,
-                    psi_desire_txt,
-                    goal_line,
-                    obstacles,
-                    axis_x,
-                    axis_y,
-                    axis_x_txt,
-                    axis_y_txt,
-                    goal_range,
-                    angle_range,
-                    pcd,
-                ]
-            )
-            self.visual_rviz_pub.publish(all_markers)
+        all_markers = visual.marker_array_rviz(
+            [
+                danger_angles,
+                goal_txt,
+                goal,
+                psi,
+                psi_txt,
+                traj,
+                psi_desire,
+                psi_desire_txt,
+                goal_line,
+                obstacles,
+                axis_x,
+                axis_y,
+                axis_x_txt,
+                axis_y_txt,
+                goal_range,
+                angle_range,
+                pcd,
+            ]
+        )
+        self.visual_rviz_pub.publish(all_markers)
 
     def degree_to_servo(self, error_angle):
         """
@@ -511,6 +504,7 @@ def main():
             return
         else:
             auto.trajectory.append([auto.boat_x, auto.boat_y])  # 이동 경로 추가
+
             # 현재 heading에서 목표로 갈 때 돌려야 할 각도.
             # 선수와 동일 선상이면 0, 우측에 있으면 +180까지 -> 180 넘을 수도 있어서 한 번 걸러줘야 함
             # TODO 잘 돌아가는지 확인할 것!
@@ -548,7 +542,8 @@ def main():
 
             print("")
             print("{:<9} : {:<6.3f}".format("Run time", rospy.get_time() - start_time))  # 작동 시간
-            auto.show(error_angle, u_servo, visualize=True)  # 현 상태 출력
+            auto.show(error_angle, u_servo)  # 현 상태 출력
+            auto.visualize()
 
         rate.sleep()
 

@@ -1,0 +1,5 @@
+goal_range: 1.5
+servo_range: [70, 120]
+kp_servo: 0.4 #2021
+kd_servo: 0.0 # 2021
+thruster: 1620 # 2021
