@@ -430,8 +430,14 @@ class Docking:
 
         elif self.state == 5:
             print("Target Shape : {} | Color : {}".format(self.target_shape, self.target_color))
-            print("Waiting..... : {:>4d} / {:>4d}".format(self.mark_check_cnt, self.target_detect_time))
-            print("Target Cnt   : {:>4d} / {:>4d}".format(self.detected_cnt, self.target_detect_cnt))
+            print(
+                "Waiting..... : {:>4d} / {:>4d}".format(
+                    self.mark_check_cnt, self.target_detect_time
+                )
+            )
+            print(
+                "Target Cnt   : {:>4d} / {:>4d}".format(self.detected_cnt, self.target_detect_cnt)
+            )
             print("")
             print(
                 "Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area)
@@ -498,7 +504,7 @@ def main():
             print(">>>>>>>>>>>>>> Finished <<<<<<<<<<<<<<")
             return
 
-        elif docking.state == 0: # 시작점으로 이동하며 장애물 회피
+        elif docking.state == 0:  # 시작점으로 이동하며 장애물 회피
             inrange_obstacles, danger_angles = oa.ob_filtering(
                 obstacles=docking.obstacles,
                 dist_to_goal=docking.distance_to_point,
@@ -520,11 +526,11 @@ def main():
             # 각도 범위가 모두 장애물이고 범위 밖에 목표지점이 있다면 psi_goal로.
             u_thruster = docking.thruster_default
 
-        elif docking.state in [1, 2, 3]: # 다음 스테이션으로 이동
+        elif docking.state in [1, 2, 3]:  # 다음 스테이션으로 이동
             error_angle = docking.psi_goal
             u_thruster = docking.thruster_default
 
-        elif docking.state == 4: # 헤딩 돌리기
+        elif docking.state == 4:  # 헤딩 돌리기
             if docking.stop_cnt >= docking.stop_time:
                 # 정지 종료, 헤딩 돌리기
                 u_thruster = 1600
@@ -557,7 +563,7 @@ def main():
             u_thruster = 1550  # docking.thruster_stop
             # TODO 자꾸 파도 때문에 밀려서 정지 안하긴 했으나 계속 돌아가는 것도 문제.
 
-        elif docking.state == 6: # 스테이션 진입
+        elif docking.state == 6:  # 스테이션 진입
             docking.target = docking.check_target(return_target=True)
             error_angle = dock_control.pixel_to_degree(
                 docking.target, docking.pixel_alpha, docking.angle_range
