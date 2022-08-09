@@ -9,13 +9,18 @@ from sensor_msgs.msg import NavSatFix
 origin = None
 boat = None
 
+
 def gps_fix_callback(msg):
     global boat
-    boat = pm.geodetic2enu(msg.latitude, msg.longitude, msg.altitude, origin[0], origin[1], origin[2])
+    boat = pm.geodetic2enu(
+        msg.latitude, msg.longitude, msg.altitude, origin[0], origin[1], origin[2]
+    )
+
 
 def enu_convert(gnss, origin):
     e, n, u = pm.geodetic2enu(gnss[0], gnss[1], gnss[2], origin[0], origin[1], origin[2])
     return [e, n]
+
 
 def main():
     global origin

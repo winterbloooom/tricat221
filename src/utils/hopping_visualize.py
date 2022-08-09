@@ -9,11 +9,18 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 import utils.visualizer as visual
 
+
 def visualize(hc):
     """hc: hopping class"""
     ids = list(range(0, 30))
 
-    boat = visual.text_rviz(name="boat", id=ids.pop(), text="({:>4.2f}, {:>4.2f})".format(hc.boat_x, hc.boat_y), x=hc.boat_x-0.3, y=hc.boat_y-0.3)
+    boat = visual.text_rviz(
+        name="boat",
+        id=ids.pop(),
+        text="({:>4.2f}, {:>4.2f})".format(hc.boat_x, hc.boat_y),
+        x=hc.boat_x - 0.3,
+        y=hc.boat_y - 0.3,
+    )
 
     traj = visual.points_rviz(name="traj", id=ids.pop(), points=hc.trajectory, color_g=255)
 
@@ -98,9 +105,9 @@ def visualize(hc):
         ]
     )
 
-    # ====================== append 
+    # ====================== append
     # remained waypoints
-    for idx in range(hc.waypoint_idx, len(hc.waypoints)+1):
+    for idx in range(hc.waypoint_idx, len(hc.waypoints) + 1):
         waypoint = visual.point_rviz(
             name="waypoints",
             id=ids.pop(),

@@ -9,19 +9,26 @@ from sensor_msgs.msg import NavSatFix
 origin = rospy.get_param("origin")
 boat = None
 
+
 def gps_fix_callback(msg):
     global boat
-    boat = pm.geodetic2enu(msg.latitude, msg.longitude, msg.altitude, origin[0], origin[1], origin[2])
+    boat = pm.geodetic2enu(
+        msg.latitude, msg.longitude, msg.altitude, origin[0], origin[1], origin[2]
+    )
+
 
 def enu_convert(gnss, dxdy):
     e, n, u = pm.geodetic2enu(gnss[0], gnss[1], gnss[2], origin[0], origin[1], origin[2])
-    return [e-dxdy[0], n-dxdy[1]]
+    return [e - dxdy[0], n - dxdy[1]]
+
 
 def main():
     rospy.init_node("gnss_converter", anonymous=True)
 
     msg = rospy.wait_for_message("/ublox_gps/fix", NavSatFix)
-    now_origin_xy = pm.geodetic2enu(msg.latitude, msg.longitude, msg.altitude, origin[0], origin[1], origin[2])[:2]
+    now_origin_xy = pm.geodetic2enu(
+        msg.latitude, msg.longitude, msg.altitude, origin[0], origin[1], origin[2]
+    )[:2]
     print(now_origin_xy)
     dx = -now_origin_xy[0]
     dy = -now_origin_xy[1]

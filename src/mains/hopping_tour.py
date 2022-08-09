@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+import copy
 import math
 import os
 import sys
-import copy
 
 import cv2
 import rospy
@@ -12,13 +12,13 @@ import rospy
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 from geometry_msgs.msg import Point
-from sensor_msgs.msg import Imu
+from sensor_msgs.msg import Imu, NavSatFix
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
-from sensor_msgs.msg import NavSatFix
 
 import perception.gnss_converter_rere as gc
 import utils.filtering as filtering
+
 # import utils.visualizer as visual
 import utils.hopping_visualize as hopping_visualize
 
@@ -45,7 +45,7 @@ class Hopping:
         #     e, n = gc.enu_convert(waypoint)  # ENU 좌표계로 변환
         #     self.remained_waypoints[idx + 1] = [n, e]  # 축이 반대이므로 순서 바꿔 할당.
         # self.waypoints = copy.deepcopy(self.remained_waypoints)
-        self.boat_y, self.boat_x = 0, 0 # 배의 좌표
+        self.boat_y, self.boat_x = 0, 0  # 배의 좌표
         # self.goal_x = self.remained_waypoints[self.waypoint_idx][0]  # 다음 목표 x좌표
         # self.goal_y = self.remained_waypoints[self.waypoint_idx][1]  # 다음 목표 y좌표
         self.trajectory = []  # 지금껏 이동한 궤적
@@ -105,17 +105,11 @@ class Hopping:
             cv2.createTrackbar(
                 "p angle (x 0.01)", "controller", self.kp_angle, 100, lambda x: x
             )  # 0.01
-            cv2.createTrackbar(
-                "i angle (x 0.01)", "controller", self.ki_angle, 10, lambda x: x
-            )
+            cv2.createTrackbar("i angle (x 0.01)", "controller", self.ki_angle, 10, lambda x: x)
             cv2.createTrackbar("d angle", "controller", self.kd_angle, 10, lambda x: x)
-            cv2.createTrackbar(
-                "p dist", "controller", self.kp_distance, 100, lambda x: x
-            )
+            cv2.createTrackbar("p dist", "controller", self.kp_distance, 100, lambda x: x)
             cv2.createTrackbar("i dist", "controller", self.ki_distance, 10, lambda x: x)
-            cv2.createTrackbar(
-                "d dist", "controller", self.kd_distance, 100, lambda x: x
-            )
+            cv2.createTrackbar("d dist", "controller", self.kd_distance, 100, lambda x: x)
 
     def is_all_connected(self):
         """make sure all subscribers(nodes) are connected to this node
@@ -209,7 +203,7 @@ class Hopping:
     def arrival_check(self):
         self.calc_distance_to_goal()  # 목적지까지 거리 다시 계산
         if self.distance_to_goal <= self.goal_range:
-            for _ in range(3): # TODO 잘 작동하는가?
+            for _ in range(3):  # TODO 잘 작동하는가?
                 self.thruster_pub.publish(1500)
                 rospy.sleep(1)
             return True

@@ -15,10 +15,9 @@ import rospy
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 from geometry_msgs.msg import Point
-from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import LaserScan, NavSatFix
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
-from sensor_msgs.msg import NavSatFix
 
 import datatypes.point_class
 import obstacle.obstacle_avoidance as oa
@@ -53,7 +52,7 @@ class Autonomous:
 
         # locations, coordinates
         self.boat_x, self.boat_y = 0, 0
-        self.goal_y, self.goal_x = 0, 0 #gc.enu_convert(rospy.get_param("autonomous_goal"))
+        self.goal_y, self.goal_x = 0, 0  # gc.enu_convert(rospy.get_param("autonomous_goal"))
         self.trajectory = []  # 지금까지 이동한 궤적
         self.input_points = []  # lidar raw data
 
