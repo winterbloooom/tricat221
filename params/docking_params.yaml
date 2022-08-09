@@ -14,7 +14,7 @@ thruster_stop: 1500
 
 
 # 선수각 방향 회전
-stop_time: 3 # sec # 스테이션 앞 도착 후 이만큼 기다렸다가 헤딩 돌림
+stop_time: 80 # 0.1(10hz) * stop_time 초만큼 멈춤 # 스테이션 앞 도착 후 이만큼 기다렸다가 헤딩 돌림
 ref_dir_range: 10 # def
 station_dir: -157 # deg
 
@@ -23,36 +23,36 @@ station_dir: -157 # deg
 ## RED
 color_range : {
   red: {
-    color1_lower: 46, #78
-    color1_upper: 94, #180
-    color2_lower: 26, #145
-    color2_upper: 187, #255
-    color3_lower: 97, #216
+    color1_lower: 0,
+    color1_upper: 15,
+    color2_lower: 82,
+    color2_upper: 255,
+    color3_lower: 0,
     color3_upper: 255
   },
   green: {
-    color1_lower: 47, #78
-    color1_upper: 95, #180
-    color2_lower: 26, #145
-    color2_upper: 187, #255
-    color3_lower: 97, #216
-    color3_upper: 254
+    color1_lower: 25, 
+    color1_upper: 100,
+    color2_lower: 135, 
+    color2_upper: 255, 
+    color3_lower: 15,
+    color3_upper: 255
   },
   blue: {
     color1_lower: 94,
-    color1_upper: 130,
-    color2_lower: 119,
-    color2_upper: 193,
+    color1_upper: 180,
+    color2_lower: 182,
+    color2_upper: 255,
     color3_lower: 0,
     color3_upper: 255
-  }
+  } # FIX
 }
 
 target_shape: 4 # 3: triangle, 4: rectangle, 5: circle
 target_color: blue # red, green, blue
 
-mark_detect_area: 20 # X 100 # 최소 이만큼은 되어야 타겟인지 판단 들어감
-target_detect_area: 35000 # 최소 이만큼은 되어야 타겟이라고 판단
+mark_detect_area: 2000 # 최소 이만큼은 되어야 타겟인지 판단 들어감
+target_detect_area: 500000 #25000 # 최소 이만큼은 되어야 타겟이라고 판단
 target_detect_time: 400 # times
 target_detect_cnt: 200 # times
 
@@ -60,5 +60,5 @@ draw_contour: True
 
 
 # 스테이션 진입
-arrival_target_area: 70 # X1,000 # 이만큼 이상 넓이면 도착임
+arrival_target_area: 50000 #이만큼 이상 넓이면 도착임
 pixel_alpha: 1000

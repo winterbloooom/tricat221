@@ -179,9 +179,12 @@ def visualize(dc, inrange_obstacles=[], danger_angels=[]):
         )
         visual.marker_array_append_rviz(all_markers, obstacles)
     else:
-        ids.pop()
-        ids.pop()
-        ids.pop()
+        angle_range = visual.del_mark(name="angle_range", id=ids.pop())
+        visual.marker_array_append_rviz(all_markers, angle_range)
+        danger_ang = visual.del_mark(name="obs", id=ids.pop())
+        visual.marker_array_append_rviz(all_markers, danger_ang)
+        obstacles = visual.del_mark(name="obs", id=ids.pop())
+        visual.marker_array_append_rviz(all_markers, obstacles)
 
     # 목표점 및 범위, 좌표
     if dc.state in [0, 1, 2, 3]:
@@ -226,33 +229,6 @@ def visualize(dc, inrange_obstacles=[], danger_angels=[]):
         for _ in range(7):
             ids.pop()
 
-    ## station 방향
-    # if not dc.state == 0:
-    #     # station 방향
-    #     station_arrow_end_x = 2 * math.cos(math.radians(dc.station_dir)) + dc.boat_x
-    #     station_arrow_end_y = 2 * math.sin(math.radians(dc.station_dir)) + dc.boat_y
-    #     station = visual.arrow_rviz(
-    #         name="station",
-    #         id=ids.pop(),
-    #         x1=dc.boat_x,
-    #         y1=dc.boat_y,
-    #         x2=station_arrow_end_x,
-    #         y2=station_arrow_end_y,
-    #         color_r=65,
-    #         color_g=53,
-    #         color_b=240,
-    #     )
-    #     visual.marker_array_append_rviz(all_markers, station)
-
-    #     # station 방향 글
-    #     station_txt = visual.text_rviz(
-    #         name="station", id=ids.pop(), text="station", x=station_arrow_end_x, y=station_arrow_end_y
-    #     )
-    #     visual.marker_array_append_rviz(all_markers, station_txt)
-    # else:
-    #     ids.pop()
-    #     ids.pop()
-
     # heading 회전 인정 범위
     if dc.state == 4:
         min_angle_x = 7 * math.cos(math.radians(dc.station_dir - dc.ref_dir_range)) + dc.boat_x
@@ -275,6 +251,7 @@ def visualize(dc, inrange_obstacles=[], danger_angels=[]):
         )
         visual.marker_array_append_rviz(all_markers, heading_range)
     else:
-        ids.pop()
+        heading_range = visual.del_mark(name="heading_range", id=ids.pop())
+        visual.marker_array_append_rviz(all_markers, heading_range)
 
     return all_markers

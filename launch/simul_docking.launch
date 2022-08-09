@@ -40,7 +40,7 @@
 	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" output="screen"/>
 	<!-- <node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO"/> -->
 
-    <node pkg="rosbag" type="play" name="rosbag_others" required="true" args="$(find tricat221)/etc/rosbag/0806_hopping.bag -l -r 3 --topics /imu/mag /scan /ublox_gps/fix"/>
+    <node pkg="rosbag" type="play" name="rosbag_others" required="true" args="$(find tricat221)/etc/rosbag/0806_hopping.bag -l -r 4 --topics /imu/mag /scan /ublox_gps/fix"/>
     <node pkg="rosbag" type="play" name="rosbag_cam" required="true" args="$(find tricat221)/etc/rosbag/cam-rosbag/one_mark.bag -l --topics /usb_cam/image_raw"/>
 	
 	<node pkg="tricat221" type="docking.py" name="Docking" output="screen"  respawn="true"/>

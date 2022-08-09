@@ -271,7 +271,7 @@ def test_with_img():
         color_range, mark_detect_area = get_trackbar_pos(color_range)
         preprocessed = preprocess_image(raw_img, blur=True)
         hsv_img = select_color(preprocessed, color_range)
-        target, shape_img = detect_target(hsv_img, target_shape, mark_detect_area)
+        target, shape_img, _ = detect_target(hsv_img, target_shape, mark_detect_area, 100000)
 
         show_img = np.hstack([raw_img, shape_img])
         cv2.imshow("controller", show_img)

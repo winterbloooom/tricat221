@@ -37,6 +37,13 @@ def basic_setting(name, id, color_r, color_g, color_b, color_a=255):
     marker.pose.orientation.w = 1.0
     return marker
 
+def del_mark(name, id):
+    marker = Marker()
+    marker.header.frame_id = "/map"
+    marker.ns = name
+    marker.id = id
+    marker.action = Marker.DELETE
+    return marker
 
 def point_rviz(name, id, x, y, color_r=0, color_g=0, color_b=0, scale=0.1):
     """make one Point Marker
