@@ -1,31 +1,29 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import rospy
 import math
-import pymap3d as pm
-import numpy as np
-import time
 import os
 import sys
+import time
 
+import numpy as np
+import pymap3d as pm
 import rospy
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-from std_msgs.msg import Float64, UInt16
-from geometry_msgs.msg import Point
-from sensor_msgs.msg import LaserScan
-from sensor_msgs.msg import Imu
-from visualization_msgs.msg import MarkerArray
-
 import skfuzzy as fuzz
+from geometry_msgs.msg import Point
+from sensor_msgs.msg import Imu, LaserScan
 from skfuzzy import control as ctrl
+from std_msgs.msg import Float64, UInt16
+from visualization_msgs.msg import MarkerArray
 
 import perception.gnss_converter as gc
 import utils.visualizer as visual
 
 # TODO fuzzy 버전끼리 비교해보기. 이건 1700 수정본
+
 
 class Fuzzy:
     def __init__(self):
@@ -41,10 +39,10 @@ class Fuzzy:
             "/enu_position", Point, self.boat_position_callback, queue_size=1
         )
         self.lidar_sub = rospy.Subscriber("/scan", LaserScan, self.lidar_callback)
-        
+
         self.distance_to_goal = 100000  # 배~목적지 거리. max 연산이므로 큰 값을 초기 할당
         self.goal_range = rospy.get_param("goal_range")  # 도착이라 판단할 거리(반지름)
-        
+
         self.psi = 0.0
         self.psi_goal = 0
 
@@ -60,14 +58,14 @@ class Fuzzy:
         self.fuzzy_servo_control = 0
         self.target_servo_ang = None
 
-        ## PID 
+        ## PID
         self.servo_range = rospy.get_param("servo_range")  # 서보모터 최대/최소값
         self.servo_middle = (self.servo_range[0] + self.servo_range[1]) / 2
 
         self.kp_servo = rospy.get_param("kp_servo")
         self.kd_servo = rospy.get_param("kd_servo")
         self.thruster = rospy.get_param("thruster")
-    
+
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0)
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
         self.visual_rviz_pub = rospy.Publisher("/visual_rviz", MarkerArray, queue_size=0)
@@ -102,7 +100,7 @@ class Fuzzy:
     def boat_position_callback(self, msg):
         self.boat_y = msg.x
         self.boat_x = msg.y
-    
+
     def lidar_callback(self, data):
         self.angle_min = data.angle_min
         self.angle_increment = data.angle_increment
@@ -110,19 +108,19 @@ class Fuzzy:
 
     def calc_psi_goal(self):
         self.psi_goal = (
-                math.degrees(math.atan2(self.goal_y - self.boat_y, self.goal_x - self.boat_x))
-                - self.psi
-            )
+            math.degrees(math.atan2(self.goal_y - self.boat_y, self.goal_x - self.boat_x))
+            - self.psi
+        )
 
     def arrival_check(self):
         self.distance_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
         return self.distance_to_goal <= self.goal_range
-    
+
     def servo_pid_controller(self):
-        error_angle = self.psi_goal # P ctrl
+        error_angle = self.psi_goal  # P ctrl
         cp_servo = self.kp_servo * error_angle
 
-        yaw_rate = math.degrees(self.yaw_rate) # D ctrl
+        yaw_rate = math.degrees(self.yaw_rate)  # D ctrl
         cd_servo = self.kd_servo * (-yaw_rate)
 
         servo_pd = -(cp_servo + cd_servo)
@@ -136,65 +134,89 @@ class Fuzzy:
         return int(u_servo)
 
     def fuzzy(self):
-        distance = ctrl.Antecedent(np.arange(0, 4, 0.1), 'distance')
-        angle = ctrl.Antecedent(np.arange(-50, 50, 1), 'angle')
-        target_servo = ctrl.Consequent(np.arange(-30, 30, 1), 'target_servo')
+        distance = ctrl.Antecedent(np.arange(0, 4, 0.1), "distance")
+        angle = ctrl.Antecedent(np.arange(-50, 50, 1), "angle")
+        target_servo = ctrl.Consequent(np.arange(-30, 30, 1), "target_servo")
 
-        distance['ED'] = fuzz.trapmf(distance.universe, [0, 0, 1, 2])
-        distance['D'] = fuzz.trimf(distance.universe, [1, 2, 3])
-        distance['W'] = fuzz.trimf(distance.universe, [2, 3, 4])
-        distance['B'] = fuzz.trimf(distance.universe, [3, 4, 4])
+        distance["ED"] = fuzz.trapmf(distance.universe, [0, 0, 1, 2])
+        distance["D"] = fuzz.trimf(distance.universe, [1, 2, 3])
+        distance["W"] = fuzz.trimf(distance.universe, [2, 3, 4])
+        distance["B"] = fuzz.trimf(distance.universe, [3, 4, 4])
 
         # TODO 선박 정면이 0이고 좌측이 (-), 우측이 (+) ????
-        angle['NL'] = fuzz.trapmf(angle.universe, [-70, -40, -30, -20])
-        angle['NM'] = fuzz.trapmf(angle.universe, [-40, -30, -20, -10])
-        angle['NS'] = fuzz.trimf(angle.universe, [-25, 0, 1])
-        angle['PS'] = fuzz.trimf(angle.universe, [0, 1, 25])
-        angle['PM'] = fuzz.trimf(angle.universe, [15, 25, 40])
-        angle['PL'] = fuzz.trimf(angle.universe, [30, 40, 70])
-        
-        target_servo['RRRR'] = fuzz.trimf(target_servo.universe, [-30, -27, -18])
-        target_servo['RRR'] = fuzz.trimf(target_servo.universe, [-18, -16, -13])
-        target_servo['RR'] = fuzz.trimf(target_servo.universe, [-18, -13, -7])
-        target_servo['R'] = fuzz.trimf(target_servo.universe, [-12, -7, 0])
-        target_servo['N'] = fuzz.trimf(target_servo.universe, [0, 0, 0])
-        target_servo['L'] = fuzz.trimf(target_servo.universe, [0, 7, 12])
-        target_servo['LL'] = fuzz.trimf(target_servo.universe, [7, 13, 18])
-        target_servo['LLL'] = fuzz.trimf(target_servo.universe, [13, 16, 18])
-        target_servo['LLLL'] = fuzz.trimf(target_servo.universe, [18, 27, 30])
+        angle["NL"] = fuzz.trapmf(angle.universe, [-70, -40, -30, -20])
+        angle["NM"] = fuzz.trapmf(angle.universe, [-40, -30, -20, -10])
+        angle["NS"] = fuzz.trimf(angle.universe, [-25, 0, 1])
+        angle["PS"] = fuzz.trimf(angle.universe, [0, 1, 25])
+        angle["PM"] = fuzz.trimf(angle.universe, [15, 25, 40])
+        angle["PL"] = fuzz.trimf(angle.universe, [30, 40, 70])
 
-        rule_ED_NL = ctrl.Rule(distance['ED'] & angle['NL'], target_servo['RR'])
-        rule_ED_NM = ctrl.Rule(distance['ED'] & angle['NM'], target_servo['RRR'])
-        rule_ED_NS = ctrl.Rule(distance['ED'] & angle['NS'], target_servo['RRRR'])
-        rule_ED_PS = ctrl.Rule(distance['ED'] & angle['PS'], target_servo['LLLL'])
-        rule_ED_PM = ctrl.Rule(distance['ED'] & angle['PM'], target_servo['LLL'])
-        rule_ED_PL = ctrl.Rule(distance['ED'] & angle['PL'], target_servo['LL'])
+        target_servo["RRRR"] = fuzz.trimf(target_servo.universe, [-30, -27, -18])
+        target_servo["RRR"] = fuzz.trimf(target_servo.universe, [-18, -16, -13])
+        target_servo["RR"] = fuzz.trimf(target_servo.universe, [-18, -13, -7])
+        target_servo["R"] = fuzz.trimf(target_servo.universe, [-12, -7, 0])
+        target_servo["N"] = fuzz.trimf(target_servo.universe, [0, 0, 0])
+        target_servo["L"] = fuzz.trimf(target_servo.universe, [0, 7, 12])
+        target_servo["LL"] = fuzz.trimf(target_servo.universe, [7, 13, 18])
+        target_servo["LLL"] = fuzz.trimf(target_servo.universe, [13, 16, 18])
+        target_servo["LLLL"] = fuzz.trimf(target_servo.universe, [18, 27, 30])
 
-        rule_D_NL = ctrl.Rule(distance['D'] & angle['NL'], target_servo['R'])
-        rule_D_NM = ctrl.Rule(distance['D'] & angle['NM'], target_servo['RR'])
-        rule_D_NS = ctrl.Rule(distance['D'] & angle['NS'], target_servo['RRR'])
-        rule_D_PS = ctrl.Rule(distance['D'] & angle['PS'], target_servo['LLL'])
-        rule_D_PM = ctrl.Rule(distance['D'] & angle['PM'], target_servo['LL'])
-        rule_D_PL = ctrl.Rule(distance['D'] & angle['PL'], target_servo['L'])
+        rule_ED_NL = ctrl.Rule(distance["ED"] & angle["NL"], target_servo["RR"])
+        rule_ED_NM = ctrl.Rule(distance["ED"] & angle["NM"], target_servo["RRR"])
+        rule_ED_NS = ctrl.Rule(distance["ED"] & angle["NS"], target_servo["RRRR"])
+        rule_ED_PS = ctrl.Rule(distance["ED"] & angle["PS"], target_servo["LLLL"])
+        rule_ED_PM = ctrl.Rule(distance["ED"] & angle["PM"], target_servo["LLL"])
+        rule_ED_PL = ctrl.Rule(distance["ED"] & angle["PL"], target_servo["LL"])
 
-        rule_W_NL = ctrl.Rule(distance['W'] & angle['NL'], target_servo['N'])
-        rule_W_NM = ctrl.Rule(distance['W'] & angle['NM'], target_servo['R'])
-        rule_W_NS = ctrl.Rule(distance['W'] & angle['NS'], target_servo['RR'])
-        rule_W_PS = ctrl.Rule(distance['W'] & angle['PS'], target_servo['LL'])
-        rule_W_PM = ctrl.Rule(distance['W'] & angle['PM'], target_servo['L'])
-        rule_W_PL = ctrl.Rule(distance['W'] & angle['PL'], target_servo['N']) 
+        rule_D_NL = ctrl.Rule(distance["D"] & angle["NL"], target_servo["R"])
+        rule_D_NM = ctrl.Rule(distance["D"] & angle["NM"], target_servo["RR"])
+        rule_D_NS = ctrl.Rule(distance["D"] & angle["NS"], target_servo["RRR"])
+        rule_D_PS = ctrl.Rule(distance["D"] & angle["PS"], target_servo["LLL"])
+        rule_D_PM = ctrl.Rule(distance["D"] & angle["PM"], target_servo["LL"])
+        rule_D_PL = ctrl.Rule(distance["D"] & angle["PL"], target_servo["L"])
 
-        rule_B_NL = ctrl.Rule(distance['B'] & angle['NL'], target_servo['N'])
-        rule_B_NM = ctrl.Rule(distance['B'] & angle['NM'], target_servo['N'])
-        rule_B_NS = ctrl.Rule(distance['B'] & angle['NS'], target_servo['R'])
-        rule_B_PS = ctrl.Rule(distance['B'] & angle['PS'], target_servo['L'])
-        rule_B_PM = ctrl.Rule(distance['B'] & angle['PM'], target_servo['N'])
-        rule_B_PL = ctrl.Rule(distance['B'] & angle['PL'], target_servo['N'])
+        rule_W_NL = ctrl.Rule(distance["W"] & angle["NL"], target_servo["N"])
+        rule_W_NM = ctrl.Rule(distance["W"] & angle["NM"], target_servo["R"])
+        rule_W_NS = ctrl.Rule(distance["W"] & angle["NS"], target_servo["RR"])
+        rule_W_PS = ctrl.Rule(distance["W"] & angle["PS"], target_servo["LL"])
+        rule_W_PM = ctrl.Rule(distance["W"] & angle["PM"], target_servo["L"])
+        rule_W_PL = ctrl.Rule(distance["W"] & angle["PL"], target_servo["N"])
 
-        target_servo_ctrl = ctrl.ControlSystem([rule_ED_NL, rule_ED_NM, rule_ED_NS, rule_ED_PL, rule_ED_PM, rule_ED_PS, \
-            rule_D_NL, rule_D_NM, rule_D_NS, rule_D_PL, rule_D_PM, rule_D_PS, \
-            rule_W_NL, rule_W_NM, rule_W_NS, rule_W_PL, rule_W_PM, rule_W_PS, \
-            rule_B_NL, rule_B_NM, rule_B_NS, rule_B_PL, rule_B_PM, rule_B_PS])
+        rule_B_NL = ctrl.Rule(distance["B"] & angle["NL"], target_servo["N"])
+        rule_B_NM = ctrl.Rule(distance["B"] & angle["NM"], target_servo["N"])
+        rule_B_NS = ctrl.Rule(distance["B"] & angle["NS"], target_servo["R"])
+        rule_B_PS = ctrl.Rule(distance["B"] & angle["PS"], target_servo["L"])
+        rule_B_PM = ctrl.Rule(distance["B"] & angle["PM"], target_servo["N"])
+        rule_B_PL = ctrl.Rule(distance["B"] & angle["PL"], target_servo["N"])
+
+        target_servo_ctrl = ctrl.ControlSystem(
+            [
+                rule_ED_NL,
+                rule_ED_NM,
+                rule_ED_NS,
+                rule_ED_PL,
+                rule_ED_PM,
+                rule_ED_PS,
+                rule_D_NL,
+                rule_D_NM,
+                rule_D_NS,
+                rule_D_PL,
+                rule_D_PM,
+                rule_D_PS,
+                rule_W_NL,
+                rule_W_NM,
+                rule_W_NS,
+                rule_W_PL,
+                rule_W_PM,
+                rule_W_PS,
+                rule_B_NL,
+                rule_B_NM,
+                rule_B_NS,
+                rule_B_PL,
+                rule_B_PM,
+                rule_B_PS,
+            ]
+        )
         self.target_servo_ang = ctrl.ControlSystemSimulation(target_servo_ctrl)
 
     def fuzzy_control_avoidance(self):
@@ -206,8 +228,8 @@ class Fuzzy:
         if len(self.ranges) == 0:
             return False
 
-        closest_distance = min(self.ranges) # 가장 가까운 장애물까지 거리
-        idx = self.ranges.index(closest_distance) # 가장 가까운 장애물의 인덱스
+        closest_distance = min(self.ranges)  # 가장 가까운 장애물까지 거리
+        idx = self.ranges.index(closest_distance)  # 가장 가까운 장애물의 인덱스
         pi = math.degrees(self.angle_min + self.angle_increment * idx) - 180
         # lidar는 후방이 0 -> 오른쪽으로 돌아 전방이 180 -> 다시 오른쪽으로 돌아 후방이 360
 
@@ -217,10 +239,10 @@ class Fuzzy:
 
         if closest_distance < 2.8 and abs(pi) < 70:
             # 장애물이 나로부터 2.8m 이하로 있고, 각도가 좌우 70도 이내일 때
-            self.target_servo_ang.input['distance'] = float(closest_distance)
-            self.target_servo_ang.input['angle'] = float(pi)
+            self.target_servo_ang.input["distance"] = float(closest_distance)
+            self.target_servo_ang.input["angle"] = float(pi)
             self.target_servo_ang.compute()
-            self.fuzzy_servo_control = int(self.target_servo_ang.output['target_servo'])
+            self.fuzzy_servo_control = int(self.target_servo_ang.output["target_servo"])
             return True
         else:
             return False
@@ -243,7 +265,11 @@ class Fuzzy:
         psi_goal_dir_str = "[   | * ]" if self.psi_goal > 0 else "[ * |   ]"
 
         # 가장 가까운 점의 위치 및 거리
-        print("Dangerous Point | {:>4.2f} deg , {:>2.1f} m".format(self.danger_ob['pi'], self.danger_ob['distance']))
+        print(
+            "Dangerous Point | {:>4.2f} deg , {:>2.1f} m".format(
+                self.danger_ob["pi"], self.danger_ob["distance"]
+            )
+        )
         print("")
 
         # 어느 쪽으로 움직일 건지
@@ -262,7 +288,11 @@ class Fuzzy:
 
         print("| {:^9} | {:^9} | {:^10} |".format("heading", "goal", "servo"))
         print("{:=^38}".format(""))
-        print("| {:>9.2f} | {:>9.2f} | {:>4d} {:5} |".format(self.psi, self.psi_goal, int(u_servo), error_angle_dir_str))
+        print(
+            "| {:>9.2f} | {:>9.2f} | {:>4d} {:5} |".format(
+                self.psi, self.psi_goal, int(u_servo), error_angle_dir_str
+            )
+        )
         print("| {:9} | {:^9} | {:^10} |".format("", psi_goal_dir_str, servo_value_str))
         print("")
 
@@ -372,8 +402,12 @@ class Fuzzy:
             obstacle = visual.point_rviz(
                 name="obstacle",
                 id=ids.pop(),
-                x=self.boat_x + self.danger_ob['distance'] * math.cos(math.radians(self.psi + self.danger_ob['pi'])),
-                y=self.boat_y + self.danger_ob['distance'] * math.sin(math.radians(self.psi + self.danger_ob['pi'])),
+                x=self.boat_x
+                + self.danger_ob["distance"]
+                * math.cos(math.radians(self.psi + self.danger_ob["pi"])),
+                y=self.boat_y
+                + self.danger_ob["distance"]
+                * math.sin(math.radians(self.psi + self.danger_ob["pi"])),
                 color_r=255,
                 scale=0.3,
             )
@@ -401,22 +435,10 @@ class Fuzzy:
         )
 
         # angle_range (탐색 범위)
-        min_angle_x = (
-            2.8 * math.cos(math.radians(self.psi - 70))
-            + self.boat_x
-        )
-        min_angle_y = (
-            2.8 * math.sin(math.radians(self.psi - 70))
-            + self.boat_y
-        )
-        max_angle_x = (
-            2.8 * math.cos(math.radians(self.psi + 70))
-            + self.boat_x
-        )
-        max_angle_y = (
-            2.8 * math.sin(math.radians(self.psi + 70))
-            + self.boat_y
-        )
+        min_angle_x = 2.8 * math.cos(math.radians(self.psi - 70)) + self.boat_x
+        min_angle_y = 2.8 * math.sin(math.radians(self.psi - 70)) + self.boat_y
+        max_angle_x = 2.8 * math.cos(math.radians(self.psi + 70)) + self.boat_x
+        max_angle_y = 2.8 * math.sin(math.radians(self.psi + 70)) + self.boat_y
         angle_range = visual.linelist_rviz(
             name="angle_range",
             id=ids.pop(),
@@ -463,11 +485,11 @@ class Fuzzy:
 
 
 def main():
-    rospy.init_node('fuzzy_ctrl', anonymous=False)
+    rospy.init_node("fuzzy_ctrl", anonymous=False)
     rate = rospy.Rate(10)
     fuzz = Fuzzy()
-    fuzz.fuzzy() # FUZZY 규칙 등록
-    
+    fuzz.fuzzy()  # FUZZY 규칙 등록
+
     while not fuzz.is_all_connected():
         rospy.sleep(0.2)
     print("\n<<<<<<<<<<<<<<<<<<< All Connected !")
@@ -488,17 +510,17 @@ def main():
                 u_servo = fuzz.servo_middle + fuzz.fuzzy_servo_control
             else:
                 u_servo = fuzz.servo_pid_controller()
-            
+
             fuzz.servo_pub.publish(int(u_servo))
             fuzz.thruster_pub.publish(int(fuzz.thruster))
-        
+
             fuzz.print_status(is_lpp, u_servo)
             fuzz.visualize()
 
         rate.sleep()
-        
+
     rospy.spin()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
