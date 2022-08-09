@@ -18,7 +18,7 @@
 
 	<!--LiDAR Test-->
 	<!-- <node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0804_fountain_wrong_psi.bag -l--> <!--topics /scan"/> -->
-	<node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
+	<!-- <node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
 		<param name="serial_port"         type="string" value="/dev/ttyLiDAR"/>  
 		<param name="serial_baudrate"     type="int"    value="256000"/>
 		<param name="frame_id"            type="string" value="laser"/>
@@ -28,12 +28,16 @@
 	</node>
 	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/>
 	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
-	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting1.rviz" /> -->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting1.rviz" /> --> -->
 
 	<!--Cam Test-->
 	<!-- <rosparam command="load" file="$(find tricat221)/params/docking_params.yaml"/>
 	<rosparam command="load" file="$(find tricat221)/params/coordinates.yaml"/>
 	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/cam-rosbag/one_mark.bag -l--> <!--topics /usb_cam/image_raw"/>
 	<node pkg="tricat221" type="camera_test.py" name="camera_test" output="screen" /> -->
+
+	<!--GPS Test-->
+	<!-- <node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0804_fountain_wrong_psi.bag -l--> <!--topics /ublox_gps/fix "/> -->
+	<node pkg="tricat221" type="gnss_converter_re.py" name="gps_test" output="screen" />
 
 </launch>

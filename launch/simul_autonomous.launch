@@ -3,7 +3,7 @@
 <launch>
 	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" output="screen"/>
 	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator"/>
-	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter"/>
+	<node pkg="tricat221"  type="gnss_converter_re.py" name="gnssConverter" output="screen"/>
 	<node pkg="tricat221" type="autonomous.py" name="autonomous" output="screen"/>
 
 	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/0806_auto.bag --topics /imu/mag /scan /ublox_gps/fix"/>

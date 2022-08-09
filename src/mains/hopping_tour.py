@@ -4,6 +4,7 @@
 import math
 import os
 import sys
+import copy
 
 import cv2
 import rospy
@@ -14,10 +15,12 @@ from geometry_msgs.msg import Point
 from sensor_msgs.msg import Imu
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
+from sensor_msgs.msg import NavSatFix
 
-import perception.gnss_converter as gc
+import perception.gnss_converter_rere as gc
 import utils.filtering as filtering
-import utils.visualizer as visual
+# import utils.visualizer as visual
+import utils.hopping_visualize as hopping_visualize
 
 
 def rearrange_angle(input_angle):
@@ -35,14 +38,16 @@ class Hopping:
         self.waypoint_idx = 1  # 지금 향하고 있는 waypoint 번호
 
         # coordinates
-        self.remained_waypoint = {}  # 남은 waypoints. key는 waypoint 순서, value는 [x, y] 좌표
+        self.remained_waypoints = {}  # 남은 waypoints. key는 waypoint 순서, value는 [x, y] 좌표
+        self.waypoints = {}
         self.gnss_waypoint = rospy.get_param("waypoints")  # GPS 형식의 전체 waypoints
-        for idx, waypoint in enumerate(self.gnss_waypoint):
-            e, n = gc.enu_convert(waypoint)  # ENU 좌표계로 변환
-            self.remained_waypoint[idx + 1] = [n, e]  # 축이 반대이므로 순서 바꿔 할당.
-        self.boat_y, self.boat_x = 0, 0  # gc.enu_convert(rospy.get_param("origin"))  # 배의 좌표
-        self.goal_x = self.remained_waypoint[self.waypoint_idx][0]  # 다음 목표 x좌표
-        self.goal_y = self.remained_waypoint[self.waypoint_idx][1]  # 다음 목표 y좌표
+        # for idx, waypoint in enumerate(gnss_waypoint):
+        #     e, n = gc.enu_convert(waypoint)  # ENU 좌표계로 변환
+        #     self.remained_waypoints[idx + 1] = [n, e]  # 축이 반대이므로 순서 바꿔 할당.
+        # self.waypoints = copy.deepcopy(self.remained_waypoints)
+        self.boat_y, self.boat_x = 0, 0 # 배의 좌표
+        # self.goal_x = self.remained_waypoints[self.waypoint_idx][0]  # 다음 목표 x좌표
+        # self.goal_y = self.remained_waypoints[self.waypoint_idx][1]  # 다음 목표 y좌표
         self.trajectory = []  # 지금껏 이동한 궤적
 
         # limits, ranges
@@ -90,31 +95,41 @@ class Hopping:
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
         self.visual_rviz_pub = rospy.Publisher("/visual_rviz", MarkerArray, queue_size=0)
 
-        # presetting
-        self.calc_distance_to_goal()
-        self.calc_error_angle()
+        # # presetting
+        # self.calc_distance_to_goal()
+        # self.calc_error_angle()
 
         # make controller
         if self.controller:
             cv2.namedWindow("controller")
             cv2.createTrackbar(
-                "p angle (x 0.01)", "controller", self.kp_angle, 100, self.trackbar_callback
+                "p angle (x 0.01)", "controller", self.kp_angle, 100, lambda x: x
             )  # 0.01
             cv2.createTrackbar(
-                "i angle (x 0.01)", "controller", self.ki_angle, 10, self.trackbar_callback
+                "i angle (x 0.01)", "controller", self.ki_angle, 10, lambda x: x
             )
-            cv2.createTrackbar("d angle", "controller", self.kd_angle, 10, self.trackbar_callback)
+            cv2.createTrackbar("d angle", "controller", self.kd_angle, 10, lambda x: x)
             cv2.createTrackbar(
-                "p dist", "controller", self.kp_distance, 100, self.trackbar_callback
+                "p dist", "controller", self.kp_distance, 100, lambda x: x
             )
-            cv2.createTrackbar("i dist", "controller", self.ki_distance, 10, self.trackbar_callback)
+            cv2.createTrackbar("i dist", "controller", self.ki_distance, 10, lambda x: x)
             cv2.createTrackbar(
-                "d dist", "controller", self.kd_distance, 100, self.trackbar_callback
+                "d dist", "controller", self.kd_distance, 100, lambda x: x
             )
 
-    def trackbar_callback(self, usrdata):
-        """trackar callback function. do nothing"""
-        pass
+    def is_all_connected(self):
+        """make sure all subscribers(nodes) are connected to this node
+
+        Returns:
+            bool : True(if all connected) / False(not ALL connected yet)
+        """
+        # msg0 = rospy.wait_for_message("/origin", NavSatFix)
+        # self.origin_gnss = [msg0.latitude, msg0.longitude, msg0.altitude]
+        msg0 = rospy.wait_for_message("/dxdy", Point)
+        self.dxdy = [msg0.x, msg0.y]
+        msg1 = rospy.wait_for_message("/enu_position", Point)
+        msg2 = rospy.wait_for_message("/heading", Float64)
+        return True
 
     def yaw_rate_callback(self, msg):
         """IMU로 측정한 각속도
@@ -133,10 +148,10 @@ class Hopping:
         Notes:
             * IMU의 예민성으로 인하여 heading 값에 noise가 있음. 따라서 이동평균필터를 적용함.
         """
-        # self.psi = filtering.moving_avg_filter(
-        #     self.heading_queue, self.filter_queue_size, msg.data
-        # )  # [deg]
-        self.psi = msg.data
+        self.psi = filtering.moving_avg_filter(
+            self.heading_queue, self.filter_queue_size, msg.data
+        )  # [deg]
+        # self.psi = msg.data
 
     def boat_position_callback(self, msg):
         """GPS로 측정한 배의 ENU 변환 좌표 콜백함수
@@ -178,22 +193,25 @@ class Hopping:
         return int(u_thruster)
 
     def set_next_goal(self):
-        del self.remained_waypoint[self.waypoint_idx]
+        del self.remained_waypoints[self.waypoint_idx]
         self.waypoint_idx += 1
 
-        # print("remain: ", self.remained_waypoint)
+        # print("remain: ", self.remained_waypoints)
         # print("waypont: ", self.gnss_waypoint)
         # print("waypoint_idx", self.waypoint_idx)
 
-        if len(self.gnss_waypoint) + 1 == self.waypoint_idx:
+        if len(self.waypoints) + 1 == self.waypoint_idx:
             return
 
-        self.goal_x = self.remained_waypoint[self.waypoint_idx][0]
-        self.goal_y = self.remained_waypoint[self.waypoint_idx][1]
+        self.goal_x = self.remained_waypoints[self.waypoint_idx][0]
+        self.goal_y = self.remained_waypoints[self.waypoint_idx][1]
 
     def arrival_check(self):
         self.calc_distance_to_goal()  # 목적지까지 거리 다시 계산
         if self.distance_to_goal <= self.goal_range:
+            for _ in range(3): # TODO 잘 작동하는가?
+                self.thruster_pub.publish(1500)
+                rospy.sleep(1)
             return True
         else:
             return False
@@ -263,16 +281,22 @@ class Hopping:
         else:
             self.cnt = 0
 
+        if self.waypoint_idx > len(self.waypoints):
+            return
+
         print("-" * 40)
+        print("")
         print("Boat [{:>4.2f}, {:>4.2f}]".format(self.boat_x, self.boat_y))
         print(
             "Goal # {} / {}  [{:>4.2f}, {:>4.2f}]".format(
                 self.waypoint_idx,
-                len(self.gnss_waypoint),
-                self.remained_waypoint[self.waypoint_idx][0],
-                self.remained_waypoint[self.waypoint_idx][1],
+                len(self.waypoints),
+                self.remained_waypoints[self.waypoint_idx][0],
+                self.remained_waypoints[self.waypoint_idx][1],
             )
         )
+
+        print("")
         print("{:>9} - {:>9} = {:>7}".format("desire", "psi", "error"))
 
         if self.error_angle > 0:
@@ -295,6 +319,7 @@ class Hopping:
             )
         )
 
+        print("")
         print("Distance : {:5.2f} m".format(self.distance_to_goal))
         print(
             "Thruster : {:>4d} | P [{:4d}], I [{:>4.1f}], D [{:>4.1f}]".format(
@@ -304,110 +329,7 @@ class Hopping:
         print("")
 
         if visualize:
-            traj = visual.points_rviz(name="traj", id=1, points=self.trajectory, color_g=255)
-            psi_arrow_end_x = 2 * math.cos(math.radians(self.psi)) + self.boat_x
-            psi_arrow_end_y = 2 * math.sin(math.radians(self.psi)) + self.boat_y
-            psi = visual.arrow_rviz(
-                name="psi",
-                id=2,
-                x1=self.boat_x,
-                y1=self.boat_y,
-                x2=psi_arrow_end_x,
-                y2=psi_arrow_end_y,
-                color_r=221,
-                color_g=119,
-                color_b=252,
-            )
-            psi_txt = visual.text_rviz(
-                name="psi", id=3, text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
-            )
-            desire_arrow_end_x = 2 * math.cos(math.radians(self.psi_desire)) + self.boat_x
-            desire_arrow_end_y = 2 * math.sin(math.radians(self.psi_desire)) + self.boat_y
-            psi_desire = visual.arrow_rviz(
-                name="psi_desire",
-                id=4,
-                x1=self.boat_x,
-                y1=self.boat_y,
-                x2=desire_arrow_end_x,
-                y2=desire_arrow_end_y,
-                color_r=59,
-                color_g=139,
-                color_b=245,
-            )
-            psi_desire_txt = visual.text_rviz(
-                name="psi_desire", id=5, text="desire", x=desire_arrow_end_x, y=desire_arrow_end_y
-            )
-            goal_line = visual.linelist_rviz(
-                name="goal_line",
-                id=6,
-                lines=[[self.boat_x, self.boat_y], [self.goal_x, self.goal_y]],
-                color_r=91,
-                color_g=169,
-                color_b=252,
-                scale=0.05,
-            )
-            axis_x = visual.linelist_rviz(
-                name="axis_x",
-                id=7,
-                lines=[[self.boat_x, self.boat_y], [self.boat_x + 3, self.boat_y]],
-                color_r=255,
-                scale=0.1,
-            )
-            axis_y = visual.linelist_rviz(
-                name="axis_x",
-                id=8,
-                lines=[[self.boat_x, self.boat_y], [self.boat_x, self.boat_y + 3]],
-                color_g=255,
-                scale=0.1,
-            )
-            all_markers = visual.marker_array_rviz(
-                [
-                    psi,
-                    psi_txt,
-                    traj,
-                    psi_desire,
-                    psi_desire_txt,
-                    goal_line,
-                    axis_x,
-                    axis_y,
-                ]
-            )
-            id = 9
-            for idx in self.remained_waypoint:
-                # wpt = key
-                # remained_waypoint[wpt] = value
-                waypoint = visual.point_rviz(
-                    name="waypoints",
-                    id=id,
-                    x=self.remained_waypoint[idx][0],
-                    y=self.remained_waypoint[idx][1],
-                    color_r=165,
-                    color_g=242,
-                    color_b=87,
-                    scale=0.3,
-                )
-                goal_range = visual.cylinder_rviz(
-                    name="waypoints",
-                    id=id + 1,
-                    x=self.remained_waypoint[idx][0],
-                    y=self.remained_waypoint[idx][1],
-                    scale=self.goal_range * 2,
-                    color_r=165,
-                    color_g=242,
-                    color_b=87,
-                )
-                waypoint_txt = visual.text_rviz(
-                    name="waypoints",
-                    id=id + 2,
-                    x=self.remained_waypoint[idx][0],
-                    y=self.remained_waypoint[idx][1],
-                    text=str(idx),
-                    scale=1.5,
-                )
-                visual.marker_array_append_rviz(all_markers, waypoint)
-                visual.marker_array_append_rviz(all_markers, goal_range)
-                visual.marker_array_append_rviz(all_markers, waypoint_txt)
-                id += 3
+            all_markers = hopping_visualize.visualize(self)
             self.visual_rviz_pub.publish(all_markers)
 
 
@@ -417,8 +339,25 @@ def main():
     hopping = Hopping()
     rate = rospy.Rate(10)
 
+    while not hopping.is_all_connected():
+        rospy.sleep(0.2)
+    print("\n<<<<<<<<<<<<<<<<<<< All Connected !")
+
+    for idx, waypoint in enumerate(hopping.gnss_waypoint):
+        # e, n = gc.enu_convert(waypoint, hopping.origin_gnss)  # ENU 좌표계로 변환
+        e, n = gc.enu_convert(waypoint, hopping.dxdy)
+        hopping.remained_waypoints[idx + 1] = [n, e]  # 축이 반대이므로 순서 바꿔 할당.
+    hopping.waypoints = copy.deepcopy(hopping.remained_waypoints)
+
+    hopping.goal_x = hopping.remained_waypoints[hopping.waypoint_idx][0]  # 다음 목표 x좌표
+    hopping.goal_y = hopping.remained_waypoints[hopping.waypoint_idx][1]  # 다음 목표 y좌표
+
+    # presetting
+    hopping.calc_distance_to_goal()
+    hopping.calc_error_angle()
+
     while not rospy.is_shutdown():
-        if len(hopping.remained_waypoint) == 0:
+        if len(hopping.remained_waypoints) == 0:
             # 마지막 목적지까지 도착함
             hopping.servo_pub.publish(hopping.servo_middle)
             hopping.thruster_pub.publish(1500)

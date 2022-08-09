@@ -18,10 +18,11 @@ from geometry_msgs.msg import Point
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
+from sensor_msgs.msg import NavSatFix
 
 import datatypes.point_class
 import obstacle.obstacle_avoidance as oa
-import perception.gnss_converter as gc
+import perception.gnss_converter_re as gc
 import utils.filtering as filtering
 import utils.visualizer as visual
 from tricat221.msg import ObstacleList
@@ -52,7 +53,7 @@ class Autonomous:
 
         # locations, coordinates
         self.boat_x, self.boat_y = 0, 0
-        self.goal_y, self.goal_x = gc.enu_convert(rospy.get_param("autonomous_goal"))
+        self.goal_y, self.goal_x = 0, 0 #gc.enu_convert(rospy.get_param("autonomous_goal"))
         self.trajectory = []  # 지금까지 이동한 궤적
         self.input_points = []  # lidar raw data
 
@@ -150,21 +151,31 @@ class Autonomous:
         Returns:
             bool : True(if all connected) / False(not ALL connected yet)
         """
-        not_connected = ""  # 아직 연결되지 않은 센서 목록
-        if self.heading_sub.get_num_connections() == 0:
-            not_connected += "headingCalculator\t"
-        if self.enu_pos_sub.get_num_connections() == 0:
-            not_connected += "gnssConverter\t"
-        if self.obstacle_sub.get_num_connections() == 0:
-            not_connected += "lidarConverter\t"
+        not_connected = ""  # 아직 연결되지 않은 센서 목록 # TODO 정리!!!!!!!1
+        msg0 = rospy.wait_for_message("/origin", NavSatFix)
+        print(msg0)
+        self.origin_gnss = [msg0.latitude, msg0.longitude, msg0.altitude]
+        print(self.origin_gnss)
+        msg1 = rospy.wait_for_message("/enu_position", Point)
+        msg2 = rospy.wait_for_message("/heading", Float64)
+        msg3 = rospy.wait_for_message("/obstacles", ObstacleList)
+        print(msg1)
+        return True
 
-        if len(not_connected) == 0:
-            return True  # 전부 연결됨
-        else:
-            print("\nWaiting >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-            print(not_connected)
-            print("\n")
-            return False  # 아직 다 연결되지는 않음
+        # if not rospy.wait_for_message("/heading", Float64): #self.heading_sub.get_num_connections() == 0:
+        #     not_connected += "headingCalculator\t"
+        # if not rospy.wait_for_message("/enu_position", Point): #self.enu_pos_sub.get_num_connections() == 0:
+        #     not_connected += "gnssConverter\t"
+        # if not rospy.wait_for_message("/obstacles", ObstacleList): #self.obstacle_sub.get_num_connections() == 0:
+        #     not_connected += "lidarConverter\t"
+
+        # if len(not_connected) == 0:
+        #     return True  # 전부 연결됨
+        # else:
+        #     print("\nWaiting >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        #     print(not_connected)
+        #     print("\n")
+        #     return False  # 아직 다 연결되지는 않음
 
     def arrival_check(self):
         """calculate distance from boat to the next goal of current state
@@ -502,6 +513,8 @@ def main():
     while not auto.is_all_connected():
         rospy.sleep(0.2)
     print("\n<<<<<<<<<<<<<<<<<<< All Connected !")
+
+    auto.goal_y, auto.goal_x = gc.enu_convert(rospy.get_param("autonomous_goal"), auto.origin_gnss)
 
     while not rospy.is_shutdown():
         arrived = auto.arrival_check()  # 현 시점에서 목표까지 남은 거리 재계산
