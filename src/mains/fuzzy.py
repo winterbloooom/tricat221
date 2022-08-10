@@ -24,6 +24,14 @@ import utils.visualizer as visual
 
 # TODO fuzzy 버전끼리 비교해보기. 이건 1700 수정본
 
+def rearrange_angle(input_angle):
+    if input_angle >= 180:  # 왼쪽으로 회전이 더 이득
+        output_angle = -180 + abs(input_angle) % 180
+    elif input_angle <= -180:
+        output_angle = 180 - abs(input_angle) % 180
+    else:
+        output_angle = input_angle
+    return output_angle
 
 class Fuzzy:
     def __init__(self):
@@ -102,9 +110,12 @@ class Fuzzy:
         self.boat_x = msg.y
 
     def lidar_callback(self, data):
+        # print(data.header.seq)
+        
         self.angle_min = data.angle_min
         self.angle_increment = data.angle_increment
         self.ranges = data.ranges  # list
+
 
     def calc_psi_goal(self):
         self.psi_goal = (
@@ -224,25 +235,53 @@ class Fuzzy:
         Returns:
             bool: 장애물이 탐지 범위(각, 거리) 안에 있으면 True이며, LPP라는 뜻. 그 외엔 False로 GPP
         """
+        # 라이다 콜백 함수와 겹쳐서 현재 탐색 중인 데이터가 아닌 방금 들어온 데이터를 쓸 위험이 있었음
+        # 그래서 이 함수 시작 시 받아올 수 있도록 변경
+        self.danger_ob = {}
+
+
+        # opt 각도 범위 내 값들만 골라냄 (라이다 raw 기준(z축 inverted) -70도는 )
+        start_idx = int((math.radians(110)) / (self.angle_increment+0.00001))
+        end_idx = int((math.radians(250)) / (self.angle_increment+0.00001))
+        ranges = self.ranges[start_idx:(end_idx+1)]
+        angle_min = self.angle_min
+        angle_increment = self.angle_increment
+
+        # for idx, r in enumerate(ranges):
+        #     index = idx + start_idx
+        #     pi = -math.degrees(angle_min + angle_increment * index) + 180
+        #     print("idx {} pi {} -> {} r {}".format(idx, math.degrees(angle_min + angle_increment * index), rearrange_angle(pi), r))
+
+        # for idx, r in enumerate(self.ranges):
+        #     index = idx
+        #     pi = -math.degrees(angle_min + angle_increment * index) + 180
+        #     print("idx {} pi {} r {}".format(idx, rearrange_angle(pi), r))
+        #     # pi = math.degrees(angle_min + angle_increment * index)
+        #     # print("idx {} pi {} r {}".format(idx, pi, r))
+
         # TODO 범위 안에 있는 장애물 개수 다 셀까....
-        if len(self.ranges) == 0:
+        
+        if min(ranges) == float("inf"):
             return False
 
-        closest_distance = min(self.ranges)  # 가장 가까운 장애물까지 거리
-        idx = self.ranges.index(closest_distance)  # 가장 가까운 장애물의 인덱스
-        pi = math.degrees(self.angle_min + self.angle_increment * idx) - 180
-        # lidar는 후방이 0 -> 오른쪽으로 돌아 전방이 180 -> 다시 오른쪽으로 돌아 후방이 360
+        closest_distance = min(ranges)  # 가장 가까운 장애물까지 거리
+        idx = ranges.index(closest_distance) + start_idx  # 가장 가까운 장애물의 인덱스
+        # pi = -math.degrees(angle_min + angle_increment * idx) + 180
+        pi = math.degrees(angle_min + angle_increment * idx) # TODO 왜...?
+        # lidar는 후방이 0 -> 왼쪽으로 돌아 전방이 180 -> 후방이 360
+        pi = rearrange_angle(pi)
 
-        self.danger_ob["distance"] = closest_distance
-        self.danger_ob["idx"] = idx
-        self.danger_ob["pi"] = pi
-
-        if closest_distance < 2.8 and abs(pi) < 70:
+        if (0.3 <= closest_distance <= 2.8) and (-70 <= pi <= 70):
             # 장애물이 나로부터 2.8m 이하로 있고, 각도가 좌우 70도 이내일 때
             self.target_servo_ang.input["distance"] = float(closest_distance)
             self.target_servo_ang.input["angle"] = float(pi)
             self.target_servo_ang.compute()
             self.fuzzy_servo_control = int(self.target_servo_ang.output["target_servo"])
+
+            self.danger_ob["distance"] = closest_distance
+            self.danger_ob["idx"] = idx
+            self.danger_ob["pi"] = pi
+
             return True
         else:
             return False
@@ -265,11 +304,16 @@ class Fuzzy:
         psi_goal_dir_str = "[   | * ]" if self.psi_goal > 0 else "[ * |   ]"
 
         # 가장 가까운 점의 위치 및 거리
-        print(
-            "Dangerous Point | {:>4.2f} deg , {:>2.1f} m".format(
-                self.danger_ob["pi"], self.danger_ob["distance"]
+        if len(self.danger_ob) == 0:
+            print("Dangerous Point | {:>4} deg / {:>2} m".format(
+                "None", "None"
+            ))
+        else:
+            print(
+                "Dangerous Point | {:>4.2f} deg / {:>2.1f} m".format(
+                    self.danger_ob["pi"], self.danger_ob["distance"]
+                )
             )
-        )
         print("")
 
         # 어느 쪽으로 움직일 건지
@@ -286,11 +330,11 @@ class Fuzzy:
         else:
             servo_value_str = ">" * ((self.servo_middle - u_servo) // 10)  # go right
 
-        print("| {:^9} | {:^9} | {:^10} |".format("heading", "goal", "servo"))
+        print("| {:^9} | {:^9} | {:^10} |".format("heading", "goal", "delta_servo"))
         print("{:=^38}".format(""))
         print(
             "| {:>9.2f} | {:>9.2f} | {:>4d} {:5} |".format(
-                self.psi, self.psi_goal, int(u_servo), error_angle_dir_str
+                self.psi, self.psi_goal, self.servo_middle - int(u_servo), error_angle_dir_str
             )
         )
         print("| {:9} | {:^9} | {:^10} |".format("", psi_goal_dir_str, servo_value_str))
@@ -301,36 +345,8 @@ class Fuzzy:
         print("")
         print("-" * 70)
 
-        # # "FUZZY ON": LPP
-        # if is_lpp:
-        #     if self.fuzzy_servo_control > 3: # left turn
-        #         turn = "left"
-        #     elif self.fuzzy_servo_control < -3: # right turn
-        #         turn = "right"
-        #     else:
-        #         turn = "mid"
-        #     print("--FUZZY ON--")
-
-        #     print("my xy : ",self.boat_x, self.boat_y)
-        #     print("way xy : ",self.goal_x, self.goal_y)
-        #     print("servo : " + turn,self.fuzzy_servo_control)
-        #     print('-------------------------------------')
-        # # "FUZZY OFF": GPP
-        # else:
-        #     if self.servo_control > 93+3: # left turn
-        #         turn = "left"
-        #     elif self.servo_control < 93-3: # right turn
-        #         turn = "right"
-        #     else:
-        #         turn = "mid"
-        #     print("--FUZZY OFF--")
-
-        #     print("my xy : ",self.boat_x, self.boat_y)
-        #     print("way xy : ",self.goal_x, self.goal_y)
-        #     print('-------------------------------------')
-
     def visualize(self):
-        ids = list(range(0, 30))
+        ids = list(range(0, 1000))
 
         # 목표 지점
         goal_txt = visual.text_rviz(
@@ -398,19 +414,29 @@ class Fuzzy:
         )
 
         # danger obstacle
-        if len(self.ranges) != 0:
+        if len(self.ranges) != 0 and len(self.danger_ob) != 0:
+            x = self.boat_x + self.danger_ob["distance"] * math.cos(math.radians(self.psi + self.danger_ob["pi"]))
+            y = self.boat_y + self.danger_ob["distance"] * math.sin(math.radians(self.psi + self.danger_ob["pi"]))
+
             obstacle = visual.point_rviz(
                 name="obstacle",
                 id=ids.pop(),
-                x=self.boat_x
-                + self.danger_ob["distance"]
-                * math.cos(math.radians(self.psi + self.danger_ob["pi"])),
-                y=self.boat_y
-                + self.danger_ob["distance"]
-                * math.sin(math.radians(self.psi + self.danger_ob["pi"])),
+                x=x,
+                y=y,
                 color_r=255,
                 scale=0.3,
             )
+
+            to_obstacle = visual.linelist_rviz(
+            name="obstacle",
+            id=ids.pop(),
+            lines=[[self.boat_x, self.boat_y], [x, y]],
+            color_r=255,
+            scale=0.05,
+        )
+        else:
+            obstacle = visual.del_mark(name="obstacle", id=ids.pop())
+            to_obstacle = visual.del_mark(name="obstacle", id=ids.pop())
 
         # 배와 함께 이동할 X, Y축
         axis_x = visual.linelist_rviz(
@@ -456,12 +482,30 @@ class Fuzzy:
 
         # lidar raw data
         pcd = []
+        to_pcd = []
+        pcd_in = []
         for idx, r in enumerate(self.ranges):
-            pi = self.angle_min + self.angle_increment * idx
-            x = self.boat_x + r * math.cos(math.radians(self.psi + pi))
-            y = self.boat_y + r * math.sin(math.radians(self.psi + pi))
-            pcd.append([x, y])
-        all_obs = visual.points_rviz(name="pcd", id=ids.pop(), points=pcd, color_g=255, scale=0.08)
+            if r != float("inf"):
+                pi = -math.degrees(self.angle_min + self.angle_increment * idx) + 180
+                pi = rearrange_angle(pi)
+                x = self.boat_x + r * math.cos(math.radians(self.psi + pi))
+                y = self.boat_y + r * math.sin(math.radians(self.psi + pi))
+
+                if -70 <= pi <= 70:
+                    pcd_in.append([x, y])
+                    to_pcd.append([self.boat_x, self.boat_y])
+                    to_pcd.append([x, y])
+                else:
+                    pcd.append([x, y])
+        all_obs = visual.points_rviz(name="pcd", id=ids.pop(), points=pcd, color_g=100, scale=0.08)
+        in_obs = visual.points_rviz(name="pcd", id=ids.pop(), points=pcd_in, color_b=100, scale=0.08)
+        to_all_obs = visual.linelist_rviz(
+            name="pcd",
+            id=ids.pop(),
+            lines=to_pcd,
+            color_b=100,
+            scale=0.02,
+        )
 
         all_markers = visual.marker_array_rviz(
             [
@@ -472,6 +516,7 @@ class Fuzzy:
                 traj,
                 goal_line,
                 obstacle,
+                to_obstacle,
                 axis_x,
                 axis_y,
                 axis_x_txt,
@@ -479,6 +524,8 @@ class Fuzzy:
                 goal_range,
                 angle_range,
                 all_obs,
+                in_obs,
+                to_all_obs,
             ]
         )
         self.visual_rviz_pub.publish(all_markers)
