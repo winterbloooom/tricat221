@@ -49,10 +49,6 @@ class Hopping:
         self.goal_range = rospy.get_param("goal_range")
 
         # PID coefficients
-        self.error_sum_angle = 0
-        self.kp_angle = rospy.get_param("kp_angle")  # (0.0 ~ 1.0)
-        self.ki_angle = rospy.get_param("ki_angle")  # (0.0 ~ 0.1)
-        self.kd_angle = rospy.get_param("kd_angle")  # (0.0 ~ 1.0)
         self.kp_distance = rospy.get_param("kp_distance")  # (0 ~ 100)
         self.ki_distance = rospy.get_param("ki_distance")  # (0 ~ 10)
         self.kd_distance = rospy.get_param("kd_distance")  # (0 ~ 100)
@@ -65,23 +61,22 @@ class Hopping:
         self.heading_queue = []  # 헤딩을 필터링할 이동평균필터 큐
 
         # other fix values
-        self.servo_middle = rospy.get_param("servo_middle")
-        self.servo_left_max = rospy.get_param("servo_left_max")
-        self.servo_right_max = rospy.get_param("servo_right_max")
+        self.angle_alpha = rospy.get_param("angle_alpha")
+        self.rotate_angle_range = rospy.get_param("rotate_angle_range")
+        self.servo_range = rospy.get_param("servo_range")
+        self.servo_middle = int((self.servo_range[0] + self.servo_range[1]) / 2)
         self.thruster_max = rospy.get_param("thruster_max")
         self.thruster_min = rospy.get_param("thruster_min")
         self.controller = rospy.get_param("controller")  # PID trackbar
         self.filter_queue_size = rospy.get_param("filter_queue_size")
 
         # other variables
-        self.yaw_rate = 0  # z축 각속도 [degree/s]
         self.distance_to_goal = 100000  # 다음 목표까지 남은 거리
         self.cnt = 0  # 상태 출력을 조절할 카운터
         self.u_servo = self.servo_middle
         self.u_thruster = self.thruster_min
 
         # subscribers
-        rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
         rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
         rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
 
@@ -97,32 +92,9 @@ class Hopping:
         # make controller
         if self.controller:
             cv2.namedWindow("controller")
-            cv2.createTrackbar(
-                "p angle (x 0.01)", "controller", self.kp_angle, 100, self.trackbar_callback
-            )  # 0.01
-            cv2.createTrackbar(
-                "i angle (x 0.01)", "controller", self.ki_angle, 10, self.trackbar_callback
-            )
-            cv2.createTrackbar("d angle", "controller", self.kd_angle, 10, self.trackbar_callback)
-            cv2.createTrackbar(
-                "p dist", "controller", self.kp_distance, 100, self.trackbar_callback
-            )
-            cv2.createTrackbar("i dist", "controller", self.ki_distance, 10, self.trackbar_callback)
-            cv2.createTrackbar(
-                "d dist", "controller", self.kd_distance, 100, self.trackbar_callback
-            )
-
-    def trackbar_callback(self, usrdata):
-        """trackar callback function. do nothing"""
-        pass
-
-    def yaw_rate_callback(self, msg):
-        """IMU로 측정한 각속도
-
-        Args:
-            msg (Imu) : Imu sensor input
-        """
-        self.yaw_rate = math.degrees(msg.angular_velocity.z)  # [rad/s] -> [degree/s]
+            cv2.createTrackbar("p dist", "controller", self.kp_distance, 100, lambda x: x)
+            cv2.createTrackbar("i dist", "controller", self.ki_distance, 10, lambda x: x)
+            cv2.createTrackbar("d dist", "controller", self.kd_distance, 100, lambda x: x)
 
     def heading_callback(self, msg):
         """IMU 지자기 센서로 측정한 자북과 heading 사이각 콜백함수
@@ -164,6 +136,7 @@ class Hopping:
             * 여기서는 I 제어 필요 없을 듯해 일단 지워둠
             * m 단위인 distance 쓰러스터 제어값으로 바꾸는 법: 계수값 조정 + min/max 값 더하고 빼고
         """
+        self.set_PID_value()
         cp_distance = self.kp_distance * self.distance_to_goal
         cd_distance = -self.kd_distance * self.distance_to_goal / 0.1  # dt = rate
 
@@ -206,40 +179,26 @@ class Hopping:
         )
         self.psi_goal = rearrange_angle(self.psi_goal)
         self.error_angle = self.psi_goal
-
         self.psi_desire = rearrange_angle(self.psi + self.error_angle)
 
-        if abs(self.psi_desire) > 180 or abs(self.psi_goal) > 180:
-            sys.exit()  # XXX 나중에 삭제하기
+    def calc_servo_value(self):
+        u_angle = (-self.error_angle) * self.angle_alpha  
+        # 조절 상수 곱해 감도 조절  # 왼쪽이 더 큰 값을 가져야 하므로
 
-    def error_angle_PID(self):
-        self.set_PID_value()
+        # degree에서 servo로 mapping
+        u_servo = (u_angle - self.rotate_angle_range[0]) * (
+            self.servo_range[1] - self.servo_range[0]
+        ) / (self.rotate_angle_range[1] - self.rotate_angle_range[0]) + self.servo_range[0]
 
-        cp_angle = self.kp_angle * self.error_angle
-
-        self.error_sum_angle += self.error_angle * 0.1  # dt = rate
-        ci_angle = self.ki_angle * self.error_sum_angle
-        # print(self.error_sum_angle, ci_angle)
-        if abs(ci_angle) > 1:
-            self.error_sum_angle = 0
-        # TODO : errorsum 초기화할 기준 잡아 파라미터로.
-
-        cd_angle = -self.kd_angle * self.yaw_rate
-
-        u_angle = cp_angle + ci_angle + cd_angle
-        u_servo = self.servo_middle - u_angle
-        if u_servo > self.servo_left_max:
-            u_servo = self.servo_left_max
-        elif u_servo < self.servo_right_max:
-            u_servo = self.servo_right_max
-
+        # servo motor 제어 가능 범위 내부에 머무르도록 함
+        if u_servo > self.servo_range[1]:
+            u_servo = self.servo_range[1]
+        elif u_servo < self.servo_range[0]:
+            u_servo = self.servo_range[0]
         return int(u_servo)
 
     def set_PID_value(self):
         if self.controller:
-            self.kp_angle = cv2.getTrackbarPos("p angle (x 0.01)", "controller") * 0.01
-            self.ki_angle = cv2.getTrackbarPos("i angle (x 0.01)", "controller") * 0.01
-            self.kd_angle = cv2.getTrackbarPos("d angle", "controller") * 0.1
             self.kp_distance = cv2.getTrackbarPos("p dist", "controller")
             self.ki_distance = cv2.getTrackbarPos("i dist", "controller")
             self.kd_distance = cv2.getTrackbarPos("d dist", "controller")
@@ -247,7 +206,7 @@ class Hopping:
     def control_publish(self):
         # 에러각 계산 -> PID로
         self.calc_error_angle()
-        self.u_servo = self.error_angle_PID()
+        self.u_servo = self.calc_servo_value()
 
         # 남은 거리 계산 -> PID로
         self.calc_distance_to_goal()
@@ -289,11 +248,6 @@ class Hopping:
                 )
             )
             print("Servo : |--{:-<3d}--|-------|".format(self.u_servo))
-        print(
-            "        P [{:4.2f}], I [{:4.2f}], D [{:4.2f}]".format(
-                self.kp_angle, self.ki_angle, self.kd_angle
-            )
-        )
 
         print("Distance : {:5.2f} m".format(self.distance_to_goal))
         print(
