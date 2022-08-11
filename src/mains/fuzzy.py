@@ -260,7 +260,7 @@ class Fuzzy:
         #     # print("idx {} pi {} r {}".format(idx, pi, r))
 
         # TODO 범위 안에 있는 장애물 개수 다 셀까....
-        
+
         if ranges == [] or min(ranges) == float("inf"):
             return False
 
