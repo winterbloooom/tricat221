@@ -2,9 +2,9 @@
 # -*- coding:utf-8 -*-
 
 import math
+import sys
 
 import rospy
-import sys
 from sensor_msgs.msg import MagneticField
 from std_msgs.msg import Float64
 
