@@ -18,6 +18,8 @@
 	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/> -->
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" />
 	
+	<node pkg="rosbag" type="record" name="rosbag_record" required="true" args="record -a -O $(find tricat221)/etc/rosbag/$(arg filename)" />
+	
 	<!--PARAMETER-->
 	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
 	<rosparam command="load" file="$(find tricat221)/params/hopping_params.yaml"/>
