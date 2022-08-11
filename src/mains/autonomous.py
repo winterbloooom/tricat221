@@ -146,8 +146,9 @@ class Autonomous:
             bool : True(if all connected) / False(not ALL connected yet)
         """
         not_connected = ""  # 아직 연결되지 않은 센서 목록
-        if self.heading_sub.get_num_connections() == 0:
-            not_connected += "headingCalculator\t"
+        # if self.heading_sub.get_num_connections() == 0:
+        #     not_connected += "headingCalculator\t"
+        msg = rospy.wait_for_message("/heading", Float64)
         if self.enu_pos_sub.get_num_connections() == 0:
             not_connected += "gnssConverter\t"
         if self.obstacle_sub.get_num_connections() == 0:

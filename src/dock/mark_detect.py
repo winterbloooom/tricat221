@@ -78,7 +78,7 @@ def select_color(img, range, color_space="hsv"):
     return selceted
 
 
-def is_target(target_shape, target_detect_area, vertex_num, area):  # TODO 검증 필요
+def is_target(target_shape, target_detect_area, vertex_num, area):
     """
     target_shape: 타겟의 모양
     target_detect_area: 이 이상의 넓이 가져야 타겟임
@@ -202,7 +202,6 @@ def draw_mark(window, contour, vertices, area, box_points, center_point, is_targ
     if is_target:  # if target_shape == len(contour) or (vertices >= 5 and target_shape == 5):
         color = (0, 255, 0)  # target은 초록색
         window = cv2.line(window, (center_point[1], 0), (center_point[1], 480), (0, 0, 255), 2)
-        # TODO 검출된 모든 정답값에 그림 -> 최댓값의 크기만 그리고 싶은데..
     else:
         color = (135, 219, 250)  # 그 외는 노란색
 

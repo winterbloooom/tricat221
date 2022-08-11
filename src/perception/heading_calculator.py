@@ -4,6 +4,7 @@
 import math
 
 import rospy
+import sys
 from sensor_msgs.msg import MagneticField
 from std_msgs.msg import Float64
 
@@ -172,6 +173,24 @@ def main():
     rate = rospy.Rate(10)  # 10 Hz renew
 
     heading_angle = Heading_Angle()
+
+    not_connect_cnt = 0
+
+    # while True:
+    #     # TODO 잘 되는지 확인!
+    #     try:
+    #         print("start to wait")
+    #         msg = rospy.wait_for_message("/imu/mag", MagneticField, timeout=3)
+    #     except:
+    #         not_connect_cnt += 1
+    #         print("Time out!", not_connect_cnt)
+    #         if not_connect_cnt >= 3:
+    #             print("Shutdown")
+    #             rospy.signal_shutdown("reason")
+    #             break
+    #         else:
+    #             continue
+
     while not rospy.is_shutdown():
         heading_angle.calculation()
         rate.sleep()

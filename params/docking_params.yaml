@@ -14,7 +14,7 @@ thruster_stop: 1500
 
 
 # 선수각 방향 회전
-stop_time: 80 # 0.1(10hz) * stop_time 초만큼 멈춤 # 스테이션 앞 도착 후 이만큼 기다렸다가 헤딩 돌림
+stop_time: 60 # 0.1(10hz) * stop_time 초만큼 멈춤 # 스테이션 앞 도착 후 이만큼 기다렸다가 헤딩 돌림
 ref_dir_range: 10 # def
 station_dir: -157 # deg
 
@@ -23,13 +23,13 @@ station_dir: -157 # deg
 ## RED
 color_range : {
   red: {
-    color1_lower: 0,
-    color1_upper: 15,
-    color2_lower: 82,
+    color1_lower: 171,
+    color1_upper: 180,
+    color2_lower: 66,
     color2_upper: 255,
     color3_lower: 0,
     color3_upper: 255
-  },
+  }, #fix
   green: {
     color1_lower: 25, 
     color1_upper: 100,
@@ -39,9 +39,9 @@ color_range : {
     color3_upper: 255
   },
   blue: {
-    color1_lower: 94,
-    color1_upper: 180,
-    color2_lower: 182,
+    color1_lower: 17,
+    color1_upper: 120,
+    color2_lower: 148,
     color2_upper: 255,
     color3_lower: 0,
     color3_upper: 255

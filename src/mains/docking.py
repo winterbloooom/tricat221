@@ -148,6 +148,8 @@ class Docking:
         )
         self.filter_queue = [0] * self.filter_queue_size
 
+        self.distance_to_point = 0
+
         # controller
         cv2.namedWindow("controller")
         cv2.createTrackbar("color1 min", "controller", self.color_range[0][0], 180, lambda x: x)
@@ -338,6 +340,7 @@ class Docking:
         ]
         print("")
         print("State: # {} - {}".format(str(self.state), state_str[self.state]))
+        print(self.boat_x, self.boat_y)
         print("")
 
         if self.state == 6:

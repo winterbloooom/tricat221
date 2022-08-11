@@ -10,14 +10,14 @@
         
         <param name="image_width" value="640" />
         <param name="image_height" value="480" />
-        <param name="exposure" value="10" />
+        <param name="exposure" value="100" />
         <param name="contrast" value="0" />
-        <param name="saturation" value="100" />
+        <param name="saturation" value="150" />
     </node>
 	
 	<!--LiDAR-->
 	<node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
-		<param name="serial_port"         type="string" value="/dev/ttyLiDAR"/>  
+		<param name="serial_port"         type="string" value="/dev/ttyUSB0"/>  
 		<param name="serial_baudrate"     type="int"    value="256000"/>
 		<param name="frame_id"            type="string" value="laser"/>
 		<param name="inverted"            type="bool"   value="false"/>
@@ -34,7 +34,7 @@
 		<param name="baud_rate" value="115200" />
 	</node>
 
-	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true"/>
+	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true" output="screen"/>
 	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter" respawn="true"/>
 	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/>
 	<node pkg="tricat221" type="docking.py" name="docking" output="screen"/>
