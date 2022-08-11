@@ -24,6 +24,7 @@ import utils.visualizer as visual
 
 # TODO fuzzy 버전끼리 비교해보기. 이건 1700 수정본
 
+
 def rearrange_angle(input_angle):
     if input_angle >= 180:  # 왼쪽으로 회전이 더 이득
         output_angle = -180 + abs(input_angle) % 180
@@ -32,6 +33,7 @@ def rearrange_angle(input_angle):
     else:
         output_angle = input_angle
     return output_angle
+
 
 class Fuzzy:
     def __init__(self):
@@ -111,11 +113,10 @@ class Fuzzy:
 
     def lidar_callback(self, data):
         # print(data.header.seq)
-        
+
         self.angle_min = data.angle_min
         self.angle_increment = data.angle_increment
         self.ranges = data.ranges  # list
-
 
     def calc_psi_goal(self):
         self.psi_goal = (
@@ -239,11 +240,10 @@ class Fuzzy:
         # 그래서 이 함수 시작 시 받아올 수 있도록 변경
         self.danger_ob = {}
 
-
         # opt 각도 범위 내 값들만 골라냄 (라이다 raw 기준(z축 inverted) -70도는 )
-        start_idx = int((math.radians(110)) / (self.angle_increment+0.00001))
-        end_idx = int((math.radians(250)) / (self.angle_increment+0.00001))
-        ranges = self.ranges[start_idx:(end_idx+1)]
+        start_idx = int((math.radians(110)) / (self.angle_increment + 0.00001))
+        end_idx = int((math.radians(250)) / (self.angle_increment + 0.00001))
+        ranges = self.ranges[start_idx : (end_idx + 1)]
         angle_min = self.angle_min
         angle_increment = self.angle_increment
 
@@ -267,7 +267,7 @@ class Fuzzy:
         closest_distance = min(ranges)  # 가장 가까운 장애물까지 거리
         idx = ranges.index(closest_distance) + start_idx  # 가장 가까운 장애물의 인덱스
         # pi = -math.degrees(angle_min + angle_increment * idx) + 180
-        pi = math.degrees(angle_min + angle_increment * idx) # TODO 왜...?
+        pi = math.degrees(angle_min + angle_increment * idx)  # TODO 왜...?
         # lidar는 후방이 0 -> 왼쪽으로 돌아 전방이 180 -> 후방이 360
         pi = rearrange_angle(pi)
 
@@ -305,9 +305,7 @@ class Fuzzy:
 
         # 가장 가까운 점의 위치 및 거리
         if len(self.danger_ob) == 0:
-            print("Dangerous Point | {:>4} deg / {:>2} m".format(
-                "None", "None"
-            ))
+            print("Dangerous Point | {:>4} deg / {:>2} m".format("None", "None"))
         else:
             print(
                 "Dangerous Point | {:>4.2f} deg / {:>2.1f} m".format(
@@ -415,8 +413,12 @@ class Fuzzy:
 
         # danger obstacle
         if len(self.ranges) != 0 and len(self.danger_ob) != 0:
-            x = self.boat_x + self.danger_ob["distance"] * math.cos(math.radians(self.psi + self.danger_ob["pi"]))
-            y = self.boat_y + self.danger_ob["distance"] * math.sin(math.radians(self.psi + self.danger_ob["pi"]))
+            x = self.boat_x + self.danger_ob["distance"] * math.cos(
+                math.radians(self.psi + self.danger_ob["pi"])
+            )
+            y = self.boat_y + self.danger_ob["distance"] * math.sin(
+                math.radians(self.psi + self.danger_ob["pi"])
+            )
 
             obstacle = visual.point_rviz(
                 name="obstacle",
@@ -428,12 +430,12 @@ class Fuzzy:
             )
 
             to_obstacle = visual.linelist_rviz(
-            name="obstacle",
-            id=ids.pop(),
-            lines=[[self.boat_x, self.boat_y], [x, y]],
-            color_r=255,
-            scale=0.05,
-        )
+                name="obstacle",
+                id=ids.pop(),
+                lines=[[self.boat_x, self.boat_y], [x, y]],
+                color_r=255,
+                scale=0.05,
+            )
         else:
             obstacle = visual.del_mark(name="obstacle", id=ids.pop())
             to_obstacle = visual.del_mark(name="obstacle", id=ids.pop())
@@ -498,7 +500,9 @@ class Fuzzy:
                 else:
                     pcd.append([x, y])
         all_obs = visual.points_rviz(name="pcd", id=ids.pop(), points=pcd, color_g=100, scale=0.08)
-        in_obs = visual.points_rviz(name="pcd", id=ids.pop(), points=pcd_in, color_b=100, scale=0.08)
+        in_obs = visual.points_rviz(
+            name="pcd", id=ids.pop(), points=pcd_in, color_b=100, scale=0.08
+        )
         to_all_obs = visual.linelist_rviz(
             name="pcd",
             id=ids.pop(),
