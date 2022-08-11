@@ -521,11 +521,11 @@ def main():
             )
             # 목표각과 현 헤딩 사이 상대적 각도 계산. 선박고정좌표계로 '가야 할 각도'에 해당
             # 각도 범위가 모두 장애물이고 범위 밖에 목표지점이 있다면 psi_goal로.
-            u_thruster = 1750 #docking.thruster_default
+            u_thruster = 1750  # docking.thruster_default
 
         elif docking.state in [1, 2, 3]:  # 다음 스테이션으로 이동
             error_angle = docking.psi_goal
-            u_thruster = 1650 #docking.thruster_default
+            u_thruster = 1650  # docking.thruster_default
 
         elif docking.state == 4:  # 헤딩 돌리기
             if docking.stop_cnt >= docking.stop_time:
@@ -565,7 +565,7 @@ def main():
             error_angle = dock_control.pixel_to_degree(
                 docking.target, docking.pixel_alpha, docking.angle_range
             )  # 양수면 오른쪽으로 가야 함
-            u_thruster = 1600 #docking.thruster_default
+            u_thruster = 1600  # docking.thruster_default
 
         docking.psi_desire = rearrange_angle(docking.psi + error_angle)  # 월드좌표계로 '가야 할 각도'를 계산함
 
