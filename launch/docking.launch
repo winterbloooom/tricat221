@@ -10,14 +10,14 @@
         
         <param name="image_width" value="640" />
         <param name="image_height" value="480" />
-        <param name="exposure" value="100" />
+        <param name="exposure" value="40" />
         <param name="contrast" value="0" />
-        <param name="saturation" value="150" />
+        <param name="saturation" value="50" />
     </node>
 	
 	<!--LiDAR-->
 	<node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
-		<param name="serial_port"         type="string" value="/dev/ttyUSB0"/>  
+		<param name="serial_port"         type="string" value="/dev/ttyLiDAR"/>  
 		<param name="serial_baudrate"     type="int"    value="256000"/>
 		<param name="frame_id"            type="string" value="laser"/>
 		<param name="inverted"            type="bool"   value="false"/>
@@ -43,7 +43,7 @@
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting3(docking).rviz" />
 	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/> -->
 
-	<node pkg="rosbag" type="record" name="rosbag_record" required="true" args="record -a -O $(find tricat221)/etc/rosbag/$(arg filename)" />
+	<node pkg="rosbag" type="record" name="rosbag_record" required="true" args="record /imu/data /imu/mag /scan /ublox_gps/fix /usb_cam/image_raw -O $(find tricat221)/etc/rosbag/$(arg filename)" />
 	
 	<!--PARAMETER-->
 	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>

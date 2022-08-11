@@ -260,11 +260,6 @@ class Docking:
 
             if self.state in [1, 2, 3]:
                 self.state = 4
-                # for _ in range(8):  # TODO 수정하기.
-                #     self.thruster_pub.publish(1425)
-                #     print("sleep")
-                #     rospy.sleep(1)
-                #     print("wake")
             elif self.state == 4:
                 self.stop_cnt = 0
                 self.state += 1
@@ -340,7 +335,6 @@ class Docking:
         ]
         print("")
         print("State: # {} - {}".format(str(self.state), state_str[self.state]))
-        print(self.boat_x, self.boat_y)
         print("")
 
         if self.state == 6:
@@ -527,16 +521,16 @@ def main():
             )
             # 목표각과 현 헤딩 사이 상대적 각도 계산. 선박고정좌표계로 '가야 할 각도'에 해당
             # 각도 범위가 모두 장애물이고 범위 밖에 목표지점이 있다면 psi_goal로.
-            u_thruster = docking.thruster_default
+            u_thruster = 1750 #docking.thruster_default
 
         elif docking.state in [1, 2, 3]:  # 다음 스테이션으로 이동
             error_angle = docking.psi_goal
-            u_thruster = docking.thruster_default
+            u_thruster = 1650 #docking.thruster_default
 
         elif docking.state == 4:  # 헤딩 돌리기
             if docking.stop_cnt >= docking.stop_time:
                 # 정지 종료, 헤딩 돌리기
-                u_thruster = 1600
+                u_thruster = 1550
             else:
                 # 아직 멈춰 있어야 함
                 docking.stop_cnt += 1
@@ -563,7 +557,7 @@ def main():
 
             error_angle = docking.station_dir - docking.psi
             error_angle = rearrange_angle(error_angle)
-            u_thruster = 1550  # docking.thruster_stop
+            u_thruster = 1510  # docking.thruster_stop
             # TODO 자꾸 파도 때문에 밀려서 정지 안하긴 했으나 계속 돌아가는 것도 문제.
 
         elif docking.state == 6:  # 스테이션 진입
@@ -571,7 +565,7 @@ def main():
             error_angle = dock_control.pixel_to_degree(
                 docking.target, docking.pixel_alpha, docking.angle_range
             )  # 양수면 오른쪽으로 가야 함
-            u_thruster = docking.thruster_default
+            u_thruster = 1600 #docking.thruster_default
 
         docking.psi_desire = rearrange_angle(docking.psi + error_angle)  # 월드좌표계로 '가야 할 각도'를 계산함
 

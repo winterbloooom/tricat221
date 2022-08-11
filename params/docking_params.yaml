@@ -6,59 +6,59 @@ ob_dist_range : 4 # m
 ob_angle_range : [-100, 100] # deg
 
 servo_range: [70, 120]
-angle_alpha: 1.5
+angle_alpha: 1.2
 filter_queue_size: 5
 
-thruster_default: 1650
+thruster_default: 1750
 thruster_stop: 1500
 
 
 # 선수각 방향 회전
-stop_time: 60 # 0.1(10hz) * stop_time 초만큼 멈춤 # 스테이션 앞 도착 후 이만큼 기다렸다가 헤딩 돌림
-ref_dir_range: 10 # def
-station_dir: -157 # deg
+stop_time: 40 # 0.1(10hz) * stop_time 초만큼 멈춤 # 스테이션 앞 도착 후 이만큼 기다렸다가 헤딩 돌림
+ref_dir_range: 15 # def
+station_dir: 138 # <- east of fountain #-157 for south # deg
 
 
 # 표지 인식
 ## RED
 color_range : {
   red: {
-    color1_lower: 171,
-    color1_upper: 180,
-    color2_lower: 66,
+    color1_lower: 139, #171,
+    color1_upper: 180, # 180,
+    color2_lower: 20, #66,
     color2_upper: 255,
-    color3_lower: 0,
+    color3_lower: 161, #0,
     color3_upper: 255
   }, #fix
   green: {
-    color1_lower: 25, 
-    color1_upper: 100,
-    color2_lower: 135, 
+    color1_lower: 58, #25, 
+    color1_upper: 176, #100,
+    color2_lower: 32, #135, 
     color2_upper: 255, 
-    color3_lower: 15,
+    color3_lower: 161, #15,
     color3_upper: 255
   },
   blue: {
-    color1_lower: 17,
-    color1_upper: 120,
-    color2_lower: 148,
-    color2_upper: 255,
-    color3_lower: 0,
+    color1_lower: 70, #17,
+    color1_upper: 118, #120,
+    color2_lower: 90, #148,
+    color2_upper: 124, #255,
+    color3_lower: 228, #0,
     color3_upper: 255
   } # FIX
 }
 
-target_shape: 4 # 3: triangle, 4: rectangle, 5: circle
-target_color: blue # red, green, blue
+target_shape: 3 # 3: triangle, 4: rectangle, 5: circle
+target_color: red # red, green, blue
 
-mark_detect_area: 2000 # 최소 이만큼은 되어야 타겟인지 판단 들어감
-target_detect_area: 500000 #25000 # 최소 이만큼은 되어야 타겟이라고 판단
-target_detect_time: 400 # times
-target_detect_cnt: 200 # times
+mark_detect_area: 1000 # 최소 이만큼은 되어야 타겟인지 판단 들어감
+target_detect_area: 2000 #25000 # 최소 이만큼은 되어야 타겟이라고 판단
+target_detect_time: 300 # times
+target_detect_cnt: 100 # times
 
 draw_contour: True
 
 
 # 스테이션 진입
-arrival_target_area: 50000 #이만큼 이상 넓이면 도착임
+arrival_target_area: 5000 #이만큼 이상 넓이면 도착임
 pixel_alpha: 1000

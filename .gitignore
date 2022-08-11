@@ -1,3 +1,4 @@
 *.pyc
 *.swap
 etc/rosbag/cam-rosbag/*.bag
+*.bag

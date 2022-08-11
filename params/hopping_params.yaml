@@ -8,7 +8,7 @@ kp_distance : 10
 ki_distance : 0
 kd_distance : 0
 
-thruster_max : 1800
+thruster_max : 1750
 thruster_min : 1700
 
 controller : 0
