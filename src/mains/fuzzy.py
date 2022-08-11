@@ -46,7 +46,7 @@ class Fuzzy:
         self.enu_pos_sub = rospy.Subscriber(
             "/enu_position", Point, self.boat_position_callback, queue_size=1
         )
-        self.lidar_sub = rospy.Subscriber("/scan", LaserScan, self.lidar_callback)
+        self.lidar_sub = rospy.Subscriber("/scan", LaserScan, self.lidar_callback, queue_size=1)
 
         self.distance_to_goal = 100000  # 배~목적지 거리. max 연산이므로 큰 값을 초기 할당
         self.goal_range = rospy.get_param("goal_range")  # 도착이라 판단할 거리(반지름)
@@ -261,7 +261,7 @@ class Fuzzy:
 
         # TODO 범위 안에 있는 장애물 개수 다 셀까....
         
-        if min(ranges) == float("inf"):
+        if ranges == [] or min(ranges) == float("inf"):
             return False
 
         closest_distance = min(ranges)  # 가장 가까운 장애물까지 거리
