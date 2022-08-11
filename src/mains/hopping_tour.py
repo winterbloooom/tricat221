@@ -182,7 +182,7 @@ class Hopping:
         self.psi_desire = rearrange_angle(self.psi + self.error_angle)
 
     def calc_servo_value(self):
-        u_angle = (-self.error_angle) * self.angle_alpha  
+        u_angle = (-self.error_angle) * self.angle_alpha
         # 조절 상수 곱해 감도 조절  # 왼쪽이 더 큰 값을 가져야 하므로
 
         # degree에서 servo로 mapping
