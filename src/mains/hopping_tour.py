@@ -171,7 +171,7 @@ class Hopping:
 
     def arrival_check(self):
         self.calc_distance_to_goal()  # 목적지까지 거리 다시 계산
-        if self.distance_to_goal <= self.goal_range: # and len(self.remained_waypoints) != 1:
+        if self.distance_to_goal <= self.goal_range:  # and len(self.remained_waypoints) != 1:
             for _ in range(10):
                 self.thruster_pub.publish(1550)
                 rospy.sleep(0.1)

@@ -573,7 +573,7 @@ def main():
 
             error_angle = docking.station_dir - docking.psi
             error_angle = rearrange_angle(error_angle)
-            u_thruster = 1500 #docking.thruster_stop
+            u_thruster = 1500  # docking.thruster_stop
 
         elif docking.state == 6:  # 스테이션 진입
             docking.target = docking.check_target(return_target=True)
