@@ -10,9 +10,11 @@
         
         <param name="image_width" value="640" />
         <param name="image_height" value="480" />
-        <param name="exposure" value="40" />
+        <param name="exposure" value="0" />
+		<!-- 40 -->
         <param name="contrast" value="0" />
-        <param name="saturation" value="50" />
+        <param name="saturation" value="100" />
+		<!-- 50 -->
     </node>
 	
 	<!--LiDAR-->

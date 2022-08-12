@@ -6,7 +6,7 @@ ob_dist_range : 4 # m
 ob_angle_range : [-100, 100] # deg
 
 servo_range: [70, 120]
-angle_alpha: 1.2
+angle_alpha: 1.3
 filter_queue_size: 5
 
 thruster_default: 1750
@@ -22,8 +22,8 @@ thruster_stop: 1500
 
 # 선수각 방향 회전
 stop_time: 40 # 0.1(10hz) * stop_time 초만큼 멈춤 # 스테이션 앞 도착 후 이만큼 기다렸다가 헤딩 돌림
-ref_dir_range: 15 # def
-station_dir: 138 # <- east of fountain #-157 for south # deg
+ref_dir_range: 10 # def
+station_dir: 125 # <- east of fountain #-157 for south # deg
 
 
 # 표지 인식
@@ -58,8 +58,8 @@ color_range : {
 target_shape: 3 # 3: triangle, 4: rectangle, 5: circle
 target_color: red # red, green, blue
 
-mark_detect_area: 1000 # 최소 이만큼은 되어야 타겟인지 판단 들어감
-target_detect_area: 2000 #25000 # 최소 이만큼은 되어야 타겟이라고 판단
+mark_detect_area: 900 # 최소 이만큼은 되어야 타겟인지 판단 들어감
+target_detect_area: 1000 # 최소 이만큼은 되어야 타겟이라고 판단
 target_detect_time: 300 # times
 target_detect_cnt: 100 # times
 
@@ -67,5 +67,5 @@ draw_contour: True
 
 
 # 스테이션 진입
-arrival_target_area: 5000 #이만큼 이상 넓이면 도착임
-pixel_alpha: 1000
+arrival_target_area: 5500 #이만큼 이상 넓이면 도착임
+pixel_alpha: 500

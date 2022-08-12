@@ -39,7 +39,7 @@
 
 	<!-- Data Collection -->
 
-	<!-- <include file="$(find ntrip_ros)/launch/ntrip_ros.launch"></include>
+	<include file="$(find ntrip_ros)/launch/ntrip_ros.launch"></include>
 	<node pkg="myahrs_driver" type="myahrs_driver" name="myahrs_driver">
 		<param name="port" value="/dev/ttyIMU" />
 		<param name="baud_rate" value="115200" />
@@ -53,13 +53,13 @@
         
         <param name="image_width" value="640" />
         <param name="image_height" value="480" />
-        <param name="exposure" value="40" />
+        <param name="exposure" value="0" />
         <param name="contrast" value="0" />
-        <param name="saturation" value="50" />
+        <param name="saturation" value="100" />
     </node>
-	<node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/> -->
+	<node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>
 
-	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/220811-181745-docking-01.bag -l -r 1 --topics /imu/mag /usb_cam/image_raw /ublox_gps/fix "/>
+	<!-- <node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/220811-181745-docking-01.bag -l -r 1--> <!--topics /imu/mag /usb_cam/image_raw /ublox_gps/fix "/> -->
 	
 	<rosparam command="load" file="$(find tricat221)/params/docking_params.yaml"/>
 	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator"/>

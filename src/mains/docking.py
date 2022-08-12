@@ -136,7 +136,7 @@ class Docking:
         self.ob_dist_range = rospy.get_param("ob_dist_range")
 
         # current status
-        self.state = 0
+        self.state = 6
         # 0: 장애물 회피
         # 1: 스테이션1로 이동 중
         # 2: 스테이션2로 이동 중
@@ -149,7 +149,7 @@ class Docking:
         self.target = []  # [area, center_col(pixel)] # TODO 처음에 0, 0으로 줬었는데 []로 하면 에러나는지 확인
         self.target_found = False
         self.next_to_visit = (
-            0  # sstate 시작을 1로할거면 1로  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
+            1  # sstate 시작을 1로할거면 1로  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
         )
         self.filter_queue = [0] * self.filter_queue_size
 
@@ -573,7 +573,7 @@ def main():
 
             error_angle = docking.station_dir - docking.psi
             error_angle = rearrange_angle(error_angle)
-            u_thruster = docking.thruster_stop
+            u_thruster = 1500 #docking.thruster_stop
 
         elif docking.state == 6:  # 스테이션 진입
             docking.target = docking.check_target(return_target=True)

@@ -42,7 +42,7 @@ def pixel_to_degree(target, alpha, angle_range):
         # 진입 중 타겟 잃어버림
         return 0
     area = target[0]
-    error_pixel = 320 - target[1]
+    error_pixel = -320 + target[1]
     degree = error_pixel / area * alpha
     if degree > angle_range[1]:
         degree = angle_range[1]
