@@ -12,16 +12,15 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 import cv2
 from cv_bridge import CvBridge
-
 from geometry_msgs.msg import Point
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, NavSatFix
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
-from sensor_msgs.msg import NavSatFix
 
 import dock.dock_control as dock_control
 import dock.mark_detect as mark_detect
 import utils.visualizer as visual
+
 
 class Data_Collection:
     def __init__(self):
@@ -37,7 +36,7 @@ class Data_Collection:
         self.visual_rviz_pub = rospy.Publisher("/visual_rviz", MarkerArray, queue_size=0)
 
         ### 상태
-        self.state = 0 # 0, 1, 2
+        self.state = 0  # 0, 1, 2
         self.target = []
         self.lat, self.lon = 0, 0
 
@@ -45,7 +44,7 @@ class Data_Collection:
         self.raw_img = np.zeros((480, 640, 3), dtype=np.uint8)  # row, col, channel
         self.hsv_img = np.zeros((480, 640), dtype=np.uint8)
         self.shape_img = np.zeros((480, 640, 3), dtype=np.uint8)
-        
+
         ### 방향
         self.psi = 0  # 자북과 선수 사이 각
         self.psi_desire = 0
@@ -113,9 +112,15 @@ class Data_Collection:
         cv2.createTrackbar("color2 max", "controller", self.color_range[1][1], 255, lambda x: x)
         cv2.createTrackbar("color3 min", "controller", self.color_range[0][2], 255, lambda x: x)
         cv2.createTrackbar("color3 max", "controller", self.color_range[1][2], 255, lambda x: x)
-        cv2.createTrackbar("mark_detect_area", "controller", self.mark_detect_area, 3000, lambda x: x)
-        cv2.createTrackbar("target_detect_area", "controller", self.target_detect_area, 3000, lambda x: x)
-        cv2.createTrackbar("arrival_target_area", "controller", self.arrival_target_area, 8000, lambda x: x)
+        cv2.createTrackbar(
+            "mark_detect_area", "controller", self.mark_detect_area, 3000, lambda x: x
+        )
+        cv2.createTrackbar(
+            "target_detect_area", "controller", self.target_detect_area, 3000, lambda x: x
+        )
+        cv2.createTrackbar(
+            "arrival_target_area", "controller", self.arrival_target_area, 8000, lambda x: x
+        )
 
     def gps_fix_callback(self, msg):
         self.lat, self.lon = msg.latitude, msg.longitude
@@ -200,7 +205,6 @@ class Data_Collection:
 
         return abs(angle_to_station) <= self.ref_dir_range
 
-
     def check_target(self, return_target=False):
         self.show_window()
         preprocessed = mark_detect.preprocess_image(self.raw_img, blur=True)
@@ -227,7 +231,9 @@ class Data_Collection:
         print("GPS : lat - {} / lon - {}".format(self.lat, self.lon))
         print("")
 
-        print("State: {}  (0: Rotating Heading\t1: Detecting Target\t2: Docking)".format(self.state))
+        print(
+            "State: {}  (0: Rotating Heading\t1: Detecting Target\t2: Docking)".format(self.state)
+        )
         print("Shape: {}  (0: Triangle\t\t1: Rectangle\t\t2: Circle)".format(self.target_shape))
         print("")
 
@@ -371,7 +377,11 @@ class Data_Collection:
             color_b=245,
         )
         desire_txt = visual.text_rviz(
-            name="psi_desire", id=ids.pop(), text="desire", x=desire_arrow_end_x, y=desire_arrow_end_y
+            name="psi_desire",
+            id=ids.pop(),
+            text="desire",
+            x=desire_arrow_end_x,
+            y=desire_arrow_end_y,
         )
 
         axis_x = visual.linelist_rviz(
@@ -388,12 +398,8 @@ class Data_Collection:
             color_g=255,
             scale=0.1,
         )
-        axis_x_txt = visual.text_rviz(
-            name="axis", id=ids.pop(), text="X", x=3.3, y=0
-        )
-        axis_y_txt = visual.text_rviz(
-            name="axis", id=ids.pop(), text="Y", x=0, y=3.3
-        )
+        axis_x_txt = visual.text_rviz(name="axis", id=ids.pop(), text="X", x=3.3, y=0)
+        axis_y_txt = visual.text_rviz(name="axis", id=ids.pop(), text="Y", x=0, y=3.3)
 
         min_angle_x = 7 * math.cos(math.radians(self.station_dir - self.ref_dir_range))
         min_angle_y = 7 * math.sin(math.radians(self.station_dir - self.ref_dir_range))
@@ -415,7 +421,17 @@ class Data_Collection:
         )
 
         all_markers = visual.marker_array_rviz(
-            [psi, psi_txt, desire, desire_txt, axis_x, axis_y, axis_x_txt, axis_y_txt, heading_range]
+            [
+                psi,
+                psi_txt,
+                desire,
+                desire_txt,
+                axis_x,
+                axis_y,
+                axis_x_txt,
+                axis_y_txt,
+                heading_range,
+            ]
         )
 
         return all_markers
@@ -429,6 +445,7 @@ def rearrange_angle(input_angle):
     else:
         output_angle = input_angle
     return output_angle
+
 
 def main():
     rospy.init_node("Data_Collect", anonymous=True)

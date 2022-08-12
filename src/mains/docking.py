@@ -163,9 +163,15 @@ class Docking:
         # cv2.createTrackbar("color2 max", "controller", self.color_range[1][1], 255, lambda x: x)
         # cv2.createTrackbar("color3 min", "controller", self.color_range[0][2], 255, lambda x: x)
         # cv2.createTrackbar("color3 max", "controller", self.color_range[1][2], 255, lambda x: x)
-        cv2.createTrackbar("mark_detect_area", "controller", self.mark_detect_area, 3000, lambda x: x)
-        cv2.createTrackbar("target_detect_area", "controller", self.target_detect_area, 3000, lambda x: x)
-        cv2.createTrackbar("arrival_target_area", "controller", self.arrival_target_area, 8000, lambda x: x)
+        cv2.createTrackbar(
+            "mark_detect_area", "controller", self.mark_detect_area, 3000, lambda x: x
+        )
+        cv2.createTrackbar(
+            "target_detect_area", "controller", self.target_detect_area, 3000, lambda x: x
+        )
+        cv2.createTrackbar(
+            "arrival_target_area", "controller", self.arrival_target_area, 8000, lambda x: x
+        )
 
     def heading_callback(self, msg):
         self.psi = msg.data  # [degree]
@@ -560,7 +566,7 @@ def main():
                     docking.target = docking.check_target(return_target=True)  # TODO 중복
                     docking.target_found = True  # 타겟 찾은 것
                 else:  # 검출 횟수가 적으면
-                    docking.target = [] # TODO 오류 없는지 확인
+                    docking.target = []  # TODO 오류 없는지 확인
                     docking.target_found = False  # 타겟 못 찾은 것
             else:
                 docking.target_found = False
