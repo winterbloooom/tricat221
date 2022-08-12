@@ -12,7 +12,6 @@ import rospy
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 from geometry_msgs.msg import Point
-from sensor_msgs.msg import Imu
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
 
@@ -145,9 +144,13 @@ class Hopping:
         u_distance = cp_distance + cd_distance
         u_thruster = self.thruster_min + u_distance
 
+        # TODO 급출발 안하는지 확인
+        if (self.u_thruster - u_thruster) >= 40:
+            u_thruster += self.u_thruster + 10
+
         if u_thruster > self.thruster_max:
             u_thruster = self.thruster_max
-        if u_thruster < self.thruster_min:
+        elif u_thruster < self.thruster_min:
             u_thruster = self.thruster_min
 
         return int(u_thruster)
@@ -169,7 +172,7 @@ class Hopping:
     def arrival_check(self):
         self.calc_distance_to_goal()  # 목적지까지 거리 다시 계산
         if self.distance_to_goal <= self.goal_range:
-            for _ in range(10):  # TODO 잘 작동하는가?
+            for _ in range(10):
                 self.thruster_pub.publish(1550)
                 rospy.sleep(0.1)
             return True

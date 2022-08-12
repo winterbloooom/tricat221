@@ -146,7 +146,7 @@ def detect_target(img, target_shape, mark_detect_area, target_detect_area, draw_
             detected = is_target(target_shape, target_detect_area, vertex_num=4, area=area)
         else:  # 원이 탐지됨
             _, radius = cv2.minEnclosingCircle(approx)  # 원으로 근사
-            ratio = radius * radius * 3.14 / area  # 해당 넓이와 정원 간의 넓이 비
+            ratio = radius * radius * 3.14 / (area + 0.000001)  # 해당 넓이와 정원 간의 넓이 비
             if 0.5 < ratio < 2:  # 원에 가까울 때만 필터링
                 detected = is_target(target_shape, target_detect_area, vertex_num=5, area=area)
 

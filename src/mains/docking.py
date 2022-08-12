@@ -99,7 +99,7 @@ class Docking:
         self.arrival_target_area = rospy.get_param("arrival_target_area")  # 도착이라 판단할 타겟 도형의 넓이
         self.mark_detect_area = rospy.get_param("mark_detect_area")  # 도형이 검출될 최소 넓이
         self.target_detect_area = rospy.get_param("target_detect_area")  # 타겟이라고 인정할 최소 넓이
-        self.station_dir = rospy.get_param("station_dir")  # [-180, 180]
+        self.station_dir = rospy.get_param("station_dir")
 
         # count
         ## (state 4에서) '이 시간동안(횟수)' 정지(약한 후진)하고 그 뒤에 헤딩 돌릴 것.
@@ -122,9 +122,14 @@ class Docking:
         # ON/OFF
         self.draw_contour = rospy.get_param("draw_contour")
 
-        # other settings
-        self.thruster_default = rospy.get_param("thruster_default")
+        # speed
+        self.thruster_auto = rospy.get_param("thruster_auto")
+        self.thruster_station = rospy.get_param("thruster_station")
+        self.thruster_rotate = rospy.get_param("thruster_rotate")
         self.thruster_stop = rospy.get_param("thruster_stop")
+        self.thruster_back = rospy.get_param("thruster_back")
+
+        # other settings
         self.filter_queue_size = rospy.get_param("filter_queue_size")
         self.span_angle = rospy.get_param("span_angle")
         self.ob_angle_range = rospy.get_param("ob_angle_range")
@@ -141,7 +146,7 @@ class Docking:
         # 6: 스테이션 진입 중
         # 7: 끝. 정지
         # self.target = {"area": 0, "center_col": 0} # [area, center_col(pixel)] # TODO 딕셔너리로 한꺼번에 바꾸자
-        self.target = [0, 0]  # [area, center_col(pixel)]
+        self.target = []  # [area, center_col(pixel)] # TODO 처음에 0, 0으로 줬었는데 []로 하면 에러나는지 확인
         self.target_found = False
         self.next_to_visit = (
             0  # sstate 시작을 1로할거면 1로  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
@@ -152,12 +157,15 @@ class Docking:
 
         # controller
         cv2.namedWindow("controller")
-        cv2.createTrackbar("color1 min", "controller", self.color_range[0][0], 180, lambda x: x)
-        cv2.createTrackbar("color1 max", "controller", self.color_range[1][0], 180, lambda x: x)
-        cv2.createTrackbar("color2 min", "controller", self.color_range[0][1], 255, lambda x: x)
-        cv2.createTrackbar("color2 max", "controller", self.color_range[1][1], 255, lambda x: x)
-        cv2.createTrackbar("color3 min", "controller", self.color_range[0][2], 255, lambda x: x)
-        cv2.createTrackbar("color3 max", "controller", self.color_range[1][2], 255, lambda x: x)
+        # cv2.createTrackbar("color1 min", "controller", self.color_range[0][0], 180, lambda x: x)
+        # cv2.createTrackbar("color1 max", "controller", self.color_range[1][0], 180, lambda x: x)
+        # cv2.createTrackbar("color2 min", "controller", self.color_range[0][1], 255, lambda x: x)
+        # cv2.createTrackbar("color2 max", "controller", self.color_range[1][1], 255, lambda x: x)
+        # cv2.createTrackbar("color3 min", "controller", self.color_range[0][2], 255, lambda x: x)
+        # cv2.createTrackbar("color3 max", "controller", self.color_range[1][2], 255, lambda x: x)
+        cv2.createTrackbar("mark_detect_area", "controller", self.mark_detect_area, 3000, lambda x: x)
+        cv2.createTrackbar("target_detect_area", "controller", self.target_detect_area, 3000, lambda x: x)
+        cv2.createTrackbar("arrival_target_area", "controller", self.arrival_target_area, 8000, lambda x: x)
 
     def heading_callback(self, msg):
         self.psi = msg.data  # [degree]
@@ -180,12 +188,15 @@ class Docking:
 
     def get_trackbar_pos(self):
         """get trackbar poses and set each values"""
-        self.color_range[0][0] = cv2.getTrackbarPos("color1 min", "controller")
-        self.color_range[1][0] = cv2.getTrackbarPos("color1 max", "controller")
-        self.color_range[0][1] = cv2.getTrackbarPos("color2 min", "controller")
-        self.color_range[1][1] = cv2.getTrackbarPos("color2 max", "controller")
-        self.color_range[0][2] = cv2.getTrackbarPos("color3 min", "controller")
-        self.color_range[1][2] = cv2.getTrackbarPos("color3 max", "controller")
+        # self.color_range[0][0] = cv2.getTrackbarPos("color1 min", "controller")
+        # self.color_range[1][0] = cv2.getTrackbarPos("color1 max", "controller")
+        # self.color_range[0][1] = cv2.getTrackbarPos("color2 min", "controller")
+        # self.color_range[1][1] = cv2.getTrackbarPos("color2 max", "controller")
+        # self.color_range[0][2] = cv2.getTrackbarPos("color3 min", "controller")
+        # self.color_range[1][2] = cv2.getTrackbarPos("color3 max", "controller")
+        self.mark_detect_area = cv2.getTrackbarPos("mark_detect_area", "controller")
+        self.target_detect_area = cv2.getTrackbarPos("target_detect_area", "controller")
+        self.arrival_target_area = cv2.getTrackbarPos("arrival_target_area", "controller")
 
     def is_all_connected(self):
         """make sure all subscribers(nodes) are connected to this node
@@ -235,7 +246,6 @@ class Docking:
             change_state = self.calc_distance(self.waypoints[3])
         elif self.state == 4:
             # heading 스테이션쪽인지 판단
-            # TODO 정지 중간에 스테이션 쪽으로 헤딩 기울면 정지를 멈추고 바로 넘어감
             change_state = self.check_heading()
         elif self.state == 5:
             if self.mark_check_cnt >= self.target_detect_time:
@@ -447,19 +457,19 @@ class Docking:
 
     def show_window(self):
         self.get_trackbar_pos()
-        cv2.moveWindow("controller", 100, 0)
+        cv2.moveWindow("controller", 0, 0)
         if self.state in [5, 6]:
             # 가로로 붙이는 버전
             raw_img = cv2.resize(self.raw_img, dsize=(0, 0), fx=0.5, fy=0.5)
             hsv_img = cv2.resize(self.hsv_img, dsize=(0, 0), fx=0.5, fy=0.5)
             hsv_img = cv2.cvtColor(hsv_img, cv2.COLOR_GRAY2BGR)
             col1 = np.vstack([raw_img, hsv_img])
-            show_img = np.hstack([col1, self.shape_img])
-
+            col2 = cv2.resize(self.shape_img, dsize=(0, 0), fx=0.9, fy=1.0)
+            show_img = np.hstack([col1, col2])
             cv2.imshow("controller", show_img)
         else:
-            # raw_img = cv2.resize(self.raw_img, dsize=(0, 0), fx=0.5, fy=0.5)
-            cv2.imshow("controller", self.raw_img)
+            raw_img = cv2.resize(self.raw_img, dsize=(0, 0), fx=0.5, fy=0.5)
+            cv2.imshow("controller", raw_img)
 
 
 def rearrange_angle(input_angle):
@@ -497,7 +507,7 @@ def main():
         if docking.state == 7:
             # 정지 및 끝내기
             docking.servo_pub.publish(docking.servo_middle)
-            docking.thruster_pub.publish(docking.thruster_default)
+            docking.thruster_pub.publish(1500)
             print(">>>>>>>>>>>>>> Finished <<<<<<<<<<<<<<")
             return
 
@@ -521,22 +531,22 @@ def main():
             )
             # 목표각과 현 헤딩 사이 상대적 각도 계산. 선박고정좌표계로 '가야 할 각도'에 해당
             # 각도 범위가 모두 장애물이고 범위 밖에 목표지점이 있다면 psi_goal로.
-            u_thruster = 1750  # docking.thruster_default
+            u_thruster = docking.thruster_auto
 
         elif docking.state in [1, 2, 3]:  # 다음 스테이션으로 이동
             error_angle = docking.psi_goal
-            u_thruster = 1650  # docking.thruster_default
+            u_thruster = docking.thruster_station
 
         elif docking.state == 4:  # 헤딩 돌리기
             if docking.stop_cnt >= docking.stop_time:
                 # 정지 종료, 헤딩 돌리기
-                u_thruster = 1550
+                u_thruster = docking.thruster_rotate
             else:
                 # 아직 멈춰 있어야 함
                 docking.stop_cnt += 1
                 rate.sleep()
-                u_thruster = 1425
-            error_angle = docking.station_dir - docking.psi  # TODO 정지에서 이상하게 움직이면 정지는 0으로 할 것.
+                u_thruster = docking.thruster_back
+            error_angle = docking.station_dir - docking.psi
             error_angle = rearrange_angle(error_angle)
 
         elif docking.state == 5:
@@ -550,22 +560,25 @@ def main():
                     docking.target = docking.check_target(return_target=True)  # TODO 중복
                     docking.target_found = True  # 타겟 찾은 것
                 else:  # 검출 횟수가 적으면
-                    docking.target = [0, 0]
+                    docking.target = [] # TODO 오류 없는지 확인
                     docking.target_found = False  # 타겟 못 찾은 것
             else:
                 docking.target_found = False
 
             error_angle = docking.station_dir - docking.psi
             error_angle = rearrange_angle(error_angle)
-            u_thruster = 1510  # docking.thruster_stop
-            # TODO 자꾸 파도 때문에 밀려서 정지 안하긴 했으나 계속 돌아가는 것도 문제.
+            u_thruster = docking.thruster_stop
 
         elif docking.state == 6:  # 스테이션 진입
             docking.target = docking.check_target(return_target=True)
-            error_angle = dock_control.pixel_to_degree(
-                docking.target, docking.pixel_alpha, docking.angle_range
-            )  # 양수면 오른쪽으로 가야 함
-            u_thruster = 1600  # docking.thruster_default
+            if len(docking.target) == 0:
+                error_angle = error_angle = docking.station_dir - docking.psi
+                error_angle = rearrange_angle(error_angle)
+            else:
+                error_angle = dock_control.pixel_to_degree(
+                    docking.target, docking.pixel_alpha, docking.angle_range
+                )  # 양수면 오른쪽으로 가야 함
+            u_thruster = docking.thruster_station
 
         docking.psi_desire = rearrange_angle(docking.psi + error_angle)  # 월드좌표계로 '가야 할 각도'를 계산함
 

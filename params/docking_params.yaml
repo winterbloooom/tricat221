@@ -10,6 +10,13 @@ angle_alpha: 1.2
 filter_queue_size: 5
 
 thruster_default: 1750
+thruster_auto: 1750
+thruster_station: 1600
+thruster_rotate: 1550
+thruster_stop: 1480
+thruster_back: 1425
+
+
 thruster_stop: 1500
 
 
