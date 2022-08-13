@@ -24,9 +24,8 @@ import dock.mark_detect as mark_detect
 import obstacle.obstacle_avoidance as oa
 import perception.gnss_converter as gc
 import utils.filtering as filtering
-from utils.tools import *
 from tricat221.msg import Obstacle, ObstacleList
-
+from utils.tools import *
 
 
 class Docking:
@@ -91,7 +90,9 @@ class Docking:
             [self.station2_x, self.station2_y],
             [self.station3_x, self.station3_y],
         ]
-        self.station_vec_ends = dock_control.calc_station_vec_end(self.station_dir, self.waypoints[1:])
+        self.station_vec_ends = dock_control.calc_station_vec_end(
+            self.station_dir, self.waypoints[1:]
+        )
         self.trajectory = []
 
         # data
@@ -479,6 +480,7 @@ class Docking:
             raw_img = cv2.resize(self.raw_img, dsize=(0, 0), fx=0.5, fy=0.5)
             cv2.imshow("controller", raw_img)
 
+
 def main():
     rospy.init_node("Docking", anonymous=True)
     docking = Docking()
@@ -544,11 +546,22 @@ def main():
                 docking.stop_cnt += 1
                 rate.sleep()
                 u_thruster = docking.thruster_back
-            
-            #error_angle = docking.station_dir - docking.psi
+
+            # error_angle = docking.station_dir - docking.psi
             station_idx = docking.next_to_visit - 1
-            projected_point = dock_control.project_boat_to_station_vec(docking.waypoints, docking.station_vec_ends, station_idx, [docking.boat_x, docking.boat_y])
-            error_angle, forward_point = dock_control.follow_station_dir(docking.station_dir, projected_point, [docking.boat_x, docking.boat_y], docking.psi, 2)
+            projected_point = dock_control.project_boat_to_station_vec(
+                docking.waypoints,
+                docking.station_vec_ends,
+                station_idx,
+                [docking.boat_x, docking.boat_y],
+            )
+            error_angle, forward_point = dock_control.follow_station_dir(
+                docking.station_dir,
+                projected_point,
+                [docking.boat_x, docking.boat_y],
+                docking.psi,
+                2,
+            )
 
             error_angle = rearrange_angle(error_angle)
 
@@ -573,7 +586,7 @@ def main():
             # projected_point = dock_control.project_boat_to_station_vec(docking.waypoints, docking.station_vec_ends, station_idx, [docking.boat_x, docking.boat_y])
             # error_angle, forward_point = dock_control.follow_station_dir(docking.station_dir, projected_point, [docking.boat_x, docking.boat_y], docking.psi, 2)
             # # TODO 여기서는 배로부터 length가 아니라 station으로부터로...?
-            
+
             error_angle = rearrange_angle(error_angle)
             u_thruster = docking.thruster_stop
 
@@ -588,9 +601,20 @@ def main():
             #         docking.target, docking.pixel_alpha, docking.angle_range
             #     )  # 양수면 오른쪽으로 가야 함
 
-            station_idx = docking.next_to_visit - 1 # TODO 0으로 오류나는 경우는 없는지?
-            projected_point = dock_control.project_boat_to_station_vec(docking.waypoints, docking.station_vec_ends, station_idx, [docking.boat_x, docking.boat_y])
-            error_angle, forward_point = dock_control.follow_station_dir(docking.station_dir, projected_point, [docking.boat_x, docking.boat_y], docking.psi, 2)
+            station_idx = docking.next_to_visit - 1  # TODO 0으로 오류나는 경우는 없는지?
+            projected_point = dock_control.project_boat_to_station_vec(
+                docking.waypoints,
+                docking.station_vec_ends,
+                station_idx,
+                [docking.boat_x, docking.boat_y],
+            )
+            error_angle, forward_point = dock_control.follow_station_dir(
+                docking.station_dir,
+                projected_point,
+                [docking.boat_x, docking.boat_y],
+                docking.psi,
+                2,
+            )
             error_angle = rearrange_angle(error_angle)
             u_thruster = docking.thruster_station
 
@@ -614,7 +638,7 @@ def main():
 
         all_markers = dock_visualize.visualize(
             dc=docking,
-            forward_point = forward_point,
+            forward_point=forward_point,
             inrange_obstacles=inrange_obstacles,
             danger_angels=danger_angles,
         )

@@ -101,7 +101,19 @@ def visualize(dc, forward_point=[], inrange_obstacles=[], danger_angels=[]):
     )
 
     all_markers = visual.marker_array_rviz(
-        [boat, traj, psi, psi_txt, desire, desire_txt, axis_x, axis_y, axis_x_txt, axis_y_txt, enterence]
+        [
+            boat,
+            traj,
+            psi,
+            psi_txt,
+            desire,
+            desire_txt,
+            axis_x,
+            axis_y,
+            axis_x_txt,
+            axis_y_txt,
+            enterence,
+        ]
     )
 
     # station과 그 방향
@@ -132,7 +144,7 @@ def visualize(dc, forward_point=[], inrange_obstacles=[], danger_angels=[]):
         )
         visual.marker_array_append_rviz(all_markers, txt)
 
-        # station line        
+        # station line
         station_line_x = 8 * math.cos(math.radians(dc.station_dir)) + x_pos
         station_line_y = 8 * math.sin(math.radians(dc.station_dir)) + y_pos
         station_line = visual.linelist_rviz(
@@ -145,7 +157,6 @@ def visualize(dc, forward_point=[], inrange_obstacles=[], danger_angels=[]):
             scale=0.1,
         )
         visual.marker_array_append_rviz(all_markers, station_line)
-
 
     # 장애물, 탐색 범위
     if dc.state == 0:
@@ -284,7 +295,16 @@ def visualize(dc, forward_point=[], inrange_obstacles=[], danger_angels=[]):
 
     # forward point
     if dc.state in [4, 5, 6]:
-        f_p = visual.point_rviz(name="waypoints", id=ids.pop(), x=forward_point[0], y=forward_point[1], color_r=0, color_g=255, color_b=0, scale=0.3)
+        f_p = visual.point_rviz(
+            name="waypoints",
+            id=ids.pop(),
+            x=forward_point[0],
+            y=forward_point[1],
+            color_r=0,
+            color_g=255,
+            color_b=0,
+            scale=0.3,
+        )
         visual.marker_array_append_rviz(all_markers, f_p)
     else:
         f_p = visual.del_mark(name="waypoints", id=ids.pop())

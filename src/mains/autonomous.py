@@ -19,8 +19,8 @@ import obstacle.obstacle_avoidance as oa
 import perception.gnss_converter as gc
 import utils.filtering as filtering
 import utils.visualizer as visual
-from utils.tools import *
 from tricat221.msg import ObstacleList
+from utils.tools import *
 
 
 class Autonomous:
@@ -476,6 +476,7 @@ class Autonomous:
         elif u_servo < self.servo_range[0]:
             u_servo = self.servo_range[0]
         return int(u_servo)
+
 
 def main():
     rospy.init_node("autonomous", anonymous=False)

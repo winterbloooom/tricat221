@@ -23,6 +23,7 @@ import perception.gnss_converter as gc
 import utils.visualizer as visual
 from utils.tools import *
 
+
 # TODO fuzzy 버전끼리 비교해보기. 이건 1700 수정본
 class Fuzzy:
     def __init__(self):

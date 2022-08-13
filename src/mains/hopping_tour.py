@@ -20,6 +20,7 @@ import utils.filtering as filtering
 import utils.hopping_visualize as hopping_visualize
 from utils.tools import *
 
+
 class Hopping:
     def __init__(self):
         self.waypoint_idx = 1  # 지금 향하고 있는 waypoint 번호

@@ -7,9 +7,9 @@ dock.py
 ===========
 """
 
+import math
 import os
 import sys
-import math
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
@@ -74,6 +74,7 @@ def degree_to_servo(error_angle, angle_range, servo_range, alpha, use_prev=False
         u_servo = servo_range[0]
     return int(u_servo)
 
+
 def calc_station_vec_end(station_dir, stations):
     """
     Args:
@@ -83,34 +84,45 @@ def calc_station_vec_end(station_dir, stations):
     Returns:
         시점을 스테이션 위치로 하는 단위 벡터의 끝점을 의미함
     """
-    n_vec = [math.cos(math.radians(station_dir)), math.sin(math.radians(station_dir))] # 스테이션 방향의 단위벡터
-    station_vec_ends = [[0, 0]] # TODO docking의 waypoints는 도킹 시작 지점도 포함하니까 형상 맞추려고.
+    n_vec = [
+        math.cos(math.radians(station_dir)),
+        math.sin(math.radians(station_dir)),
+    ]  # 스테이션 방향의 단위벡터
+    station_vec_ends = [[0, 0]]  # TODO docking의 waypoints는 도킹 시작 지점도 포함하니까 형상 맞추려고.
     for station in stations:
         vec = [station[0] + n_vec[0], station[1] + n_vec[1]]
-        station_vec_ends.append(vec) # 각 스테이션으로부터의 벡터 끝점
+        station_vec_ends.append(vec)  # 각 스테이션으로부터의 벡터 끝점
 
     return station_vec_ends
+
 
 def project_boat_to_station_vec(stations, station_vec_ends, station_idx, boat):
     # TODO station_idx는 1번 스테이션이 1번임에 유의! 0번은 도킹 시작지점이라 garbage 값
     # 현재 배 위치에서 스테이션 방향으로 투영한 점
-    a = [station_vec_ends[station_idx][0] - stations[station_idx][0], station_vec_ends[station_idx][1] - stations[station_idx][1]] # [x, y]
-    len_a = math.sqrt(a[0]**2 + a[1]**2)
+    a = [
+        station_vec_ends[station_idx][0] - stations[station_idx][0],
+        station_vec_ends[station_idx][1] - stations[station_idx][1],
+    ]  # [x, y]
+    len_a = math.sqrt(a[0] ** 2 + a[1] ** 2)
     b = [boat[0] - stations[station_idx][0], boat[1] - stations[station_idx][1]]
     scala = (a[0] * b[0] + a[1] * b[1]) / len_a
     projection = [stations[station_idx][0] + a[0] * scala, stations[station_idx][1] + a[1] * scala]
     return projection
 
+
 def follow_station_dir(station_dir, projection, boat, psi, length=1):
-    forward_point = [projection[0] + length * math.cos(math.radians(station_dir)), projection[1] + length * math.sin(math.radians(station_dir))]
+    forward_point = [
+        projection[0] + length * math.cos(math.radians(station_dir)),
+        projection[1] + length * math.sin(math.radians(station_dir)),
+    ]
     # print("forward Point: ", forward_point)
     error_angle = (
-            math.degrees(
-                math.atan2(
-                    forward_point[1] - boat[1],
-                    forward_point[0] - boat[0],
-                )
+        math.degrees(
+            math.atan2(
+                forward_point[1] - boat[1],
+                forward_point[0] - boat[0],
             )
-            - psi
         )
+        - psi
+    )
     return error_angle, forward_point
