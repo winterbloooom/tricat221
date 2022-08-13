@@ -140,7 +140,7 @@ class Docking:
         self.ob_dist_range = rospy.get_param("ob_dist_range")
 
         # current status
-        self.state = 2
+        self.state = 0
         # 0: 장애물 회피
         # 1: 스테이션1로 이동 중
         # 2: 스테이션2로 이동 중
@@ -152,7 +152,7 @@ class Docking:
         # self.target = {"area": 0, "center_col": 0} # [area, center_col(pixel)] # TODO 딕셔너리로 한꺼번에 바꾸자
         self.target = []  # [area, center_col(pixel)] # TODO 처음에 0, 0으로 줬었는데 []로 하면 에러나는지 확인
         self.target_found = False
-        self.next_to_visit = 2
+        self.next_to_visit = 0
         # state 시작을 1로할거면 1로  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
         self.filter_queue = [0] * self.filter_queue_size
 
