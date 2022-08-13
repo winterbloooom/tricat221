@@ -18,17 +18,7 @@ from visualization_msgs.msg import MarkerArray
 import perception.gnss_converter as gc
 import utils.filtering as filtering
 import utils.hopping_visualize as hopping_visualize
-
-
-def rearrange_angle(input_angle):
-    if input_angle >= 180:  # 왼쪽으로 회전이 더 이득
-        output_angle = -180 + abs(input_angle) % 180
-    elif input_angle <= -180:
-        output_angle = 180 - abs(input_angle) % 180
-    else:
-        output_angle = input_angle
-    return output_angle
-
+from utils.tools import *
 
 class Hopping:
     def __init__(self):
@@ -143,10 +133,6 @@ class Hopping:
 
         u_distance = cp_distance + cd_distance
         u_thruster = self.thruster_min + u_distance
-
-        # TODO 급출발 안하는지 확인
-        if (self.u_thruster - u_thruster) >= 40:
-            u_thruster += self.u_thruster + 10
 
         if u_thruster > self.thruster_max:
             u_thruster = self.thruster_max

@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import utils.visualizer as visual
 
 
-def visualize(dc, inrange_obstacles=[], danger_angels=[]):
+def visualize(dc, forward_point=[], inrange_obstacles=[], danger_angels=[]):
     """
     dc: 도킹 클래스
     """
@@ -88,9 +88,64 @@ def visualize(dc, inrange_obstacles=[], danger_angels=[]):
         name="axis", id=ids.pop(), text="Y", x=dc.boat_x, y=dc.boat_y + 3.3
     )
 
-    all_markers = visual.marker_array_rviz(
-        [boat, traj, psi, psi_txt, desire, desire_txt, axis_x, axis_y, axis_x_txt, axis_y_txt]
+    # 도킹 시작 지점
+    enterence = visual.cylinder_rviz(
+        name="waypoints",
+        id=ids.pop(),
+        x=dc.waypoints[0][0],
+        y=dc.waypoints[0][1],
+        scale=dc.arrival_range * 2,
+        color_r=165,
+        color_g=242,
+        color_b=87,
     )
+
+    all_markers = visual.marker_array_rviz(
+        [boat, traj, psi, psi_txt, desire, desire_txt, axis_x, axis_y, axis_x_txt, axis_y_txt, enterence]
+    )
+
+    # station과 그 방향
+    for i in range(1, 4):
+        x_pos = dc.waypoints[i][0]
+        y_pos = dc.waypoints[i][1]
+
+        # 도착 인정 범위
+        waypoint = visual.cylinder_rviz(
+            name="waypoints",
+            id=ids.pop(),
+            x=x_pos,
+            y=y_pos,
+            scale=dc.arrival_range * 2,
+            color_r=165,
+            color_g=242,
+            color_b=87,
+        )
+        visual.marker_array_append_rviz(all_markers, waypoint)
+
+        # 좌표
+        txt = visual.text_rviz(
+            name="waypoints",
+            id=ids.pop(),
+            x=x_pos,
+            y=y_pos,
+            text="{:^10}\n({:>4.2f}, {:>4.2f})".format("#" + str(i), x_pos, y_pos),
+        )
+        visual.marker_array_append_rviz(all_markers, txt)
+
+        # station line        
+        station_line_x = 8 * math.cos(math.radians(dc.station_dir)) + x_pos
+        station_line_y = 8 * math.sin(math.radians(dc.station_dir)) + y_pos
+        station_line = visual.linelist_rviz(
+            name="waypoints",
+            id=ids.pop(),
+            lines=[[x_pos, y_pos], [station_line_x, station_line_y]],
+            color_r=65,
+            color_g=53,
+            color_b=240,
+            scale=0.1,
+        )
+        visual.marker_array_append_rviz(all_markers, station_line)
+
 
     # 장애물, 탐색 범위
     if dc.state == 0:
@@ -198,42 +253,16 @@ def visualize(dc, inrange_obstacles=[], danger_angels=[]):
             scale=0.05,
         )
         visual.marker_array_append_rviz(all_markers, goal_line)
-
-        for i in range(4):
-            x_pos = dc.waypoints[i][0]
-            y_pos = dc.waypoints[i][1]
-            # 도착 인정 범위
-            waypoint = visual.cylinder_rviz(
-                name="waypoints",
-                id=ids.pop(),
-                x=x_pos,
-                y=y_pos,
-                scale=dc.arrival_range * 2,
-                color_r=165,
-                color_g=242,
-                color_b=87,
-            )
-            visual.marker_array_append_rviz(all_markers, waypoint)
-
-            # 좌표
-            txt = visual.text_rviz(
-                name="waypoints",
-                id=ids.pop(),
-                x=x_pos,
-                y=y_pos,
-                text="{:^10}\n({:>4.2f}, {:>4.2f})".format("#" + str(i), x_pos, y_pos),
-            )
-            visual.marker_array_append_rviz(all_markers, txt)
     else:
         for _ in range(7):
             ids.pop()
 
     # heading 회전 인정 범위
-    if dc.state == 4:
-        min_angle_x = 7 * math.cos(math.radians(dc.station_dir - dc.ref_dir_range)) + dc.boat_x
-        min_angle_y = 7 * math.sin(math.radians(dc.station_dir - dc.ref_dir_range)) + dc.boat_y
-        max_angle_x = 7 * math.cos(math.radians(dc.station_dir + dc.ref_dir_range)) + dc.boat_x
-        max_angle_y = 7 * math.sin(math.radians(dc.station_dir + dc.ref_dir_range)) + dc.boat_y
+    if dc.state in [4, 5, 6]:
+        min_angle_x = 4 * math.cos(math.radians(dc.station_dir - dc.ref_dir_range)) + dc.boat_x
+        min_angle_y = 4 * math.sin(math.radians(dc.station_dir - dc.ref_dir_range)) + dc.boat_y
+        max_angle_x = 4 * math.cos(math.radians(dc.station_dir + dc.ref_dir_range)) + dc.boat_x
+        max_angle_y = 4 * math.sin(math.radians(dc.station_dir + dc.ref_dir_range)) + dc.boat_y
         heading_range = visual.linelist_rviz(
             name="heading_range",
             id=ids.pop(),
@@ -246,11 +275,19 @@ def visualize(dc, inrange_obstacles=[], danger_angels=[]):
             color_r=122,
             color_g=114,
             color_b=237,
-            scale=0.1,
+            scale=0.08,
         )
         visual.marker_array_append_rviz(all_markers, heading_range)
     else:
         heading_range = visual.del_mark(name="heading_range", id=ids.pop())
         visual.marker_array_append_rviz(all_markers, heading_range)
+
+    # forward point
+    if dc.state in [4, 5, 6]:
+        f_p = visual.point_rviz(name="waypoints", id=ids.pop(), x=forward_point[0], y=forward_point[1], color_r=0, color_g=255, color_b=0, scale=0.3)
+        visual.marker_array_append_rviz(all_markers, f_p)
+    else:
+        f_p = visual.del_mark(name="waypoints", id=ids.pop())
+        visual.marker_array_append_rviz(all_markers, f_p)
 
     return all_markers

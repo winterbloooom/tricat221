@@ -20,6 +20,7 @@ from visualization_msgs.msg import MarkerArray
 import dock.dock_control as dock_control
 import dock.mark_detect as mark_detect
 import utils.visualizer as visual
+from utils.tools import *
 
 
 class Data_Collection:
@@ -435,16 +436,6 @@ class Data_Collection:
         )
 
         return all_markers
-
-
-def rearrange_angle(input_angle):
-    if input_angle >= 180:  # 왼쪽으로 회전이 더 이득
-        output_angle = -180 + abs(input_angle) % 180
-    elif input_angle <= -180:
-        output_angle = 180 - abs(input_angle) % 180
-    else:
-        output_angle = input_angle
-    return output_angle
 
 
 def main():

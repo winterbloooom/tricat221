@@ -21,20 +21,9 @@ from visualization_msgs.msg import MarkerArray
 
 import perception.gnss_converter as gc
 import utils.visualizer as visual
+from utils.tools import *
 
 # TODO fuzzy 버전끼리 비교해보기. 이건 1700 수정본
-
-
-def rearrange_angle(input_angle):
-    if input_angle >= 180:  # 왼쪽으로 회전이 더 이득
-        output_angle = -180 + abs(input_angle) % 180
-    elif input_angle <= -180:
-        output_angle = 180 - abs(input_angle) % 180
-    else:
-        output_angle = input_angle
-    return output_angle
-
-
 class Fuzzy:
     def __init__(self):
         self.boat_x, self.boat_y = 0, 0

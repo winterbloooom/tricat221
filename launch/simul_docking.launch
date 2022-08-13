@@ -39,7 +39,7 @@
 	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter"/>
 	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" output="screen"/>
 
-    <node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/220811-181745-docking-01.bag -l -r 1 --topics /imu/mag /scan /ublox_gps/fix /usb_cam/image_raw"/>
+    <node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/220812-121635-docking-05.bag -l -r 1 --topics /imu/mag /scan /ublox_gps/fix /usb_cam/image_raw"/>
 	
 	<node pkg="tricat221" type="docking.py" name="Docking" output="screen"  respawn="true"/>
 

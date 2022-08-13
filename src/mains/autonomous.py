@@ -19,6 +19,7 @@ import obstacle.obstacle_avoidance as oa
 import perception.gnss_converter as gc
 import utils.filtering as filtering
 import utils.visualizer as visual
+from utils.tools import *
 from tricat221.msg import ObstacleList
 
 
@@ -476,17 +477,6 @@ class Autonomous:
             u_servo = self.servo_range[0]
         return int(u_servo)
 
-
-def rearrange_angle(input_angle):
-    if input_angle >= 180:  # 왼쪽으로 회전이 더 이득
-        output_angle = -180 + abs(input_angle) % 180
-    elif input_angle <= -180:
-        output_angle = 180 - abs(input_angle) % 180
-    else:
-        output_angle = input_angle
-    return output_angle
-
-
 def main():
     rospy.init_node("autonomous", anonymous=False)
     start_time = rospy.get_time()
@@ -508,7 +498,6 @@ def main():
 
             # 현재 heading에서 목표로 갈 때 돌려야 할 각도.
             # 선수와 동일 선상이면 0, 우측에 있으면 +180까지 -> 180 넘을 수도 있어서 한 번 걸러줘야 함
-            # TODO 잘 돌아가는지 확인할 것!
             auto.psi_goal = (
                 math.degrees(math.atan2(auto.goal_y - auto.boat_y, auto.goal_x - auto.boat_x))
                 - auto.psi
@@ -531,7 +520,6 @@ def main():
 
             auto.psi_desire = rearrange_angle(auto.psi + error_angle)
             # 월드좌표계로 '가야 할 각도'를 계산함
-            # TODO 잘 돌아가는지 확인할 것.
 
             u_servo = auto.degree_to_servo(error_angle)  # degree 단위를 servo moter 단위로 변경
             # u_servo = filtering.moving_avg_filter(

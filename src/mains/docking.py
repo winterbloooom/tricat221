@@ -24,7 +24,9 @@ import dock.mark_detect as mark_detect
 import obstacle.obstacle_avoidance as oa
 import perception.gnss_converter as gc
 import utils.filtering as filtering
+from utils.tools import *
 from tricat221.msg import Obstacle, ObstacleList
+
 
 
 class Docking:
@@ -46,30 +48,6 @@ class Docking:
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0)
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
         self.visual_rviz_pub = rospy.Publisher("/visual_rviz", MarkerArray, queue_size=0)
-
-        # coordinates
-        self.enterence_y, self.enterence_x = gc.enu_convert(rospy.get_param("docking_enterence"))
-        self.station1_y, self.station1_x = gc.enu_convert(rospy.get_param("station1"))
-        self.station2_y, self.station2_x = gc.enu_convert(rospy.get_param("station2"))
-        self.station3_y, self.station3_x = gc.enu_convert(rospy.get_param("station3"))
-        self.boat_x, self.boat_y = 0, 0
-        self.waypoints = [
-            [self.enterence_x, self.enterence_y],
-            [self.station1_x, self.station1_y],
-            [self.station2_x, self.station2_y],
-            [self.station3_x, self.station3_y],
-        ]
-        self.trajectory = []
-
-        # data
-        self.psi = 0  # 자북과 선수 사이 각
-        self.psi_goal = 0
-        self.psi_desire = 0
-        self.raw_img = np.zeros((480, 640, 3), dtype=np.uint8)  # row, col, channel
-        self.hsv_img = np.zeros((480, 640), dtype=np.uint8)
-        self.shape_img = np.zeros((480, 640, 3), dtype=np.uint8)
-        self.obstacles = []
-        self.mark_area = 0
 
         # target info
         self.target_shape = rospy.get_param("target_shape")
@@ -100,6 +78,31 @@ class Docking:
         self.mark_detect_area = rospy.get_param("mark_detect_area")  # 도형이 검출될 최소 넓이
         self.target_detect_area = rospy.get_param("target_detect_area")  # 타겟이라고 인정할 최소 넓이
         self.station_dir = rospy.get_param("station_dir")
+
+        # coordinates
+        self.enterence_y, self.enterence_x = gc.enu_convert(rospy.get_param("docking_enterence"))
+        self.station1_y, self.station1_x = gc.enu_convert(rospy.get_param("station1"))
+        self.station2_y, self.station2_x = gc.enu_convert(rospy.get_param("station2"))
+        self.station3_y, self.station3_x = gc.enu_convert(rospy.get_param("station3"))
+        self.boat_x, self.boat_y = 0, 0
+        self.waypoints = [
+            [self.enterence_x, self.enterence_y],
+            [self.station1_x, self.station1_y],
+            [self.station2_x, self.station2_y],
+            [self.station3_x, self.station3_y],
+        ]
+        self.station_vec_ends = dock_control.calc_station_vec_end(self.station_dir, self.waypoints[1:])
+        self.trajectory = []
+
+        # data
+        self.psi = 0  # 자북과 선수 사이 각
+        self.psi_goal = 0
+        self.psi_desire = 0
+        self.raw_img = np.zeros((480, 640, 3), dtype=np.uint8)  # row, col, channel
+        self.hsv_img = np.zeros((480, 640), dtype=np.uint8)
+        self.shape_img = np.zeros((480, 640, 3), dtype=np.uint8)
+        self.obstacles = []
+        self.mark_area = 0
 
         # count
         ## (state 4에서) '이 시간동안(횟수)' 정지(약한 후진)하고 그 뒤에 헤딩 돌릴 것.
@@ -136,7 +139,7 @@ class Docking:
         self.ob_dist_range = rospy.get_param("ob_dist_range")
 
         # current status
-        self.state = 6
+        self.state = 2
         # 0: 장애물 회피
         # 1: 스테이션1로 이동 중
         # 2: 스테이션2로 이동 중
@@ -148,9 +151,8 @@ class Docking:
         # self.target = {"area": 0, "center_col": 0} # [area, center_col(pixel)] # TODO 딕셔너리로 한꺼번에 바꾸자
         self.target = []  # [area, center_col(pixel)] # TODO 처음에 0, 0으로 줬었는데 []로 하면 에러나는지 확인
         self.target_found = False
-        self.next_to_visit = (
-            1  # sstate 시작을 1로할거면 1로  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
-        )
+        self.next_to_visit = 2
+        # state 시작을 1로할거면 1로  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
         self.filter_queue = [0] * self.filter_queue_size
 
         self.distance_to_point = 0
@@ -477,17 +479,6 @@ class Docking:
             raw_img = cv2.resize(self.raw_img, dsize=(0, 0), fx=0.5, fy=0.5)
             cv2.imshow("controller", raw_img)
 
-
-def rearrange_angle(input_angle):
-    if input_angle >= 180:  # 왼쪽으로 회전이 더 이득
-        output_angle = -180 + abs(input_angle) % 180
-    elif input_angle <= -180:
-        output_angle = 180 - abs(input_angle) % 180
-    else:
-        output_angle = input_angle
-    return output_angle
-
-
 def main():
     rospy.init_node("Docking", anonymous=True)
     docking = Docking()
@@ -506,6 +497,7 @@ def main():
         # 일부 변수 초기화
         inrange_obstacles = []
         danger_angles = []
+        forward_point = []
 
         if docking.state in [0, 1, 2, 3]:
             docking.calc_psi_desire()
@@ -552,7 +544,12 @@ def main():
                 docking.stop_cnt += 1
                 rate.sleep()
                 u_thruster = docking.thruster_back
-            error_angle = docking.station_dir - docking.psi
+            
+            #error_angle = docking.station_dir - docking.psi
+            station_idx = docking.next_to_visit - 1
+            projected_point = dock_control.project_boat_to_station_vec(docking.waypoints, docking.station_vec_ends, station_idx, [docking.boat_x, docking.boat_y])
+            error_angle, forward_point = dock_control.follow_station_dir(docking.station_dir, projected_point, [docking.boat_x, docking.boat_y], docking.psi, 2)
+
             error_angle = rearrange_angle(error_angle)
 
         elif docking.state == 5:
@@ -572,18 +569,29 @@ def main():
                 docking.target_found = False
 
             error_angle = docking.station_dir - docking.psi
+            # station_idx = docking.next_to_visit - 1
+            # projected_point = dock_control.project_boat_to_station_vec(docking.waypoints, docking.station_vec_ends, station_idx, [docking.boat_x, docking.boat_y])
+            # error_angle, forward_point = dock_control.follow_station_dir(docking.station_dir, projected_point, [docking.boat_x, docking.boat_y], docking.psi, 2)
+            # # TODO 여기서는 배로부터 length가 아니라 station으로부터로...?
+            
             error_angle = rearrange_angle(error_angle)
-            u_thruster = 1500  # docking.thruster_stop
+            u_thruster = docking.thruster_stop
 
         elif docking.state == 6:  # 스테이션 진입
             docking.target = docking.check_target(return_target=True)
-            if len(docking.target) == 0:
-                error_angle = error_angle = docking.station_dir - docking.psi
-                error_angle = rearrange_angle(error_angle)
-            else:
-                error_angle = dock_control.pixel_to_degree(
-                    docking.target, docking.pixel_alpha, docking.angle_range
-                )  # 양수면 오른쪽으로 가야 함
+
+            # if len(docking.target) == 0:
+            #     error_angle = error_angle = docking.station_dir - docking.psi
+            #     error_angle = rearrange_angle(error_angle)
+            # else:
+            #     error_angle = dock_control.pixel_to_degree(
+            #         docking.target, docking.pixel_alpha, docking.angle_range
+            #     )  # 양수면 오른쪽으로 가야 함
+
+            station_idx = docking.next_to_visit - 1 # TODO 0으로 오류나는 경우는 없는지?
+            projected_point = dock_control.project_boat_to_station_vec(docking.waypoints, docking.station_vec_ends, station_idx, [docking.boat_x, docking.boat_y])
+            error_angle, forward_point = dock_control.follow_station_dir(docking.station_dir, projected_point, [docking.boat_x, docking.boat_y], docking.psi, 2)
+            error_angle = rearrange_angle(error_angle)
             u_thruster = docking.thruster_station
 
         docking.psi_desire = rearrange_angle(docking.psi + error_angle)  # 월드좌표계로 '가야 할 각도'를 계산함
@@ -606,6 +614,7 @@ def main():
 
         all_markers = dock_visualize.visualize(
             dc=docking,
+            forward_point = forward_point,
             inrange_obstacles=inrange_obstacles,
             danger_angels=danger_angles,
         )
