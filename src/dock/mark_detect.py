@@ -208,7 +208,7 @@ def draw_mark(window, contour, vertices, area, box_points, center_point, is_targ
     if vertices == 3:
         shape = "Triangle"
     elif vertices == 12:
-        shape = "cross" #"Rectangle"
+        shape = "cross"  # "Rectangle"
     else:
         shape = "Circle"
     # caption = "{} ({}, {})".format(shape, center_row, center_col)  # 도형에 보일 텍스트(중점 좌표)
