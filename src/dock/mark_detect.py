@@ -142,8 +142,8 @@ def detect_target(img, target_shape, mark_detect_area, target_detect_area, draw_
 
         if vertex_num == 3:  # 삼각형이 탐지됨
             detected = is_target(target_shape, target_detect_area, vertex_num=3, area=area)
-        elif vertex_num == 4:  # 사각형이 탐지됨
-            detected = is_target(target_shape, target_detect_area, vertex_num=4, area=area)
+        elif vertex_num == 12:  # 사각형이 탐지됨
+            detected = is_target(target_shape, target_detect_area, vertex_num=12, area=area)
         else:  # 원이 탐지됨
             _, radius = cv2.minEnclosingCircle(approx)  # 원으로 근사
             ratio = radius * radius * 3.14 / (area + 0.000001)  # 해당 넓이와 정원 간의 넓이 비
@@ -207,8 +207,8 @@ def draw_mark(window, contour, vertices, area, box_points, center_point, is_targ
 
     if vertices == 3:
         shape = "Triangle"
-    elif vertices == 4:
-        shape = "Rectangle"
+    elif vertices == 12:
+        shape = "cross" #"Rectangle"
     else:
         shape = "Circle"
     # caption = "{} ({}, {})".format(shape, center_row, center_col)  # 도형에 보일 텍스트(중점 좌표)

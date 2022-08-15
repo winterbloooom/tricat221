@@ -19,7 +19,7 @@ thruster_back: 1450
 # 선수각 방향 회전
 stop_time: 40 # 0.1(10hz) * stop_time 초만큼 멈춤 # 스테이션 앞 도착 후 이만큼 기다렸다가 헤딩 돌림
 ref_dir_range: 10 # def
-station_dir: 125 # <- east of fountain #-157 for south # deg
+station_dir: -17 #for main #125 # <- east of fountain #-157 for south # deg
 
 
 # 표지 인식
@@ -34,11 +34,11 @@ color_range : {
     color3_upper: 255
   }, #fix
   green: {
-    color1_lower: 58, #25, 
-    color1_upper: 176, #100,
-    color2_lower: 32, #135, 
-    color2_upper: 255, 
-    color3_lower: 161, #15,
+    color1_lower: 62, #58, #25, 
+    color1_upper: 86, #176, #100,
+    color2_lower: 108, #32, #135, 
+    color2_upper: 205, #255, 
+    color3_lower: 0, #161, #15,
     color3_upper: 255
   },
   blue: {
@@ -51,8 +51,8 @@ color_range : {
   } # FIX
 }
 
-target_shape: 3 # 3: triangle, 4: rectangle, 5: circle
-target_color: red # red, green, blue
+target_shape: 12 # 3: triangle, 12: cross, 5: circle
+target_color: green # red, green, blue
 
 mark_detect_area: 900 # 최소 이만큼은 되어야 타겟인지 판단 들어감
 target_detect_area: 1000 # 최소 이만큼은 되어야 타겟이라고 판단

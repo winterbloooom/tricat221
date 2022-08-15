@@ -139,7 +139,7 @@ class Data_Collection:
     def get_trackbar_pos(self):
         """get trackbar poses and set each values"""
         self.state = cv2.getTrackbarPos("state", "controller")
-        self.target_shape = cv2.getTrackbarPos("shape", "controller") + 3
+        # self.target_shape = cv2.getTrackbarPos("shape", "controller") + 3
         self.color_range[0][0] = cv2.getTrackbarPos("color1 min", "controller")
         self.color_range[1][0] = cv2.getTrackbarPos("color1 max", "controller")
         self.color_range[0][1] = cv2.getTrackbarPos("color2 min", "controller")
