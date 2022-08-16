@@ -27,11 +27,11 @@ l5 = [35.0693834, 128.5790279, 49.0]
 d1 = [35.0696287, 128.578821, 49.0]
 d2 = [35.0696596, 128.5789156, 49.0]
 
-s1 = [35.0693012, 128.5789177, 49.0]
-s2 = [35.0696497, 128.5788137, 49.0]
-s3 = [35.069664, 128.5788595, 49.0]
-s4 = [35.0696782, 128.5789079, 49.0]
-s5 = [35.0693834, 128.5790279, 49.0]
+s1 = [35.0692817, 128.578876, 49.0]
+s2 = [35.0695906, 128.5786724, 49.0]
+s3 = [35.0696016, 128.5786953, 49.0]
+s4 = [35.0696118, 128.578718, 49.0]
+s5 = [35.0693012, 128.5789177, 49.0]
 
 cv2.namedWindow("controller")
 cv2.createTrackbar("x", "controller", 80, 160, lambda x: x)
@@ -68,6 +68,13 @@ def main():
     l5_re = enu_convert(l5)
     d1_re = enu_convert(d1)
     d2_re = enu_convert(d2)
+
+    s1_re = enu_convert(s1)
+    s2_re = enu_convert(s2)
+    s3_re = enu_convert(s3)
+    s4_re = enu_convert(s4)
+    s5_re = enu_convert(s5)
+
 
     l1_gn = geodetic_convert(l1_re)
 
@@ -129,10 +136,34 @@ def main():
         d2_p = visual.point_rviz(
             name="fixed", id=ids.pop(), x=d2_re[0], y=d2_re[1], color_r=255, scale=0.25
         )
+        s1_p = visual.point_rviz(
+            name="fixed", id=ids.pop(), x=s1_re[0], y=s1_re[1], color_r=255, scale=0.25
+        )
+        s2_p = visual.point_rviz(
+            name="fixed", id=ids.pop(), x=s2_re[0], y=s2_re[1], color_r=255, scale=0.25
+        )
+        s3_p = visual.point_rviz(
+            name="fixed", id=ids.pop(), x=s3_re[0], y=s3_re[1], color_r=255, scale=0.25
+        )
+        s4_p = visual.point_rviz(
+            name="fixed", id=ids.pop(), x=s4_re[0], y=s4_re[1], color_r=255, scale=0.25
+        )
+        s5_p = visual.point_rviz(
+            name="fixed", id=ids.pop(), x=s5_re[0], y=s5_re[1], color_r=255, scale=0.25
+        )
         boundary = visual.linelist_rviz(
             name="boundary",
             id=ids.pop(),
             lines=[l1_re, l2_re, l2_re, l4_re, l4_re, l5_re, l5_re, l1_re],
+            color_r=65,
+            color_g=53,
+            color_b=240,
+            scale=0.15,
+        )
+        boundary_s = visual.linelist_rviz(
+            name="boundary",
+            id=ids.pop(),
+            lines=[s1_re, s2_re, s2_re, s3_re, s3_re, s4_re, s4_re, s5_re, s5_re, s1_re],
             color_r=65,
             color_g=53,
             color_b=240,
@@ -176,8 +207,9 @@ def main():
         )
 
         all_markers = visual.marker_array_rviz(
-            [picked_point, picked_point_txt, l1_p, l1_txt, boundary, 
+            [picked_point, picked_point_txt, l1_p, l1_txt, boundary, boundary_s,
             l2_p, l3_p, l4_p, l5_p, d1_p, d2_p, 
+            s1_p, s2_p, s3_p, s4_p, s5_p,
             new_point, enu_txt, axis_x, axis_y]
         )
         visual_rviz_pub.publish(all_markers)
