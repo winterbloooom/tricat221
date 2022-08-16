@@ -3,8 +3,8 @@
 
 import os
 import sys
-import cv2
 
+import cv2
 import pymap3d as pm
 import rospy
 from geometry_msgs.msg import Point
@@ -48,6 +48,7 @@ def enu_convert(gnss):
     # print(u)
     return [n, e, u]
 
+
 def geodetic_convert(enu):
     e = enu[1]
     n = enu[0]
@@ -55,10 +56,12 @@ def geodetic_convert(enu):
     lat, lon, alt = pm.enu2geodetic(e, n, u, origin[0], origin[1], origin[2])
     return [lat, lon, alt]
 
+
 def get_trackbar_pos():
     x = (cv2.getTrackbarPos("x", "controller") - 80) / 2.0
     y = (cv2.getTrackbarPos("y", "controller") - 80) / 2.0
     return x, y
+
 
 def main():
     l1_re = enu_convert(l1)
@@ -98,7 +101,8 @@ def main():
         picked_point_txt = visual.text_rviz(
             name="point",
             id=ids.pop(),
-            x=x, y=y,
+            x=x,
+            y=y,
             text="({}, {})\n({}, {})".format(x, y, picked_gn[0], picked_gn[1]),
         )
 
@@ -108,7 +112,8 @@ def main():
         l1_txt = visual.text_rviz(
             name="fixed",
             id=ids.pop(),
-            x=l1_re[0], y=l1_re[1],
+            x=l1_re[0],
+            y=l1_re[1],
             text="Origin\n({}, {})\n({}, {})".format(l1[0], l1[1], l1_re[0], l1_re[1]),
         )
         l2_p = visual.point_rviz(
@@ -164,7 +169,6 @@ def main():
             scale=0.1,
         )
 
-
         new_point = visual.point_rviz(name="point", id=0, x=boat[0], y=boat[1], color_g=255)
 
         enu_txt = visual.text_rviz(
@@ -176,9 +180,23 @@ def main():
         )
 
         all_markers = visual.marker_array_rviz(
-            [picked_point, picked_point_txt, l1_p, l1_txt, boundary, 
-            l2_p, l3_p, l4_p, l5_p, d1_p, d2_p, 
-            new_point, enu_txt, axis_x, axis_y]
+            [
+                picked_point,
+                picked_point_txt,
+                l1_p,
+                l1_txt,
+                boundary,
+                l2_p,
+                l3_p,
+                l4_p,
+                l5_p,
+                d1_p,
+                d2_p,
+                new_point,
+                enu_txt,
+                axis_x,
+                axis_y,
+            ]
         )
         visual_rviz_pub.publish(all_markers)
 
