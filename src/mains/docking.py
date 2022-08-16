@@ -583,8 +583,19 @@ def main():
 
             # error_angle = docking.station_dir - docking.psi
             station_idx = docking.next_to_visit - 1
-            projected_point = dock_control.project_boat_to_station_vec(docking.waypoints, docking.station_vec_ends, station_idx, [docking.boat_x, docking.boat_y])
-            error_angle, forward_point = dock_control.follow_station_dir(docking.station_dir, projected_point, [docking.boat_x, docking.boat_y], docking.psi, 2)
+            projected_point = dock_control.project_boat_to_station_vec(
+                docking.waypoints,
+                docking.station_vec_ends,
+                station_idx,
+                [docking.boat_x, docking.boat_y],
+            )
+            error_angle, forward_point = dock_control.follow_station_dir(
+                docking.station_dir,
+                projected_point,
+                [docking.boat_x, docking.boat_y],
+                docking.psi,
+                2,
+            )
             # # TODO 여기서는 배로부터 length가 아니라 station으로부터로...?
 
             error_angle = rearrange_angle(error_angle)
