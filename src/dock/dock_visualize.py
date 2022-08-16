@@ -294,7 +294,7 @@ def visualize(dc, forward_point=[], inrange_obstacles=[], danger_angels=[]):
         visual.marker_array_append_rviz(all_markers, heading_range)
 
     # forward point
-    if dc.state in [4, 5, 6]:
+    if dc.state in [5, 6]:
         f_p = visual.point_rviz(
             name="waypoints",
             id=ids.pop(),
