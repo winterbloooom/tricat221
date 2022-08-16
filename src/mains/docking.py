@@ -241,58 +241,58 @@ class Docking:
 
     def check_state(self):
         change_state = False
-        if self.state == 0:
-            # 변경지점 도착 여부 판단
-            change_state = self.calc_distance(self.waypoints[0])
-        elif self.state == 1:
-            # 스테이션1 도착 여부 판단
-            change_state = self.calc_distance(self.waypoints[1])
-        elif self.state == 2:
-            # 스테이션2 도착 여부 판단
-            change_state = self.calc_distance(self.waypoints[2])
-        elif self.state == 3:
-            # 스테이션3 도착 여부 판단
-            change_state = self.calc_distance(self.waypoints[3])
-        elif self.state == 4:
-            # heading 스테이션쪽인지 판단
-            change_state = self.check_heading()
-        elif self.state == 5:
-            if self.mark_check_cnt >= self.target_detect_time:
-                change_state = True
-                self.mark_check_cnt = 0
-                self.detected_cnt = 0
-            else:
-                change_state = False
-        elif self.state == 6:
-            # 도킹 완료했는지 확인
-            change_state = self.check_docked()
+        # if self.state == 0:
+        #     # 변경지점 도착 여부 판단
+        #     change_state = self.calc_distance(self.waypoints[0])
+        # elif self.state == 1:
+        #     # 스테이션1 도착 여부 판단
+        #     change_state = self.calc_distance(self.waypoints[1])
+        # elif self.state == 2:
+        #     # 스테이션2 도착 여부 판단
+        #     change_state = self.calc_distance(self.waypoints[2])
+        # elif self.state == 3:
+        #     # 스테이션3 도착 여부 판단
+        #     change_state = self.calc_distance(self.waypoints[3])
+        # elif self.state == 4:
+        #     # heading 스테이션쪽인지 판단
+        #     change_state = self.check_heading()
+        # elif self.state == 5:
+        #     if self.mark_check_cnt >= self.target_detect_time:
+        #         change_state = True
+        #         self.mark_check_cnt = 0
+        #         self.detected_cnt = 0
+        #     else:
+        #         change_state = False
+        # elif self.state == 6:
+        #     # 도킹 완료했는지 확인
+        #     change_state = self.check_docked()
 
-        if change_state:
-            print("")
-            print("{:=^70}".format(" Change State "))
-            print("")
-            if self.state in [0, 1, 2, 3]:
-                self.next_to_visit += 1
-                if self.next_to_visit == 4:
-                    # next_to_visit=4이면 전부 찾기 실패. 다시 1로 이동
-                    self.next_to_visit = 1
+        # if change_state:
+        #     print("")
+        #     print("{:=^70}".format(" Change State "))
+        #     print("")
+        #     if self.state in [0, 1, 2, 3]:
+        #         self.next_to_visit += 1
+        #         if self.next_to_visit == 4:
+        #             # next_to_visit=4이면 전부 찾기 실패. 다시 1로 이동
+        #             self.next_to_visit = 1
 
-            if self.state in [1, 2, 3]:
-                self.state = 4
-            elif self.state == 4:
-                self.stop_cnt = 0
-                self.state += 1
-            elif self.state == 5:
-                if self.target_found:
-                    self.state += 1
-                else:
-                    self.state = self.next_to_visit
-            else:
-                self.state += 1
+        #     if self.state in [1, 2, 3]:
+        #         self.state = 4
+        #     elif self.state == 4:
+        #         self.stop_cnt = 0
+        #         self.state += 1
+        #     elif self.state == 5:
+        #         if self.target_found:
+        #             self.state += 1
+        #         else:
+        #             self.state = self.next_to_visit
+        #     else:
+        #         self.state += 1
 
-            return True
-        else:
-            return False
+        #     return True
+        # else:
+        #     return False
 
     def check_heading(self):
         # 차잇값이 ref_dir_range 보다 작으면 잘 돌린 것

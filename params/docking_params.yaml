@@ -42,16 +42,16 @@ color_range : {
     color3_upper: 255
   }, # FIX
   blue: {
-    color1_lower: 110, #70, #17,
-    color1_upper: 120, #118, #120,
-    color2_lower: 180, #90, #148,
-    color2_upper: 255, #124, #255,
+    color1_lower: 96, #110, #70, #17,
+    color1_upper: 153, #120, #118, #120,
+    color2_lower: 104, #180, #90, #148,
+    color2_upper: 154, #255, #124, #255,
     color3_lower: 0, #228, #0,
     color3_upper: 255
   } #fix
 }
 
-target_shape: 5 # 3: triangle, 12: cross, 5: circle
+target_shape: 12 # 3: triangle, 12: cross, 5: circle
 target_color: blue # red, green, blue
 
 mark_detect_area: 900 # 최소 이만큼은 되어야 타겟인지 판단 들어감
