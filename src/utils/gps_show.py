@@ -78,7 +78,6 @@ def main():
     s4_re = enu_convert(s4)
     s5_re = enu_convert(s5)
 
-
     l1_gn = geodetic_convert(l1_re)
 
     rospy.init_node("gnss_converter", anonymous=True)
@@ -211,10 +210,29 @@ def main():
         )
 
         all_markers = visual.marker_array_rviz(
-            [picked_point, picked_point_txt, l1_p, l1_txt, boundary, boundary_s,
-            l2_p, l3_p, l4_p, l5_p, d1_p, d2_p, 
-            s1_p, s2_p, s3_p, s4_p, s5_p,
-            new_point, enu_txt, axis_x, axis_y]
+            [
+                picked_point,
+                picked_point_txt,
+                l1_p,
+                l1_txt,
+                boundary,
+                boundary_s,
+                l2_p,
+                l3_p,
+                l4_p,
+                l5_p,
+                d1_p,
+                d2_p,
+                s1_p,
+                s2_p,
+                s3_p,
+                s4_p,
+                s5_p,
+                new_point,
+                enu_txt,
+                axis_x,
+                axis_y,
+            ]
         )
         visual_rviz_pub.publish(all_markers)
 
