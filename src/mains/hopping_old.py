@@ -1,19 +1,22 @@
 #!/usr/bin/env python
 
-import rospy
 import math
-import pymap3d as pm
-import numpy as np
 
-from std_msgs.msg import UInt16, Float64
+import numpy as np
+import pymap3d as pm
+import rospy
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import Imu
+from std_msgs.msg import Float64, UInt16
+
 
 def RAD2DEG(x):
-    return x * 180. / math.pi
+    return x * 180.0 / math.pi
+
 
 def DEG2RAD(x):
-    return x / 180. * math.pi
+    return x / 180.0 * math.pi
+
 
 class Goal:
     def __init__(self):
@@ -26,24 +29,28 @@ class Goal:
 
         ## ENU & Waypoint List
         self.map_list = rospy.get_param("map_dd")
-        self.lat_00, self.lon_00, self.alt_00 = self.map_list['map_00_lat'], self.map_list['map_00_lon'], self.map_list['map_00_alt']
+        self.lat_00, self.lon_00, self.alt_00 = (
+            self.map_list["map_00_lat"],
+            self.map_list["map_00_lon"],
+            self.map_list["map_00_alt"],
+        )
 
         self.waypoints = rospy.get_param("waypoint_List/waypoints")
-        self.way_list_gps = np.empty((0,3), float)
+        self.way_list_gps = np.empty((0, 3), float)
         for i in range(len(self.waypoints)):
             self.way_list_gps = np.append(self.way_list_gps, np.array([self.waypoints[i]]), axis=0)
-        #self.way_list_gps = self.way_list_gps.astype(np.float64)
-        self.goal_list = self.get_xy(self.way_list_gps) # ENU way list
+        # self.way_list_gps = self.way_list_gps.astype(np.float64)
+        self.goal_list = self.get_xy(self.way_list_gps)  # ENU way list
         self.goal_x = self.goal_list[0][0]
         self.goal_y = self.goal_list[0][1]
-        
+
         self.goal_range = rospy.get_param("goal_range")
-        
+
         ## Direction Search
         self.angle = 0.0
         self.bearing = 0.0
 
-        ## PID 
+        ## PID
         self.init_servo = 94
         self.servo_control = 0
         self.errSum = 0.0
@@ -64,10 +71,10 @@ class Goal:
     def get_xy(self, points):
         way_list = np.zeros_like(points)
         for i in range(len(points)):
-            way_list[i][0], way_list[i][1] , way_list[i][2] = \
-                pm.geodetic2enu(points[i][0], points[i][1], points[i][2], \
-                 self.lat_00, self.lon_00, self.alt_00)
-        way_list = np.delete(way_list, 2, axis=1) # axis z delete
+            way_list[i][0], way_list[i][1], way_list[i][2] = pm.geodetic2enu(
+                points[i][0], points[i][1], points[i][2], self.lat_00, self.lon_00, self.alt_00
+            )
+        way_list = np.delete(way_list, 2, axis=1)  # axis z delete
         return way_list
 
     def yaw_rate_callback(self, data):
@@ -85,54 +92,54 @@ class Goal:
         dy = self.goal_y - self.boat_y
         self.angle = RAD2DEG(math.atan2(dx, dy))
 
-        if dx >= 0 and dy >= 0: # Quadrant 1
-            if b >= 0 : # right bearing
+        if dx >= 0 and dy >= 0:  # Quadrant 1
+            if b >= 0:  # right bearing
                 self.t = self.angle - b
-            elif b < 0: # left bearing
+            elif b < 0:  # left bearing
                 if abs(b) < (180 - self.angle):
                     self.t = self.angle - b
                 elif abs(b) >= (180 - self.angle):
                     self.t = -(360 - self.angle + b)
 
-        elif dx < 0 and dy >= 0: # Quadrant 2
-            if b >= 0 :
+        elif dx < 0 and dy >= 0:  # Quadrant 2
+            if b >= 0:
                 if b < 180 + self.angle:
                     self.t = self.angle - b
                 elif b >= 180 + self.angle:
                     self.t = 360 + self.angle - b
             elif b < 0:
                 self.t = self.angle - b
-                
-        elif dx < 0 and dy < 0: # Quadrant 3
-            if b >= 0 :
+
+        elif dx < 0 and dy < 0:  # Quadrant 3
+            if b >= 0:
                 if b < 180 + self.angle:
-                    self.t = (self.angle - b)
+                    self.t = self.angle - b
                 elif b >= 180 + self.angle:
                     self.t = 360 + (self.angle - b)
             elif b < 0:
-                self.t = (self.angle - b)
+                self.t = self.angle - b
 
-        elif dx >= 0 and dy < 0: # Quadrant 4
-            if b >= 0 :
-                self.t = (self.angle - b)
+        elif dx >= 0 and dy < 0:  # Quadrant 4
+            if b >= 0:
+                self.t = self.angle - b
             elif b < 0:
                 if abs(b) < 180 - self.angle:
-                    self.t = (self.angle - b)
+                    self.t = self.angle - b
                 elif abs(b) >= 180 - self.angle:
                     self.t = self.angle - b - 360
 
         return self.t
 
     def target(self):
-        
+
         return self.OPTIMAL_DIRECTION(self.bearing)
 
     def set_next_point(self):
-        self.goal_list = np.delete(self.goal_list, 0, axis = 0)
+        self.goal_list = np.delete(self.goal_list, 0, axis=0)
 
     def arrival_check(self):
         self.dist_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
-        
+
         if self.dist_to_goal <= self.goal_range:
             for _ in range(15):
                 self.thruster_pub.publish(1600)
@@ -142,27 +149,27 @@ class Goal:
             return False
 
     def prt(self):
-        if self.servo_control > 94+3: # left turn
+        if self.servo_control > 94 + 3:  # left turn
             turn = "left"
-        elif self.servo_control < 94-3: # right turn
+        elif self.servo_control < 94 - 3:  # right turn
             turn = "right"
         else:
             turn = "mid"
         print("distance, thruster : ", self.dist_to_goal, self.thrust)
-        print("my xy : ",self.boat_x, self.boat_y)
-        print("way xy : ",self.goal_x, self.goal_y)
+        print("my xy : ", self.boat_x, self.boat_y)
+        print("way xy : ", self.goal_x, self.goal_y)
         print("a, b, t : ", self.angle, self.bearing, self.OPTIMAL_DIRECTION(self.bearing))
         print("servo : " + turn, round(self.servo_control))
         print("errSum:", self.errSum)
-        print('-------------------------------------')
-    
+        print("-------------------------------------")
+
     def servo_pid_controller(self):
         # P ctrl
-        error_angle = self.target() # deg
+        error_angle = self.target()  # deg
 
         # I ctrl
-        self.errSum += (error_angle * 0.1)
-        
+        self.errSum += error_angle * 0.1
+
         if self.errSum > 90:
             self.errSum = 90
         elif self.errSum < -90:
@@ -171,8 +178,7 @@ class Goal:
             pass
 
         # D ctrl
-        yaw_rate = RAD2DEG(self.yaw_rate) # deg/s
-
+        yaw_rate = RAD2DEG(self.yaw_rate)  # deg/s
 
         cp_servo = self.kp_servo * error_angle
         ci_servo = self.ki_servo * self.errSum
@@ -181,10 +187,10 @@ class Goal:
         servo_pid = -(cp_servo + ci_servo + cd_servo)
         self.servo_control = self.init_servo + servo_pid
 
-        if self.servo_control > 94+26: #94+24
-            self.servo_control = 94+26
-        elif self.servo_control < 94-26:
-            self.servo_control = 94-26
+        if self.servo_control > 94 + 26:  # 94+24
+            self.servo_control = 94 + 26
+        elif self.servo_control < 94 - 26:
+            self.servo_control = 94 - 26
         else:
             pass
 
@@ -202,10 +208,10 @@ class Goal:
 
 
 def main():
-    rospy.init_node('Hopping_PID_controller', anonymous=False)
+    rospy.init_node("Hopping_PID_controller", anonymous=False)
 
     goal = Goal()
-    
+
     rate = rospy.Rate(10)
 
     while not rospy.is_shutdown():
@@ -213,27 +219,27 @@ def main():
             if len(goal.goal_list) == 0:
                 goal.thruster_pub.publish(1500)
                 goal.Servo_pub.publish(93)
-                #rospy.on_shutdown()
+                # rospy.on_shutdown()
                 print("arrived final goal")
                 break
             elif len(goal.goal_list) == 1:
                 goal.goal_x = goal.goal_list[0][0]
                 goal.goal_y = goal.goal_list[0][1]
                 goal.set_next_point()
-                goal.errSum = 0.0 # error initialization
+                goal.errSum = 0.0  # error initialization
             else:
                 goal.set_next_point()
                 goal.goal_x = goal.goal_list[0][0]
                 goal.goal_y = goal.goal_list[0][1]
-                goal.errSum = 0.0 # error initialization
+                goal.errSum = 0.0  # error initialization
 
         goal.control_publisher()
         goal.prt()
-        
+
         rate.sleep()
-        
+
     rospy.spin()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
