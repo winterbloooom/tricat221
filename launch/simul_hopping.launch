@@ -9,7 +9,9 @@
 	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/220817-172208-hopping-17(try6).bag -l -r 1 --topics /imu/data /imu/mag /ublox_gps/fix"/>
 
 	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/> -->
-	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" />
+	<!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" /> -->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting6_2021hop.rviz" />
+	
 	
 	<!--PARAMETER-->
 	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
