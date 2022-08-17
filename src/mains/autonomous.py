@@ -213,6 +213,38 @@ class Autonomous:
         print("-" * 70)
 
     def visualize(self):
+        ids = list(range(0, 100))
+        s1 = [0, 0, 49.0]
+        s2 = [34.2702195235803, -18.57066436602931, 49.0]
+        s3 = [35.49058524956531, -16.48191847191928, 49.0]
+        s4 = [36.62219732309793, -14.411415574411318, 49.0]
+        s5 = [2.1633834264934397, 3.8035335854915084, 49.0]
+
+        s1_p = visual.point_rviz(
+            name="fixed", id=ids.pop(), x=s1[0], y=s1[1], color_r=255, scale=0.25
+        )
+        s2_p = visual.point_rviz(
+            name="fixed", id=ids.pop(), x=s2[0], y=s2[1], color_r=255, scale=0.25
+        )
+        s3_p = visual.point_rviz(
+            name="fixed", id=ids.pop(), x=s3[0], y=s3[1], color_r=255, scale=0.25
+        )
+        s4_p = visual.point_rviz(
+            name="fixed", id=ids.pop(), x=s4[0], y=s4[1], color_r=255, scale=0.25
+        )
+        s5_p = visual.point_rviz(
+            name="fixed", id=ids.pop(), x=s5[0], y=s5[1], color_r=255, scale=0.25
+        )
+        boundary_s = visual.linelist_rviz(
+            name="boundary",
+            id=ids.pop(),
+            lines=[s1, s2, s2, s3, s3, s4, s4, s5, s5, s1],
+            color_r=65,
+            color_g=53,
+            color_b=240,
+            scale=0.15,
+        )
+
         # danger_angles
         dangers = []
         for angle in self.danger_angles:
@@ -411,17 +443,17 @@ class Autonomous:
         pcd = []
         if self.show_raw_pcd:
             for p in self.input_points:
-                x_re = (
+                x = (
                     self.boat_x
                     + (-p.x) * math.cos(math.radians(self.psi))
                     - p.y * math.sin(math.radians(self.psi))
                 )
-                y_re = (
+                y = (
                     self.boat_y
                     + (-p.x) * math.sin(math.radians(self.psi))
                     + p.y * math.cos(math.radians(self.psi))
                 )
-                pcd.append([x_re, y_re])
+                pcd.append([x, y])
         pcd = visual.points_rviz(name="pcd", id=14, points=pcd, color_r=255, scale=0.08)
 
         all_markers = visual.marker_array_rviz(
@@ -443,6 +475,7 @@ class Autonomous:
                 goal_range,
                 angle_range,
                 pcd,
+                boundary_s
             ]
         )
         self.visual_rviz_pub.publish(all_markers)

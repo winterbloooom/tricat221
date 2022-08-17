@@ -1,40 +1,10 @@
-# goal_range: 1.5
-
-# angle_min: -70
-# angle_max: 70
-# angle_increment: 1
-# span_angle: 10
-# goal_risk_range: 10
-
-# ob_exist_coefficient: 0
-# ob_near_coefficient: 0
-# goal_orient_coefficient: 100
-
-# kp_angle : 0.4
-# ki_angle : 0.00 # max 0.05?
-# kd_angle : 0.1
-
-# # kp_distance : 40
-# # ki_distance : 40
-# # kd_distance : 40
-
-# servo_middle: 93
-# servo_left_max: 118 #93+25
-# servo_right_max: 68 #93-25
-
-# thruster_max : 1700
-# thruster_min : 1600
-# thruster_average : 1650
-
-# New Algorithm ------------------------
-
 goal_range: 1.5 # m
-ob_dist_range : 4 # m : 가까이 있는 것을 우선적으로 피하고 싶다면 작아야 함
-ob_angle_range : [-100, 100] # deg
-rotate_angle_range : [-80, 80] #deg
+ob_dist_range : 5 # m
+ob_angle_range : [-70, 70] #[-100, 100] # deg
+rotate_angle_range : [-90, 90] #deg
 servo_range : [70, 120]
 thruster_speed : 1800
-span_angle : 15 # deg
+span_angle : 12 # deg
 filter_queue_size : 3
 angle_alpha : 1.5
-show_raw_pcd : True
+show_raw_pcd : 0

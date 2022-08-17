@@ -1,16 +1,7 @@
-# max_gap_in_set: 0.1 # meter
-# min_point_set_size: 10
-# max_dist_to_ps_line: 0.1 # meter
-# min_wall_length: 2 # meter
-# min_wall_particle_length: 2 # meter
-# min_input_points_size: 3
-
-# trackbar----------------------------------
-
-max_gap_in_set: 1 # * 0.1 meter // 1 -> 2 -> 5 (벽이 자꾸 쪼개져서 올려둠)
-min_point_set_size: 3 # 5
-max_dist_to_ps_line: 3 # *0.1 meter
-min_wall_length: 50 # * 0.1 meter///// 40 -> 50 (벽을 쪼개지 않기 위해)
-min_wall_particle_length: 24 # * 0.1 meter /// 5 -> 24 (벽을 쪼개지 않기 위해)
+max_gap_in_set: 1 # * 0.1 meter
+min_point_set_size: 3
+max_dist_to_ps_line: 1 # *0.1 meter
+min_wall_length: 0 # * 0.1 meter
+min_wall_particle_length: 1 # * 0.1 meter
 min_input_points_size: 1
 controller: 0

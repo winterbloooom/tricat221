@@ -238,17 +238,17 @@ def get_trackbar_pos(color_range):
 
 def test_with_img():
     # variables
-    target_shape = 4
-    color_range = np.array([[37, 104, 123], [100, 158, 193]])
+    target_shape = 12
+    color_range = np.array([[81, 124, 0], [128, 182, 255]])
     area = 0
     mark_detect_area = 75
     cv2.namedWindow("controller")
 
     # image load
     path_prefix = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-    raw_img = cv2.imread(path_prefix + "/pic1.jpeg", cv2.IMREAD_COLOR)
-    raw_img = cv2.rotate(raw_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-    raw_img = cv2.resize(raw_img, (640, 480))  # (504, 672))
+    raw_img = cv2.imread(path_prefix + "/0816-2.png", cv2.IMREAD_COLOR)
+    # raw_img = cv2.rotate(raw_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    raw_img = raw_img[:240, :320]  # (504, 672))
     if raw_img is None:
         print("Image load failed!")
         exit(1)
@@ -272,7 +272,18 @@ def test_with_img():
         hsv_img = select_color(preprocessed, color_range)
         target, shape_img, _ = detect_target(hsv_img, target_shape, mark_detect_area, 100000)
 
-        show_img = np.hstack([raw_img, shape_img])
+        # raw_img = cv2.resize(raw_img, (320, 240)) #dsize=(0, 0), fx=0.5, fy=0.5)
+        # hsv_img = cv2.resize(hsv_img, (320, 240)) #dsize=(0, 0), fx=0.5, fy=0.5)
+        hsv_img = cv2.cvtColor(hsv_img, cv2.COLOR_GRAY2BGR)
+        col1 = np.vstack([raw_img, hsv_img])
+        cv2.imshow("col1", raw_img)
+        shape_img = cv2.resize(hsv_img, (640, 480))
+        col2 = cv2.resize(shape_img, dsize=(0, 0), fx=0.9, fy=1.0)
+        print("")
+        print(col1.shape)
+        print(col2.shape)
+        show_img = np.hstack([col1, col2])
+        
         cv2.imshow("controller", show_img)
 
         if cv2.waitKey(1) == 27:

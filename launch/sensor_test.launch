@@ -2,10 +2,10 @@
 
 <launch>
 	<!-- GPS -->
-	<!-- <node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/220815-gps_data_large.bag -l -r 3--> <!--topics /ublox_gps/fix "/>
+	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/large_gps.bag -l --topics /ublox_gps/fix "/>
 	<node pkg="tricat221"  type="gps_show.py" name="gnssConverter" respawn="true" output="screen"/>
 	<rosparam command="load" file="$(find tricat221)/params/coordinates.yaml"/>
-	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" /> -->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" />
 
 	<!--IMU-->
 	<!-- <node pkg="myahrs_driver" type="myahrs_driver" name="myahrs_driver">
@@ -31,8 +31,8 @@
 		<param name="inverted"            type="bool"   value="false"/>
 		<param name="angle_compensate"    type="bool"   value="true"/>
 		<param name="scan_mode"           type="string" value="Stability"/>
-	</node> -->
-	<!-- <node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/> -->
+	</node>
+	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/> -->
 	<!-- <rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/> -->
 	<!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting1.rviz" /> -->
 	<!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" /> -->
@@ -65,11 +65,11 @@
     </node> -->
 	<!-- <node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>--> -->
 
-	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/220816-cam_data2.bag -l --topics /usb_cam/image_raw"/> -->
+	<!-- <node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/220816-155735-docking-06.bag -l--> <!--topics /usb_cam/image_raw"/> -->
 	
-	<rosparam command="load" file="$(find tricat221)/params/docking_params.yaml"/>
+	<!-- <rosparam command="load" file="$(find tricat221)/params/docking_params.yaml"/> -->
 	<!-- <node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator"/> -->
-	<node pkg="tricat221" type="data_collect.py" name="data_collect" output="screen" />
+	<!-- <node pkg="tricat221" type="data_collect.py" name="data_collect" output="screen" /> -->
 	<!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting4(data_collection).rviz" /> -->
 
 </launch>

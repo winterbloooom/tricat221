@@ -19,11 +19,11 @@ import utils.visualizer as visual
 origin = rospy.get_param("origin")
 boat = [0, 0, 0]
 msg_in = [0, 0, 0]
-l1 = [35.069359, 128.5789284, 49.0]
-l2 = [35.0696497, 128.5788137, 49.0]
-l3 = [35.069664, 128.5788595, 49.0]
+l1 = [35.0693468, 128.5789093, 49.0] #[35.069359, 128.5789284, 49.0]
+l2 = [35.069376, 128.5785790028, 49.0] #$[35.0696497, 128.5788137, 49.0]
+l3 = [35.0696129, 128.5788164, 49.0] #, [35.069664, 128.5788595, 49.0]
 l4 = [35.0696782, 128.5789079, 49.0]
-l5 = [35.0693834, 128.5790279, 49.0]
+l5 = [35.0696362, 128.578901, 49.0] #, [35.0693834, 128.5790279, 49.0]
 d1 = [35.0696287, 128.578821, 49.0]
 d2 = [35.0696596, 128.5789156, 49.0]
 
@@ -77,6 +77,12 @@ def main():
     s3_re = enu_convert(s3)
     s4_re = enu_convert(s4)
     s5_re = enu_convert(s5)
+    print(s1_re)
+    print(s2_re)
+    print(s3_re)
+    print(s4_re)
+    print(s5_re)
+
 
     l1_gn = geodetic_convert(l1_re)
 
@@ -128,18 +134,18 @@ def main():
         l3_p = visual.point_rviz(
             name="fixed", id=ids.pop(), x=l3_re[0], y=l3_re[1], color_r=255, scale=0.25
         )
-        l4_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=l4_re[0], y=l4_re[1], color_r=255, scale=0.25
-        )
+        # l4_p = visual.point_rviz(
+        #     name="fixed", id=ids.pop(), x=l4_re[0], y=l4_re[1], color_r=255, scale=0.25
+        # )
         l5_p = visual.point_rviz(
             name="fixed", id=ids.pop(), x=l5_re[0], y=l5_re[1], color_r=255, scale=0.25
         )
-        d1_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=d1_re[0], y=d1_re[1], color_r=255, scale=0.25
-        )
-        d2_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=d2_re[0], y=d2_re[1], color_r=255, scale=0.25
-        )
+        # d1_p = visual.point_rviz(
+        #     name="fixed", id=ids.pop(), x=d1_re[0], y=d1_re[1], color_r=255, scale=0.25
+        # )
+        # d2_p = visual.point_rviz(
+        #     name="fixed", id=ids.pop(), x=d2_re[0], y=d2_re[1], color_r=255, scale=0.25
+        # )
         s1_p = visual.point_rviz(
             name="fixed", id=ids.pop(), x=s1_re[0], y=s1_re[1], color_r=255, scale=0.25
         )
@@ -158,7 +164,8 @@ def main():
         boundary = visual.linelist_rviz(
             name="boundary",
             id=ids.pop(),
-            lines=[l1_re, l2_re, l2_re, l4_re, l4_re, l5_re, l5_re, l1_re],
+            lines=[l1_re, l2_re, l2_re, l3_re, l3_re, l5_re, l5_re, l1_re],
+            # lines=[l1_re, l2_re, l2_re, l4_re, l4_re, l5_re, l5_re, l1_re],
             color_r=65,
             color_g=53,
             color_b=240,
@@ -219,10 +226,10 @@ def main():
                 boundary_s,
                 l2_p,
                 l3_p,
-                l4_p,
+                # l4_p,
                 l5_p,
-                d1_p,
-                d2_p,
+                # d1_p,
+                # d2_p,
                 s1_p,
                 s2_p,
                 s3_p,
