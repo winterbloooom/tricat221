@@ -1,15 +1,43 @@
 goal_range: 1.5
 
-angle_alpha : 1.5
-rotate_angle_range : [-80, 80]
+angle_alpha : 1.7
+rotate_angle_range : [-180, 180]
 servo_range : [70, 120]
 
-kp_distance : 10
+# kp_distance : 10
 ki_distance : 0
 kd_distance : 0
 
-thruster_max : 1750
-thruster_min : 1700
+thruster_max : 1800
+thruster_min : 1750
 
 controller : 0
 filter_queue_size : 5
+
+map_dd : {
+  map_00_lat : 35.0693468,
+  map_00_lon : 128.5789093,
+  map_00_alt : 49.0
+  }
+
+waypoint_List: {
+  waypoints:
+  [ 
+    [35.069481592976622, 128.57889197025276, 49.0], #left bottm
+    [35.069618508613225, 128.57887159855932, 49.0], #mid up
+    # [35.069481592976622, 128.57889197025276, 49.0],
+    [35.069464319011999, 128.57896821820279, 49.0], #right bottom 
+    [35.069558500130611, 128.57893036813357, 49.0], #right up
+    [35.0693811, 128.5789538, 49.0] # startpoint ours
+  ],
+  }
+
+kp_servo : 0.4
+ki_servo : 0.0 # max 0.05?
+kd_servo : 0.1
+
+kp_distance : 40
+
+thruster_power : 1850
+
+min_power : 1600

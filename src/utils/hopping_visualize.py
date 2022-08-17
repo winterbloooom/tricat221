@@ -12,7 +12,7 @@ import utils.visualizer as visual
 
 def visualize(hc):
     """hc: hopping class"""
-    ids = list(range(0, 30))
+    ids = list(range(0, 100))
 
     boat = visual.text_rviz(
         name="boat",

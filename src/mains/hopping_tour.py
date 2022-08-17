@@ -211,11 +211,11 @@ class Hopping:
         self.thruster_pub.publish(int(self.u_thruster))
 
     def print_state(self, visualize=False):
-        if self.cnt < 5:
-            self.cnt += 1
-            return
-        else:
-            self.cnt = 0
+        # if self.cnt < 5:
+        #     self.cnt += 1
+        #     return
+        # else:
+        #     self.cnt = 0
 
         if self.waypoint_idx > len(self.waypoints):
             return
@@ -277,6 +277,7 @@ def main():
         else:
             hopping.trajectory.append([hopping.boat_x, hopping.boat_y])
             if hopping.arrival_check():
+                # TODO rotate heading
                 hopping.set_next_goal()  # 목적지에 도착했음 -> 다음 목적지로 변경
                 print("\n##### Arrived Current Goal. Set next goal #####\n")
 

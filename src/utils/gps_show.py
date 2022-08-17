@@ -33,6 +33,9 @@ s3 = [35.0696016, 128.5786953, 49.0]
 s4 = [35.0696118, 128.578718, 49.0]
 s5 = [35.0693012, 128.5789177, 49.0]
 
+ll1=[35.069464319011999, 128.57896821820279, 49.0] #right bottom 
+ll2=[35.069558500130611, 128.57893036813357, 49.0]
+
 cv2.namedWindow("controller")
 cv2.createTrackbar("x", "controller", 80, 160, lambda x: x)
 cv2.createTrackbar("y", "controller", 80, 160, lambda x: x)
@@ -44,6 +47,7 @@ def gps_fix_callback(msg):
 
 
 def enu_convert(gnss):
+    print(gnss)
     e, n, u = pm.geodetic2enu(gnss[0], gnss[1], gnss[2], origin[0], origin[1], origin[2])
     # print(u)
     return [n, e, u]
@@ -82,6 +86,9 @@ def main():
     print(s3_re)
     print(s4_re)
     print(s5_re)
+
+    ll1_re = enu_convert(ll1)
+    ll2_re = enu_convert(ll2)
 
     l1_gn = geodetic_convert(l1_re)
 
@@ -159,6 +166,12 @@ def main():
         )
         s5_p = visual.point_rviz(
             name="fixed", id=ids.pop(), x=s5_re[0], y=s5_re[1], color_r=255, scale=0.25
+        )
+        ll1_p = visual.point_rviz(
+            name="fixed", id=ids.pop(), x=ll1_re[0], y=ll1_re[1], color_r=255, scale=0.25
+        )
+        ll2_p = visual.point_rviz(
+            name="fixed", id=ids.pop(), x=ll2_re[0], y=ll2_re[1], color_r=255, scale=0.25
         )
         boundary = visual.linelist_rviz(
             name="boundary",
@@ -238,6 +251,8 @@ def main():
                 enu_txt,
                 axis_x,
                 axis_y,
+                ll1_p, 
+                ll2_p
             ]
         )
         visual_rviz_pub.publish(all_markers)

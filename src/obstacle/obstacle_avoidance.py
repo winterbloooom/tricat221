@@ -20,7 +20,7 @@ import datatypes.point_class as pc
 
 
 def ob_filtering(
-    obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range, distance_range, close_dist=2
+    obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range, distance_range, close_dist=4
 ):
     """filter dangerous obstacles among all of them
 
