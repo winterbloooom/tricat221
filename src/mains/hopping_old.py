@@ -2,6 +2,8 @@
 # -*- coding:utf-8 -*-
 
 import math
+import os
+import sys
 
 import numpy as np
 import pymap3d as pm
@@ -10,8 +12,6 @@ from geometry_msgs.msg import Point
 from sensor_msgs.msg import Imu
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
-import os
-import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import utils.visualizer as visual
@@ -48,7 +48,7 @@ class Goal:
         self.way_list_gps = np.empty((0, 3), float)
         for i in range(len(self.waypoints)):
             self.way_list_gps = np.append(self.way_list_gps, np.array([self.waypoints[i]]), axis=0)
-        
+
         self.goal_list = self.get_xy(self.way_list_gps)  # ENU way list
         self.goal_list2 = [[2, 14], [5, 29], [8, 10], [8, 21], [5, 2]]
 
@@ -96,7 +96,7 @@ class Goal:
         self.bearing = data.data
 
     def enu_callback(self, data):
-        self.boat_x = data.x + self.gps_diff[0] # East
+        self.boat_x = data.x + self.gps_diff[0]  # East
         self.boat_y = data.y + self.gps_diff[1]  # North
         # print(data.x, data.y, "->", data.x + self.gps_diff[0], data.y + self.gps_diff[1])
 
@@ -228,24 +228,28 @@ class Goal:
             x=self.boat_x - 0.3,
             y=self.boat_y - 0.3,
         )
-        
+
         traj = visual.points_rviz(name="traj", id=ids.pop(), points=self.trajectory, color_g=255)
 
         boundary = visual.linelist_rviz(
             name="boundary",
             id=ids.pop(),
-            lines=[[0, 0], [0, 33], [0, 33], [10, 33], [10, 33], [10, 0], [10, 0], [0, 0],],
+            lines=[
+                [0, 0],
+                [0, 33],
+                [0, 33],
+                [10, 33],
+                [10, 33],
+                [10, 0],
+                [10, 0],
+                [0, 0],
+            ],
             color_r=65,
             color_g=53,
             color_b=240,
             scale=0.15,
         )
-        all_markers = visual.marker_array_rviz(
-            [
-                boat,
-                traj, boundary
-            ]
-        )
+        all_markers = visual.marker_array_rviz([boat, traj, boundary])
         for idx in range(len(self.goal_list)):
             waypoint = visual.cylinder_rviz(
                 name="waypoints",
@@ -263,7 +267,9 @@ class Goal:
                 id=ids.pop(),
                 x=self.goal_list[idx][0],
                 y=self.goal_list[idx][1],
-                text=str(round(self.goal_list[idx][0], 2)) + ", " + str(round(self.goal_list[idx][1], 2)),
+                text=str(round(self.goal_list[idx][0], 2))
+                + ", "
+                + str(round(self.goal_list[idx][1], 2)),
                 scale=1.2,
             )
             visual.marker_array_append_rviz(all_markers, waypoint_txt)
@@ -279,7 +285,7 @@ class Goal:
                 color_b=245,
             )
             visual.marker_array_append_rviz(all_markers, waypoint)
-            
+
             visual.marker_array_append_rviz(all_markers, waypoint)
             waypoint_txt = visual.text_rviz(
                 name="waypoints",
@@ -291,7 +297,6 @@ class Goal:
             )
             visual.marker_array_append_rviz(all_markers, waypoint_txt)
         self.visual_rviz_pub.publish(all_markers)
-
 
 
 def main():
@@ -307,7 +312,6 @@ def main():
         print(gps_diff, "change diff============")
         rospy.sleep(0.1)
     goal.gps_diff = gps_diff
-
 
     while not rospy.is_shutdown():
         goal.trajectory.append([goal.boat_x, goal.boat_y])
