@@ -475,7 +475,7 @@ class Autonomous:
                 goal_range,
                 angle_range,
                 pcd,
-                boundary_s
+                boundary_s,
             ]
         )
         self.visual_rviz_pub.publish(all_markers)

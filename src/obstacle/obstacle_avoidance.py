@@ -19,7 +19,9 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import datatypes.point_class as pc
 
 
-def ob_filtering(obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range, distance_range, close_dist=2):
+def ob_filtering(
+    obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range, distance_range, close_dist=2
+):
     """filter dangerous obstacles among all of them
 
     Args:
@@ -101,8 +103,7 @@ def ob_filtering(obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range
     out_of_range = set(danger_angles) - all_angles_in_range
     danger_angles = sorted(list(danger_angles - out_of_range))
 
-    
-    if len(danger_angles) >= (angle_range[1] - angle_range[0]) -5 :
+    if len(danger_angles) >= (angle_range[1] - angle_range[0]) - 5:
         # angle_range 넘는 부분은 제외하고 그 안쪽 danger_angles만 남겨둠.
         # 참고 URL: https://appia.tistory.com/101
         most_danger_angles = set(most_danger_angles)

@@ -283,7 +283,7 @@ def test_with_img():
         print(col1.shape)
         print(col2.shape)
         show_img = np.hstack([col1, col2])
-        
+
         cv2.imshow("controller", show_img)
 
         if cv2.waitKey(1) == 27:
