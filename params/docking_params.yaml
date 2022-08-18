@@ -11,13 +11,13 @@ filter_queue_size: 3
 
 thruster_auto: 1800
 thruster_station: 1600
-thruster_rotate: 1550
+thruster_rotate: 1600
 thruster_stop: 1500
-thruster_back: 1450
+thruster_back: 1500
 
 
 # 선수각 방향 회전
-stop_time: 40 # 0.1(10hz) * stop_time 초만큼 멈춤 # 스테이션 앞 도착 후 이만큼 기다렸다가 헤딩 돌림
+stop_time: 20 # 0.1(10hz) * stop_time 초만큼 멈춤 # 스테이션 앞 도착 후 이만큼 기다렸다가 헤딩 돌림
 ref_dir_range: 10 # def
 station_dir: -17 #for main #125 # <- east of fountain #-157 for south # deg
 
@@ -54,10 +54,15 @@ color_range : {
 target_shape: 12 # 3: triangle, 12: cross, 5: circle
 target_color: green # red, green, blue
 
-mark_detect_area: 100 # 최소 이만큼은 되어야 타겟인지 판단 들어감
+docking_enterence: [35.0696005, 128.5788919, 49.0] # temp
+station1: [35.0696088, 128.5788543, 49.0]
+station2: [35.0696215, 128.578882, 49.0]
+station3: [35.0696303, 128.5789104, 49.0]
+
+mark_detect_area: 200 # 최소 이만큼은 되어야 타겟인지 판단 들어감
 target_detect_area: 500 # 최소 이만큼은 되어야 타겟이라고 판단
-target_detect_time: 200 # times
-target_detect_cnt: 100 # times
+target_detect_time: 150 # times
+target_detect_cnt: 70 # times
 
 draw_contour: True
 

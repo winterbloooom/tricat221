@@ -642,7 +642,7 @@ def main():
         docking.servo_pub.publish(u_servo)
         docking.thruster_pub.publish(u_thruster)
 
-        if print_cnt > 10:
+        if print_cnt > 1:
             docking.print_status(error_angle, u_servo, u_thruster)
             print_cnt = 0
         else:
