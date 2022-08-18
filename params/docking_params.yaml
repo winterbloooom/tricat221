@@ -1,15 +1,15 @@
 # 장애물 회피 및 서보, 쓰러스터 제어
 arrival_range: 1 # m
-angle_range: [-80, 80]
+angle_range: [-90, 90]
 span_angle : 15 # deg
-ob_dist_range : 4 # m
+ob_dist_range : 5 # m
 ob_angle_range : [-100, 100] # deg
 
 servo_range: [70, 120]
-angle_alpha: 1.3
-filter_queue_size: 5
+angle_alpha: 1.5
+filter_queue_size: 3
 
-thruster_auto: 1750
+thruster_auto: 1800
 thruster_station: 1600
 thruster_rotate: 1550
 thruster_stop: 1500
@@ -26,42 +26,42 @@ station_dir: -17 #for main #125 # <- east of fountain #-157 for south # deg
 ## 비오는 날 exposure 10
 color_range : {
   red: {
-    color1_lower: 121, #161, #139, #171,
-    color1_upper: 180,
-    color2_lower: 108, #115, #20, #66,
+    color1_lower: 0, # 121, #161, #139, #171,
+    color1_upper: 10, #180,
+    color2_lower: 149, #115, #20, #66,
     color2_upper: 255,
     color3_lower: 0, #161, #0,
     color3_upper: 255
   }, #fix
   green: {
-    color1_lower: 36, #62, #58, #25, 
-    color1_upper: 100, #86, #176, #100,
-    color2_lower: 108, #108, #32, #135, 
+    color1_lower: 52, #62, #58, #25, 
+    color1_upper: 103, #86, #176, #100,
+    color2_lower: 168, #108, #32, #135, 
     color2_upper: 255, #205, #255, 
     color3_lower: 0, #161, #15,
     color3_upper: 250, #255
   }, # FIX
   blue: {
-    color1_lower: 110, #81, #396, #110, #70, #17,
-    color1_upper: 138, #128, # 153, #120, #118, #120,
-    color2_lower: 108, #124, #, 104, #180, #90, #148,
-    color2_upper: 255, #182, #154, #255, #124, #255,
+    color1_lower: 107, #81, #396, #110, #70, #17,
+    color1_upper: 154, #128, # 153, #120, #118, #120,
+    color2_lower: 172, #124, #, 104, #180, #90, #148,
+    color2_upper: 240, #182, #154, #255, #124, #255,
     color3_lower: 0, #228, #0,
     color3_upper: 255
   } #fix
 }
 
 target_shape: 12 # 3: triangle, 12: cross, 5: circle
-target_color: blue # red, green, blue
+target_color: green # red, green, blue
 
-mark_detect_area: 300 # 최소 이만큼은 되어야 타겟인지 판단 들어감
-target_detect_area: 600 # 최소 이만큼은 되어야 타겟이라고 판단
-target_detect_time: 300 # times
+mark_detect_area: 100 # 최소 이만큼은 되어야 타겟인지 판단 들어감
+target_detect_area: 500 # 최소 이만큼은 되어야 타겟이라고 판단
+target_detect_time: 200 # times
 target_detect_cnt: 100 # times
 
 draw_contour: True
 
 
 # 스테이션 진입
-arrival_target_area: 5500 #이만큼 이상 넓이면 도착임
+arrival_target_area: 5000 #이만큼 이상 넓이면 도착임
 pixel_alpha: 500
