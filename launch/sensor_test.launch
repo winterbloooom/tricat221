@@ -2,7 +2,7 @@
 
 <launch>
 	<!-- GPS -->
-	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/220817-170419-hopping-14(try4).bag -l -r 3 --topics /ublox_gps/fix "/>
+	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/2022-08-18-08-55-07.bag -l --topics /ublox_gps/fix "/>
 	<node pkg="tricat221"  type="gps_show.py" name="gnssConverter" respawn="true" output="screen"/>
 	<rosparam command="load" file="$(find tricat221)/params/coordinates.yaml"/>
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" />
@@ -51,7 +51,7 @@
 		<param name="baud_rate" value="115200" />
 	</node>-->
 	<!-- <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
-        <param name="video_device" value="/dev/video2" />
+        <param name="video_device" value="/dev/video0" />
         <param name="autoexposure" value="false" />
         <param name="pixel_format" value="yuyv" />
         <param name="camera_frame_id" value="usb_cam" />
@@ -59,9 +59,9 @@
         
         <param name="image_width" value="640" />
         <param name="image_height" value="480" />
-        <param name="exposure" value="10" />
+        <param name="exposure" value="0" />
         <param name="contrast" value="0" />
-        <param name="saturation" value="100" />
+        <param name="saturation" value="90" />
     </node> -->
 	<!-- <node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>--> -->
 
