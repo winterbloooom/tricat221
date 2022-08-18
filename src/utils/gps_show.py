@@ -33,7 +33,7 @@ s3 = [35.0696016, 128.5786953, 49.0]
 s4 = [35.0696118, 128.578718, 49.0]
 s5 = [35.0693012, 128.5789177, 49.0]
 
-ll1 = [35.069464319011999, 128.57896821820279, 49.0]  # right bottom
+ll1 = [35.069657964817701, 128.5787989131625, 49.0]  # right bottom
 ll2 = [35.069558500130611, 128.57893036813357, 49.0]
 
 cv2.namedWindow("controller")
@@ -47,7 +47,6 @@ def gps_fix_callback(msg):
 
 
 def enu_convert(gnss):
-    print(gnss)
     e, n, u = pm.geodetic2enu(gnss[0], gnss[1], gnss[2], origin[0], origin[1], origin[2])
     # print(u)
     return [n, e, u]
@@ -81,13 +80,9 @@ def main():
     s3_re = enu_convert(s3)
     s4_re = enu_convert(s4)
     s5_re = enu_convert(s5)
-    print(s1_re)
-    print(s2_re)
-    print(s3_re)
-    print(s4_re)
-    print(s5_re)
 
     ll1_re = enu_convert(ll1)
+    print(ll1_re)
     ll2_re = enu_convert(ll2)
 
     l1_gn = geodetic_convert(l1_re)
@@ -168,7 +163,7 @@ def main():
             name="fixed", id=ids.pop(), x=s5_re[0], y=s5_re[1], color_r=255, scale=0.25
         )
         ll1_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=ll1_re[0], y=ll1_re[1], color_r=255, scale=0.25
+            name="fixed", id=ids.pop(), x=ll1_re[0], y=ll1_re[1], color_b=255, scale=0.5
         )
         ll2_p = visual.point_rviz(
             name="fixed", id=ids.pop(), x=ll2_re[0], y=ll2_re[1], color_r=255, scale=0.25
