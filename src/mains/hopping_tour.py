@@ -157,7 +157,6 @@ class Hopping:
         self.goal_x = self.remained_waypoints[self.waypoint_idx][0]
         self.goal_y = self.remained_waypoints[self.waypoint_idx][1]
 
-        
         while abs(self.error_angle) > 10:
             self.calc_error_angle()
             u_servo = self.calc_servo_value()

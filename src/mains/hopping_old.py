@@ -254,7 +254,12 @@ class Goal:
             color_b=240,
             scale=0.15,
         )
-        all_markers = visual.marker_array_rviz([boat, traj, ])
+        all_markers = visual.marker_array_rviz(
+            [
+                boat,
+                traj,
+            ]
+        )
         for idx in range(len(self.goal_list)):
             waypoint = visual.cylinder_rviz(
                 name="waypoints",
@@ -305,12 +310,10 @@ class Goal:
 
     def rotate_heading(self, error_angle):
         print("=" * 500)
-        u_angle = (-error_angle) * 1.2 # 조절 상수 곱해 감도 조절  # 왼쪽이 더 큰 값을 가져야 하므로
+        u_angle = (-error_angle) * 1.2  # 조절 상수 곱해 감도 조절  # 왼쪽이 더 큰 값을 가져야 하므로
 
         # degree에서 servo로 mapping
-        u_servo = (u_angle - (-80)) * (120 - 70) / (
-            80 - (-80)
-        ) + 70
+        u_servo = (u_angle - (-80)) * (120 - 70) / (80 - (-80)) + 70
 
         # 중앙값 근처는 전부 중앙값으로 publish
         servo_middle = 95
