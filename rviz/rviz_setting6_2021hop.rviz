@@ -60,7 +60,6 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         boat: true
-        boundary: true
         traj: true
         waypoints: true
       Queue Size: 100
@@ -93,25 +92,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 43.29741287231445
+      Distance: 43.811161041259766
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 10.40025520324707
-        Y: 17.116411209106445
-        Z: 0.24590426683425903
+        X: -1.2682430744171143
+        Y: 14.374218940734863
+        Z: 0.09250731766223907
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0010000000474974513
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 1.519796371459961
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.150026798248291
+      Yaw: 3.3800272941589355
     Saved:
       - Class: rviz/Orbit
         Distance: 20
