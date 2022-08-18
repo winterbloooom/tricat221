@@ -30,7 +30,7 @@ class Goal:
         self.boat_x = 0.0
         self.boat_y = 0.0
         self.trajectory = []  # 지금껏 이동한 궤적
-        self.gps_diff = [0, 0]
+        self.gps_diff = [-3, -6]
 
         rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback)
         rospy.Subscriber("/heading", Float64, self.heading_callback)
@@ -50,7 +50,7 @@ class Goal:
             self.way_list_gps = np.append(self.way_list_gps, np.array([self.waypoints[i]]), axis=0)
 
         self.goal_list = self.get_xy(self.way_list_gps)  # ENU way list
-        self.goal_list2 = [[2, 14], [5, 29], [8, 10], [8, 21], [5, 2]]
+        # self.goal_list2 = [[2, 14], [5, 29], [8, 10], [8, 21], [5, 2]]
 
         self.goal_x = self.goal_list[0][0]
         self.goal_y = self.goal_list[0][1]
@@ -97,7 +97,9 @@ class Goal:
 
     def enu_callback(self, data):
         self.boat_x = data.x + self.gps_diff[0]  # East
+        # self.boat_x = data.x
         self.boat_y = data.y + self.gps_diff[1]  # North
+        # self.boat_y = data.y
         # print(data.x, data.y, "->", data.x + self.gps_diff[0], data.y + self.gps_diff[1])
 
     def OPTIMAL_DIRECTION(self, b):
@@ -154,9 +156,12 @@ class Goal:
         self.dist_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
 
         if self.dist_to_goal <= self.goal_range:
-            for _ in range(15):
+            for _ in range(8):
                 self.thruster_pub.publish(1600)
                 rospy.sleep(0.1)
+            while abs(self.OPTIMAL_DIRECTION(self.bearing)) > 10:
+                self.rotate_heading(self.OPTIMAL_DIRECTION(self.bearing))
+                print(self.OPTIMAL_DIRECTION(self.bearing))
             return True
         else:
             return False
@@ -249,7 +254,7 @@ class Goal:
             color_b=240,
             scale=0.15,
         )
-        all_markers = visual.marker_array_rviz([boat, traj, boundary])
+        all_markers = visual.marker_array_rviz([boat, traj, ])
         for idx in range(len(self.goal_list)):
             waypoint = visual.cylinder_rviz(
                 name="waypoints",
@@ -273,30 +278,53 @@ class Goal:
                 scale=1.2,
             )
             visual.marker_array_append_rviz(all_markers, waypoint_txt)
-        for idx in range(len(self.goal_list2)):
-            waypoint = visual.cylinder_rviz(
-                name="waypoints",
-                id=ids.pop(),
-                x=self.goal_list2[idx][0],
-                y=self.goal_list2[idx][1],
-                scale=self.goal_range * 2,
-                color_r=66,
-                color_g=135,
-                color_b=245,
-            )
-            visual.marker_array_append_rviz(all_markers, waypoint)
+        # for idx in range(len(self.goal_list2)):
+        #     waypoint = visual.cylinder_rviz(
+        #         name="waypoints",
+        #         id=ids.pop(),
+        #         x=self.goal_list2[idx][0],
+        #         y=self.goal_list2[idx][1],
+        #         scale=self.goal_range * 2,
+        #         color_r=66,
+        #         color_g=135,
+        #         color_b=245,
+        #     )
+        #     visual.marker_array_append_rviz(all_markers, waypoint)
 
-            visual.marker_array_append_rviz(all_markers, waypoint)
-            waypoint_txt = visual.text_rviz(
-                name="waypoints",
-                id=ids.pop(),
-                x=self.goal_list2[idx][0],
-                y=self.goal_list2[idx][1],
-                text=str(self.goal_list2[idx][0]) + ", " + str(self.goal_list2[idx][1]),
-                scale=1.2,
-            )
-            visual.marker_array_append_rviz(all_markers, waypoint_txt)
+        #     visual.marker_array_append_rviz(all_markers, waypoint)
+        #     waypoint_txt = visual.text_rviz(
+        #         name="waypoints",
+        #         id=ids.pop(),
+        #         x=self.goal_list2[idx][0],
+        #         y=self.goal_list2[idx][1],
+        #         text=str(self.goal_list2[idx][0]) + ", " + str(self.goal_list2[idx][1]),
+        #         scale=1.2,
+        #     )
+        #     visual.marker_array_append_rviz(all_markers, waypoint_txt)
         self.visual_rviz_pub.publish(all_markers)
+
+    def rotate_heading(self, error_angle):
+        print("=" * 500)
+        u_angle = (-error_angle) * 1.2 # 조절 상수 곱해 감도 조절  # 왼쪽이 더 큰 값을 가져야 하므로
+
+        # degree에서 servo로 mapping
+        u_servo = (u_angle - (-80)) * (120 - 70) / (
+            80 - (-80)
+        ) + 70
+
+        # 중앙값 근처는 전부 중앙값으로 publish
+        servo_middle = 95
+        if servo_middle - 2 <= u_servo <= servo_middle + 2:
+            u_servo = servo_middle
+
+        # servo motor 제어 가능 범위 내부에 머무르도록 함
+        if u_servo > 120:
+            u_servo = 120
+        elif u_servo < 70:
+            u_servo = 70
+
+        self.thruster_pub.publish(1550)
+        self.Servo_pub.publish(int(u_servo))
 
 
 def main():
@@ -306,12 +334,12 @@ def main():
 
     rate = rospy.Rate(10)
 
-    for _ in range(5):
-        # start_point = [goal.boat_x, goal.boat_y] # (ex) [3, 4]
-        gps_diff = [5 - goal.boat_x, 2 - goal.boat_y]
-        print(gps_diff, "change diff============")
-        rospy.sleep(0.1)
-    goal.gps_diff = gps_diff
+    # for _ in range(5):
+    #     # start_point = [goal.boat_x, goal.boat_y] # (ex) [3, 4]
+    #     gps_diff = [0 - goal.boat_x,  - goal.boat_y]
+    #     print(gps_diff, "change diff============")
+    #     rospy.sleep(0.1)
+    # goal.gps_diff = gps_diff
 
     while not rospy.is_shutdown():
         goal.trajectory.append([goal.boat_x, goal.boat_y])

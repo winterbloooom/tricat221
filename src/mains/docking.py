@@ -94,6 +94,7 @@ class Docking:
             self.station_dir, self.waypoints[1:]
         )
         self.trajectory = []
+        self.diff = [0, 0]
 
         # data
         self.psi = 0  # 자북과 선수 사이 각
@@ -140,7 +141,7 @@ class Docking:
         self.ob_dist_range = rospy.get_param("ob_dist_range")
 
         # current status
-        self.state = 0
+        self.state = 1
         # 0: 장애물 회피
         # 1: 스테이션1로 이동 중
         # 2: 스테이션2로 이동 중
@@ -152,7 +153,7 @@ class Docking:
         # self.target = {"area": 0, "center_col": 0} # [area, center_col(pixel)] # TODO 딕셔너리로 한꺼번에 바꾸자
         self.target = []  # [area, center_col(pixel)] # TODO 처음에 0, 0으로 줬었는데 []로 하면 에러나는지 확인
         self.target_found = False
-        self.next_to_visit = 0
+        self.next_to_visit = 1
         # state 시작을 1로할거면 1로  # 다음에 방문해야 할 스테이션 번호(state5가 false일 경우 처리하려고 만들어둠)
         self.filter_queue = [0] * self.filter_queue_size
 
@@ -180,8 +181,8 @@ class Docking:
         self.psi = msg.data  # [degree]
 
     def boat_position_callback(self, msg):
-        self.boat_y = msg.x
-        self.boat_x = msg.y
+        self.boat_y = msg.x + self.diff[1]
+        self.boat_x = msg.y + self.diff[0]
 
     def obstacle_callback(self, msg):
         self.obstacles = (
