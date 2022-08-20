@@ -80,6 +80,7 @@ class Autonomous:
         self.obstacles = []  # 장애물 전체
         self.inrange_obstacles = []  # 탐지 범위 내 장애물
         self.danger_angles = []  # 장애물이 존재하는 각도 리스트
+        self.diff = [0, 0]
 
         # pre-setting
         self.arrival_check()  # 다음 목표까지 남은 거리
@@ -126,8 +127,8 @@ class Autonomous:
             * ENU좌표계로 변환되어 입력을 받는데, ENU좌표계와 x, y축이 반대임
             * 따라서 Point.x, Point.y가 각각 y, x가 됨
         """
-        self.boat_y = msg.x
-        self.boat_x = msg.y
+        self.boat_y = msg.x + self.diff[1]
+        self.boat_x = msg.y + self.diff[0]
 
     def obstacle_callback(self, msg):
         """lidar_converter에서 받아온 장애물 정보 저장
@@ -181,6 +182,7 @@ class Autonomous:
         """
         # show in terminal
         print("")
+        print("({:>4.2f}, {:>4.2f})".format(self.boat_x, self.boat_y))
         print("Obstacle  : {:2d} / {:2d}".format(len(self.inrange_obstacles), len(self.obstacles)))
 
         psi_goal_dir_str = "[   | * ]" if self.psi_goal > 0 else "[ * |   ]"
@@ -456,6 +458,14 @@ class Autonomous:
                 pcd.append([x, y])
         pcd = visual.points_rviz(name="pcd", id=14, points=pcd, color_r=255, scale=0.08)
 
+        boat = visual.text_rviz(
+            name="boat",
+            id=ids.pop(),
+            text="({:>4.2f}, {:>4.2f})".format(self.boat_x, self.boat_y),
+            x=self.boat_x - 0.3,
+            y=self.boat_y - 0.3,
+        )
+
         all_markers = visual.marker_array_rviz(
             [
                 danger_angles,
@@ -475,7 +485,7 @@ class Autonomous:
                 goal_range,
                 angle_range,
                 pcd,
-                boundary_s,
+                boat,
             ]
         )
         self.visual_rviz_pub.publish(all_markers)

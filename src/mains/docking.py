@@ -94,7 +94,7 @@ class Docking:
             self.station_dir, self.waypoints[1:]
         )
         self.trajectory = []
-        self.diff = [0, 0]
+        self.diff = [-1, 0]
 
         # data
         self.psi = 0  # 자북과 선수 사이 각
@@ -141,7 +141,7 @@ class Docking:
         self.ob_dist_range = rospy.get_param("ob_dist_range")
 
         # current status
-        self.state = 1
+        self.state = 5
         # 0: 장애물 회피
         # 1: 스테이션1로 이동 중
         # 2: 스테이션2로 이동 중
@@ -167,15 +167,15 @@ class Docking:
         # cv2.createTrackbar("color2 max", "controller", self.color_range[1][1], 255, lambda x: x)
         # cv2.createTrackbar("color3 min", "controller", self.color_range[0][2], 255, lambda x: x)
         # cv2.createTrackbar("color3 max", "controller", self.color_range[1][2], 255, lambda x: x)
-        cv2.createTrackbar(
-            "mark_detect_area", "controller", self.mark_detect_area, 3000, lambda x: x
-        )
-        cv2.createTrackbar(
-            "target_detect_area", "controller", self.target_detect_area, 3000, lambda x: x
-        )
-        cv2.createTrackbar(
-            "arrival_target_area", "controller", self.arrival_target_area, 8000, lambda x: x
-        )
+        # cv2.createTrackbar(
+        #     "mark_detect_area", "controller", self.mark_detect_area, 3000, lambda x: x
+        # )
+        # cv2.createTrackbar(
+        #     "target_detect_area", "controller", self.target_detect_area, 3000, lambda x: x
+        # )
+        # cv2.createTrackbar(
+        #     "arrival_target_area", "controller", self.arrival_target_area, 8000, lambda x: x
+        # )
 
     def heading_callback(self, msg):
         self.psi = msg.data  # [degree]
@@ -204,9 +204,9 @@ class Docking:
         # self.color_range[1][1] = cv2.getTrackbarPos("color2 max", "controller")
         # self.color_range[0][2] = cv2.getTrackbarPos("color3 min", "controller")
         # self.color_range[1][2] = cv2.getTrackbarPos("color3 max", "controller")
-        self.mark_detect_area = cv2.getTrackbarPos("mark_detect_area", "controller")
-        self.target_detect_area = cv2.getTrackbarPos("target_detect_area", "controller")
-        self.arrival_target_area = cv2.getTrackbarPos("arrival_target_area", "controller")
+        # self.mark_detect_area = cv2.getTrackbarPos("mark_detect_area", "controller")
+        # self.target_detect_area = cv2.getTrackbarPos("target_detect_area", "controller")
+        # self.arrival_target_area = cv2.getTrackbarPos("arrival_target_area", "controller")
 
     def is_all_connected(self):
         """make sure all subscribers(nodes) are connected to this node
@@ -354,6 +354,7 @@ class Docking:
             "End",
         ]
         print("")
+        print("({:>4.2f}, {:>4.2f})".format(self.boat_x, self.boat_y))
         print("State: # {} - {}".format(str(self.state), state_str[self.state]))
         print("")
 
@@ -612,8 +613,17 @@ def main():
             #     error_angle = dock_control.pixel_to_degree(
             #         docking.target, docking.pixel_alpha, docking.angle_range
             #     )  # 양수면 오른쪽으로 가야 함
+            if len(docking.target) == 0:
+                station_idx = 3
+            else:
+                if docking.target[1] < 215:
+                    station_idx = 3
+                elif docking.target[1] > 420:
+                    station_idx = 1
+                else:
+                    station_idx = 2
 
-            station_idx = docking.next_to_visit - 1  # TODO 0으로 오류나는 경우는 없는지?
+            # station_idx = docking.next_to_visit - 1  # TODO 0으로 오류나는 경우는 없는지?
             projected_point = dock_control.project_boat_to_station_vec(
                 docking.waypoints,
                 docking.station_vec_ends,

@@ -3,7 +3,7 @@ ob_dist_range : 5 # m
 ob_angle_range : [-100, 100] #[-100, 100] # deg
 rotate_angle_range : [-90, 90] #deg
 servo_range : [70, 120]
-thruster_speed : 1880
+thruster_speed : 1825
 span_angle : 15 # deg
 filter_queue_size : 3
 angle_alpha : 1.5

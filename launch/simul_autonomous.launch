@@ -6,7 +6,7 @@
 	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter"/>
 	<node pkg="tricat221" type="autonomous.py" name="autonomous" output="screen"/>
 
-	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/220817-142344-auto-13(try2,2번접촉).bag -l -r 1 --topics /imu/mag /scan /ublox_gps/fix"/>
+	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/220819-104706-auto-03(try,충돌)(short).bag -l -r 0.7 --topics /imu/mag /scan /ublox_gps/fix"/>
 
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" />
 	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/> -->
