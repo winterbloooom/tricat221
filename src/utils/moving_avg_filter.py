@@ -10,6 +10,8 @@ import rospy
 from sensor_msgs.msg import MagneticField
 from std_msgs.msg import Header
 
+# TODO 삭제할까
+
 
 class IMU_MAF:
     def __init__(self):
@@ -22,7 +24,6 @@ class IMU_MAF:
         self.x_prev = []
         self.y_prev = []
         self.z_prev = []
-        # self.record = [["time_sec"], ["time_nsec"], ["raw_x"], ["raw_y"], ["raw_z"], ["f_x"], ["f_y"], ["f_z"]]
         self.record = [[], [], [], [], [], [], [], []]
         self.n = 10
         self.output_msg = MagneticField()

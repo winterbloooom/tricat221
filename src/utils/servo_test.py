@@ -10,11 +10,9 @@ import rospy
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-from geometry_msgs.msg import Point
-from std_msgs.msg import Float64, UInt16
+from std_msgs.msg import UInt16
 
-import utils.filtering as filtering
-
+# TODO 삭제할까?
 
 class ServoTest:
     def __init__(self):
@@ -97,13 +95,7 @@ if __name__ == "__main__":
         )
         print("Angle -> Servo")
         print("{:<5}    {:<5}".format(st.error_angle, u_servo))
-
-        # u_servo_f = filtering.moving_avg_filter(u_servo)
-        # print("Angle -> Servo -> Filter")
-        # print("{:<5}    {:<5}    {:<6}".format(st.error_angle, u_servo, u_servo_f))
-
         print("")
 
         st.servo_pub.publish(u_servo)
-        # st.thruster_pub.publish(1600)
         rate.sleep()

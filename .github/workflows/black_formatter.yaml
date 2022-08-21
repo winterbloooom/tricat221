@@ -15,12 +15,12 @@ jobs:
       - name: Black Formatter Check
         uses: lgeiger/black-action@v1.0.1
         with:
-          args: . --config ./pyproject.toml --verbose # --diff --color
+          args: . --config ./pyproject.toml --verbose
 
       - name: isort Check
         uses: isort/isort-action@master
         with:
-          configuration: --settings-path ./pyproject.toml --verbose # --diff
+          configuration: --settings-path ./pyproject.toml --verbose
 
       - name: Check for modified files
         id: git-check

@@ -3,14 +3,15 @@
 <!--bag and pub-->
 <launch>
 	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true"/>
-	<node pkg="tricat221" type="hopping_tour.py" name="hopping" respawn="true" output="screen"/>
+	<!-- <node pkg="tricat221" type="hopping_tour.py" name="hopping" respawn="true" output="screen"/> -->
+	<node pkg="tricat221" type="hopping_old.py" name="hopping" respawn="true" output="screen"/>
 	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter" respawn="true"/>
 
-	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/etc/rosbag/220818-112852-hopping-32(try,완주).bag -l -r 3 --topics /imu/data /imu/mag /ublox_gps/fix"/>
+	<node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/data/rosbag/final-220817-181154-hopping-17.bag -l --topics /imu/data /imu/mag /ublox_gps/fix"/>
 
 	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/> -->
-	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" />
-	<!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting6_2021hop.rviz" /> -->
+	<!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" /> -->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting6_2021hop.rviz" />
 	
 	
 	<!--PARAMETER-->

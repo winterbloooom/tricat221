@@ -10,9 +10,13 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import utils.visualizer as visual
 
 
-def visualize(dc, forward_point=[], inrange_obstacles=[], danger_angels=[]):
+def visualize(dc, forward_point, inrange_obstacles, danger_angels):
     """
-    dc: 도킹 클래스
+    Args:
+        * dc (class): Docking 클래스
+        * forward_point (list): follow-up point [x, y]
+        * inrange_obstacles
+        * danger_angels
     """
     ids = list(range(0, 100))
 

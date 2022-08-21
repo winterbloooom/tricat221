@@ -1,255 +1,238 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+"""Visualize GPS data with Rviz
+
+Attributes:
+    origin (list): 
+        Origin coordinate(latitude, longitude, altitude) data with DD.MMMMMMM format. 
+        Get this data from /tricat221/params/coordinates.ymal (e.g. [35.0695517, 128.5788733, 49.0] )
+    enu_coord (list):
+        Coordinate data list to subscribe and save current location with ENU coordinate system. 
+        Raw GNSS data is converted using "origin".
+    geodetic_coord (list):
+        Coordinate data list to subscribe and save current location with DD.MMMMMMM format.
+
+Note:
+    * Launch file: /tricat221/launch/sensor_test.launch의 <!-- gps_show --> 부분 주석 해제 후 사용
+    * What can you do with this module
+        * Draw the boundary
+        * Draw lacation and watch coordinates of each points in ENU or geodetic(dd.mmmm)
+        * Pick specific point
+        * Draw current input data
+"""
+
 import os
 import sys
-
 import cv2
 import pymap3d as pm
 import rospy
-from geometry_msgs.msg import Point
 from sensor_msgs.msg import NavSatFix
+from visualization_msgs.msg import MarkerArray
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-from visualization_msgs.msg import MarkerArray
-
 import utils.visualizer as visual
+import utils.gnss_converter as gc
 
+
+# set module attributes
 origin = rospy.get_param("origin")
-boat = [0, 0, 0]
-msg_in = [0, 0, 0]
-l1 = [35.0693468, 128.5789093, 49.0]  # [35.069359, 128.5789284, 49.0]
-l2 = [35.069376, 128.5785790028, 49.0]  # $[35.0696497, 128.5788137, 49.0]
-l3 = [35.0696129, 128.5788164, 49.0]  # , [35.069664, 128.5788595, 49.0]
-l4 = [35.0696782, 128.5789079, 49.0]
-l5 = [35.0696362, 128.578901, 49.0]  # , [35.0693834, 128.5790279, 49.0]
-d1 = [35.0696287, 128.578821, 49.0]
-d2 = [35.0696596, 128.5789156, 49.0]
+enu_coord = [0, 0, 0] # N(x), E(y), U(z)
+geodetic_coord = [0, 0, 0]
 
-s1 = [35.0692817, 128.578876, 49.0]
-s2 = [35.0695906, 128.5786724, 49.0]
-s3 = [35.0696016, 128.5786953, 49.0]
-s4 = [35.0696118, 128.578718, 49.0]
-s5 = [35.0693012, 128.5789177, 49.0]
-
-ll1 = [35.069657964817701, 128.5787989131625, 49.0]  # right bottom
-ll2 = [35.069558500130611, 128.57893036813357, 49.0]
-
+# set trackbar
 cv2.namedWindow("controller")
-cv2.createTrackbar("x", "controller", 80, 160, lambda x: x)
-cv2.createTrackbar("y", "controller", 80, 160, lambda x: x)
-
+cv2.createTrackbar("x", "controller", 100, 200, lambda x: x)
+cv2.createTrackbar("y", "controller", 100, 200, lambda x: x)
 
 def gps_fix_callback(msg):
-    msg_in[0], msg_in[1], msg_in[2] = msg.latitude, msg.longitude, msg.altitude
-    boat[0], boat[1], boat[2] = enu_convert([msg.latitude, msg.longitude, msg.altitude])
+    """Subscribe geodetic coordinate from GPS and save both geodetic and ENU coordinates
 
-
-def enu_convert(gnss):
-    e, n, u = pm.geodetic2enu(gnss[0], gnss[1], gnss[2], origin[0], origin[1], origin[2])
-    # print(u)
-    return [n, e, u]
-
+    Args:
+        msg (NavSatFix): geodetic coordinate including latitude, longitude and altitude value
+    """
+    geodetic_coord[0], geodetic_coord[1], geodetic_coord[2] = msg.latitude, msg.longitude, msg.altitude
+    enu_coord[0], enu_coord[1], enu_coord[2] = gc.enu_convert(geodetic_coord)
 
 def geodetic_convert(enu):
-    e = enu[1]
-    n = enu[0]
-    u = enu[2]
-    lat, lon, alt = pm.enu2geodetic(e, n, u, origin[0], origin[1], origin[2])
-    return [lat, lon, alt]
+    """Convert ENU coordinate to geodetic(dd.mmmmmm) system
+    
+    Args:
+        enu (list): 
+            ENU coordinate to convert to DD.MMMMMM format. 
+            U(Up, latitude) value is not accurate, just arbitrarily picked (ususally 0 or -1)
+
+    Returns:
+        lat, lon, alt (float): Converted latitude, longitude, altitude coordinate from "origin"
+    """
+    lat, lon, alt = pm.enu2geodetic(enu[0], enu[1], enu[2], origin[0], origin[1], origin[2])
+    return lat, lon, alt
 
 
 def get_trackbar_pos():
-    x = (cv2.getTrackbarPos("x", "controller") - 80) / 2.0
-    y = (cv2.getTrackbarPos("y", "controller") - 80) / 2.0
+    """Get trackbar position to set the point location(x, y)(ENU)
+
+    Returns:
+        x, y (float): the location of picked point
+    
+    Notes:
+        * scale = 0.5 meters
+        * the trackbar value "0" means "-50 meters", "100" means "0 meters", and "200" means "+50 meters"
+    """
+    x = (cv2.getTrackbarPos("x", "controller") - 100) / 2.0
+    y = (cv2.getTrackbarPos("y", "controller") - 100) / 2.0
     return x, y
 
 
 def main():
-    l1_re = enu_convert(l1)
-    l2_re = enu_convert(l2)
-    l3_re = enu_convert(l3)
-    l4_re = enu_convert(l4)
-    l5_re = enu_convert(l5)
-    d1_re = enu_convert(d1)
-    d2_re = enu_convert(d2)
+    # set boundary vertices
+    boundary1_geo = rospy.get_param("boundary1")
+    boundary2_geo = rospy.get_param("boundary2")
+    boundary1_enu = []
+    boundary2_enu = []
+    for p in boundary1_geo:
+        boundary1_enu.append(list(gc.enu_convert(p)))
+    for p in boundary2_geo:
+        boundary2_enu.append(list(gc.enu_convert(p)))
 
-    s1_re = enu_convert(s1)
-    s2_re = enu_convert(s2)
-    s3_re = enu_convert(s3)
-    s4_re = enu_convert(s4)
-    s5_re = enu_convert(s5)
-
-    ll1_re = enu_convert(ll1)
-    print(ll1_re)
-    ll2_re = enu_convert(ll2)
-
-    l1_gn = geodetic_convert(l1_re)
-
-    rospy.init_node("gnss_converter", anonymous=True)
-
+    # ros nodes
+    rospy.init_node("gnss_show", anonymous=True)
     rospy.Subscriber("/ublox_gps/fix", NavSatFix, gps_fix_callback, queue_size=1)
-    pub = rospy.Publisher("enu_position", Point, queue_size=10)
     visual_rviz_pub = rospy.Publisher("/visual_rviz", MarkerArray, queue_size=0)
 
-    rate = rospy.Rate(10)  # 10Hz
-
-    enu_position = Point()
-
     while not rospy.is_shutdown():
+        # get & set picked point info
         x, y = get_trackbar_pos()
-        picked_gn = geodetic_convert([x, y, -0.1])
+        picked_geo = geodetic_convert([x, y, 0])
 
-        enu_position.x = boat[0]
-        enu_position.y = boat[1]
-        pub.publish(enu_position)
-
-        # visualize
+        # rviz
         ids = list(range(0, 100))
 
-        picked_point = visual.point_rviz(
-            name="point", id=ids.pop(), x=x, y=y, color_b=255, color_g=255, scale=0.3
-        )
-        picked_point_txt = visual.text_rviz(
-            name="point",
-            id=ids.pop(),
-            x=x,
-            y=y,
-            text="({}, {})\n({}, {})".format(x, y, picked_gn[0], picked_gn[1]),
-        )
-
-        l1_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=l1_re[0], y=l1_re[1], color_g=255, scale=0.25
-        )
-        l1_txt = visual.text_rviz(
-            name="fixed",
-            id=ids.pop(),
-            x=l1_re[0],
-            y=l1_re[1],
-            text="Origin\n({}, {})\n({}, {})".format(l1[0], l1[1], l1_re[0], l1_re[1]),
-        )
-        l2_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=l2_re[0], y=l2_re[1], color_r=255, scale=0.25
-        )
-        l3_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=l3_re[0], y=l3_re[1], color_r=255, scale=0.25
-        )
-        # l4_p = visual.point_rviz(
-        #     name="fixed", id=ids.pop(), x=l4_re[0], y=l4_re[1], color_r=255, scale=0.25
-        # )
-        l5_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=l5_re[0], y=l5_re[1], color_r=255, scale=0.25
-        )
-        # d1_p = visual.point_rviz(
-        #     name="fixed", id=ids.pop(), x=d1_re[0], y=d1_re[1], color_r=255, scale=0.25
-        # )
-        # d2_p = visual.point_rviz(
-        #     name="fixed", id=ids.pop(), x=d2_re[0], y=d2_re[1], color_r=255, scale=0.25
-        # )
-        s1_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=s1_re[0], y=s1_re[1], color_r=255, scale=0.25
-        )
-        s2_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=s2_re[0], y=s2_re[1], color_r=255, scale=0.25
-        )
-        s3_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=s3_re[0], y=s3_re[1], color_r=255, scale=0.25
-        )
-        s4_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=s4_re[0], y=s4_re[1], color_r=255, scale=0.25
-        )
-        s5_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=s5_re[0], y=s5_re[1], color_r=255, scale=0.25
-        )
-        ll1_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=ll1_re[0], y=ll1_re[1], color_b=255, scale=0.5
-        )
-        ll2_p = visual.point_rviz(
-            name="fixed", id=ids.pop(), x=ll2_re[0], y=ll2_re[1], color_r=255, scale=0.25
-        )
-        boundary = visual.linelist_rviz(
+        boundary1 = visual.linelist_rviz(
             name="boundary",
             id=ids.pop(),
-            lines=[l1_re, l2_re, l2_re, l3_re, l3_re, l5_re, l5_re, l1_re],
-            # lines=[l1_re, l2_re, l2_re, l4_re, l4_re, l5_re, l5_re, l1_re],
-            color_r=65,
-            color_g=53,
-            color_b=240,
-            scale=0.15,
-        )
-        boundary_s = visual.linelist_rviz(
-            name="boundary",
-            id=ids.pop(),
-            lines=[s1_re, s2_re, s2_re, s3_re, s3_re, s4_re, s4_re, s5_re, s5_re, s1_re],
-            color_r=65,
-            color_g=53,
-            color_b=240,
+            lines=[
+                boundary1_enu[0], boundary1_enu[1], 
+                boundary1_enu[1], boundary1_enu[2],
+                boundary1_enu[2], boundary1_enu[3],
+                boundary1_enu[3], boundary1_enu[0]
+                ],
+            color_r=59,
+            color_g=196,
+            color_b=212,
             scale=0.15,
         )
 
-        # station = visual.linelist_rviz(
-        #     name="boundary",
-        #     id=ids.pop(),
-        #     lines=[d1_re, l2_re, d2_re, l4_re],
-        #     color_r=65,
-        #     color_g=53,
-        #     color_b=240,
-        #     scale=0.25,
-        # )
+        boundary2 = visual.linelist_rviz(
+            name="boundary",
+            id=ids.pop(),
+            lines=[
+                boundary2_enu[0], boundary2_enu[1], 
+                boundary2_enu[1], boundary2_enu[2],
+                boundary2_enu[2], boundary2_enu[3],
+                boundary2_enu[3], boundary2_enu[0]
+                ],
+            color_r=59,
+            color_g=196,
+            color_b=212,
+            scale=0.15,
+        )
 
         axis_x = visual.linelist_rviz(
             name="axis",
             id=ids.pop(),
-            lines=[[-40, 0], [40, 0]],
+            lines=[[-50, 0], [50, 0]],
             color_r=255,
             scale=0.1,
         )
         axis_y = visual.linelist_rviz(
             name="axis",
             id=ids.pop(),
-            lines=[[0, -40], [0, 40]],
+            lines=[[0, -50], [0, 50]],
             color_g=255,
             scale=0.1,
         )
 
-        new_point = visual.point_rviz(name="point", id=0, x=boat[0], y=boat[1], color_g=255)
-
-        enu_txt = visual.text_rviz(
+        current_point = visual.point_rviz(name="point", id=0, x=enu_coord[0], y=enu_coord[1], color_g=255, scale=0.5)
+        current_txt = visual.text_rviz(
             name="point",
             id=ids.pop(),
-            x=boat[0],
-            y=boat[1],
-            text="({:>4.2f}, {:>4.2f})\n({}, {})".format(boat[0], boat[1], msg_in[0], msg_in[1]),
+            x=enu_coord[0],
+            y=enu_coord[1],
+            text="({:>4.2f}, {:>4.2f})\n({}, {})".format(enu_coord[0], enu_coord[1], geodetic_coord[0], geodetic_coord[1]),
+            scale=0.8
+        )
+
+        picked_point = visual.point_rviz(
+            name="point", id=ids.pop(), x=x, y=y, color_r=255, color_g=255, color_b=255, scale=0.5
+        )
+        picked_point_txt = visual.text_rviz(
+            name="point",
+            id=ids.pop(),
+            x=x,
+            y=y,
+            text="({:>4.2f}, {:>4.2f})\n({}, {})".format(x, y, picked_geo[0], picked_geo[1]),
+            scale=0.8
         )
 
         all_markers = visual.marker_array_rviz(
             [
+                boundary1,
+                boundary2,
+                current_point,
+                current_txt,
                 picked_point,
                 picked_point_txt,
-                l1_p,
-                l1_txt,
-                boundary,
-                boundary_s,
-                l2_p,
-                l3_p,
-                # l4_p,
-                l5_p,
-                # d1_p,
-                # d2_p,
-                s1_p,
-                s2_p,
-                s3_p,
-                s4_p,
-                s5_p,
-                new_point,
-                enu_txt,
                 axis_x,
                 axis_y,
-                ll1_p,
-                ll2_p,
             ]
         )
+
+        for idx in range(len(boundary1_enu)):
+            point = visual.point_rviz(
+                name="waypoints",
+                id=ids.pop(),
+                x=boundary1_enu[idx][0],
+                y=boundary1_enu[idx][1],
+                color_r=78,
+                color_g=166,
+                color_b=58,
+                scale=0.3,
+            )
+            visual.marker_array_append_rviz(all_markers, point)
+
+            point_txt = visual.text_rviz(
+                name="waypoints",
+                id=ids.pop(),
+                x=boundary1_enu[idx][0],
+                y=boundary1_enu[idx][1],
+                text="({:>6.4f}, {:>6.4f})\n({:>8.6f}, {:>9.6f})".format(boundary1_enu[idx][0], boundary1_enu[idx][1], boundary1_geo[idx][0], boundary1_geo[idx][1]),
+            )
+            visual.marker_array_append_rviz(all_markers, point_txt)
+
+        for idx in range(len(boundary2_enu)):
+            point = visual.point_rviz(
+                name="waypoints",
+                id=ids.pop(),
+                x=boundary2_enu[idx][0],
+                y=boundary2_enu[idx][1],
+                color_r=78,
+                color_g=166,
+                color_b=58,
+                scale=0.3,
+            )
+            visual.marker_array_append_rviz(all_markers, point)
+
+            point_txt = visual.text_rviz(
+                name="waypoints",
+                id=ids.pop(),
+                x=boundary2_enu[idx][0],
+                y=boundary2_enu[idx][1],
+                text="({:>6.4f}, {:>6.4f})\n({:>8.6f}, {:>9.6f})".format(boundary2_enu[idx][0], boundary2_enu[idx][1], boundary2_geo[idx][0], boundary2_geo[idx][1]),
+            )
+            visual.marker_array_append_rviz(all_markers, point_txt)
+
         visual_rviz_pub.publish(all_markers)
 
         if cv2.waitKey(1) == 27:
@@ -258,7 +241,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except rospy.ROSInterruptException:
-        pass
+    main()

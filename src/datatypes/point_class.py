@@ -3,6 +3,7 @@
 
 from math import atan2, cos, degrees, pow, sin, sqrt
 
+# TODO 정리
 
 class Point:
     def __init__(self, x, y):
@@ -26,7 +27,7 @@ class Point:
     def __mul__(self, c):
         return Point(self.x * c, self.y * c)
 
-    def __div__(self, d):  # __truediv__
+    def __div__(self, d):
         return Point(self.x / d, self.y / d) if d != 0 else Point(0, 0)
 
     def __eq__(self, p2):
@@ -56,31 +57,11 @@ class Point:
     def cross(self, p):
         return self.x * p.y - self.y * p.x
 
-    def normalized_point(self):  # TODO : 값 직접 계산해 확인해볼 것
+    def normalized_point(self):
         return (self / self.dist_from_origin()) if self.dist_from_origin() > 0.0 else self
 
-    def reflected(self, normal_vec):  # TODO : 값 직접 계산해 확인해볼 것
+    def reflected(self, normal_vec):
         return self - normal_vec * (2 * normal_vec.dot(self))
 
-    def perpendicular(self):  # TODO : 무슨 뜻인지?
+    def perpendicular(self):
         return Point(-self.y, self.x)
-
-
-# class Point:
-#     def __init__(self, idx, r, phi):
-#         self.idx = idx
-#         self.x, self.y = self.polar_to_cartesian(r, phi)
-#         self.phi = phi
-
-#     def polar_to_cartesian(self, r, phi):
-#         # r: 반지름 / phi: 각도
-#         # 극좌표계를 직교좌표계로 변환함
-#         return Point(r * math.cos(phi), r * math.sin(phi))  # TODO : 문법 맞나 확인
-
-#     def distance_between_points(self, p):
-#         return math.sqrt(math.pow(self.x - p.x, 2) + math.pow(self.y - p.y, 2))
-
-#     def __add__(self, x, y):
-#         self.idx = -1
-#         self.phi = 0
-#         self.x
