@@ -15,9 +15,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import datatypes.point_class as pc
 
 
-def ob_filtering(
-    obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range, distance_range, close_dist=4
-):
+def ob_filtering(obstacles, dist_to_goal, angle_to_goal, span_angle, angle_range, distance_range, close_dist=4):
     """filter dangerous obstacles among all of them
 
     Args:
@@ -34,7 +32,7 @@ def ob_filtering(
         danger_angles (list): list of danger angles (type=int)
 
     Note:
-        * 범위(거리, 각도) 내에 있는 장애물만 걸러내 저장하고, 그 장애물이 위치한 각도도 따로 저장함. 
+        * 범위(거리, 각도) 내에 있는 장애물만 걸러내 저장하고, 그 장애물이 위치한 각도도 따로 저장함.
             * 목표점이 장애물보다 앞쪽에 있다면(거리가 더 가깝다면) 회피 필요 없이 바로 목표점으로 전진하면 되니까 그 경우에는 저장하지 않음
             * 거의 모든 각도에 장애물이 있다면 "close_dist" 안쪽의 것들만 저장함
 
@@ -52,7 +50,7 @@ def ob_filtering(
     """
     # initialize data
     inrange_obstacles = []
-    danger_angles = [] # 장애물이 있는 각도
+    danger_angles = []  # 장애물이 있는 각도
     close_obstacles = []
     most_danger_angles = []
 
@@ -76,12 +74,12 @@ def ob_filtering(
         begin = pc.Point(ob.begin.x, ob.begin.y)
         end = pc.Point(ob.begin.x, ob.begin.y)
         boat = pc.Point(0, 0)
-        a = end - begin # begin -> end vecter
-        b = boat - begin # begin -> boat vector
+        a = end - begin  # begin -> end vecter
+        b = boat - begin  # begin -> boat vector
         if a.dist_squared_from_origin() != 0:
             projection = begin + a * (a.dot(b) / a.dist_squared_from_origin())
         else:
-            projection = begin # if length of obstacle is 0, calculate distance using begining point
+            projection = begin  # if length of obstacle is 0, calculate distance using begining point
         dist_to_ob = (boat - projection).dist_from_origin()
 
         # if obstacle is behind the goal, don't consider
@@ -89,9 +87,7 @@ def ob_filtering(
             continue
 
         # if an obstacle is in distance & angle range, save it
-        if (angle_range[0] <= begin_ang <= angle_range[1]) or (
-            angle_range[0] <= end_ang <= angle_range[1]
-        ):
+        if (angle_range[0] <= begin_ang <= angle_range[1]) or (angle_range[0] <= end_ang <= angle_range[1]):
             if dist_to_ob <= distance_range:
                 inrange_obstacles.append(ob)  # [begin.x, begin.y, end.x, end.y]
                 danger_angles.extend(list(range(begin_ang, end_ang + 1)))
@@ -101,10 +97,10 @@ def ob_filtering(
                 most_danger_angles.extend(list(range(begin_ang, end_ang + 1)))
 
     # arrange final results
-    danger_angles = set(danger_angles) # delete overlapped data
-    all_angles_in_range = set(range(angle_range[0], angle_range[1] + 1)) # all angles in 'set' datatype
+    danger_angles = set(danger_angles)  # delete overlapped data
+    all_angles_in_range = set(range(angle_range[0], angle_range[1] + 1))  # all angles in 'set' datatype
     out_of_range = set(danger_angles) - all_angles_in_range
-    danger_angles = sorted(list(danger_angles - out_of_range)) # don't count angles outside of angel_range
+    danger_angles = sorted(list(danger_angles - out_of_range))  # don't count angles outside of angel_range
 
     # arrange final results (if almost angles are covered with obstacles)
     if len(danger_angles) >= (angle_range[1] - angle_range[0]) - 5:
@@ -147,11 +143,11 @@ def calc_desire_angle(danger_angles, angle_to_goal, angle_range):
 
     # 범위 내 모두 장애물임. 목표점 방향으로 각도 선택
     if len(danger_angles) == (angle_range[1] - angle_range[0]) + 1:
-        return angle_to_goal 
+        return angle_to_goal
 
     # 범위 내 장애물 없음. 목표점 방향으로 각도 선택
     elif len(danger_angles) == 0:
-        return angle_to_goal  
+        return angle_to_goal
 
     # 범위 내 일부가 장애물로 가려짐. 안전한 각도 선정
     else:
@@ -164,7 +160,7 @@ def calc_desire_angle(danger_angles, angle_to_goal, angle_range):
                 # 범위 모두 장애물이면 목표점 방향으로 각도 선택
                 if angle == angle_range[1] + 1:
                     return angle_to_goal
-                continue 
+                continue
 
             # 지금 탐색하고 있는 각도가 goal까지 가장 가깝거나 heading을 가장 덜 돌린다면 값을 갱신
             if (delta_goal > abs(angle_to_goal - angle)) or (

@@ -10,6 +10,7 @@ Notes:
 # TODO 해석해서 다시 코딩하기
 
 import math
+
 import rospy
 from sensor_msgs.msg import MagneticField
 from std_msgs.msg import Float64
@@ -185,6 +186,7 @@ def main():
         heading.pub.publish(round(heading_angle, 2))
 
         rate.sleep()
+
 
 if __name__ == "__main__":
     main()

@@ -30,9 +30,7 @@ def visualize(dc, forward_point, inrange_obstacles, danger_angels):
     )
 
     # 지나온 경로
-    traj = visual.points_rviz(
-        name="traj", id=ids.pop(), points=dc.trajectory, color_g=180, scale=0.05
-    )
+    traj = visual.points_rviz(name="traj", id=ids.pop(), points=dc.trajectory, color_g=180, scale=0.05)
 
     # heading
     psi_arrow_end_x = 2 * math.cos(math.radians(dc.psi)) + dc.boat_x
@@ -48,9 +46,7 @@ def visualize(dc, forward_point, inrange_obstacles, danger_angels):
         color_g=119,
         color_b=252,
     )
-    psi_txt = visual.text_rviz(
-        name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
-    )
+    psi_txt = visual.text_rviz(name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y)
 
     # psi_desire (가고 싶은 각도)
     desire_arrow_end_x = 3 * math.cos(math.radians(dc.psi_desire)) + dc.boat_x
@@ -85,12 +81,8 @@ def visualize(dc, forward_point, inrange_obstacles, danger_angels):
         color_g=255,
         scale=0.1,
     )
-    axis_x_txt = visual.text_rviz(
-        name="axis", id=ids.pop(), text="X", x=dc.boat_x + 3.3, y=dc.boat_y
-    )
-    axis_y_txt = visual.text_rviz(
-        name="axis", id=ids.pop(), text="Y", x=dc.boat_x, y=dc.boat_y + 3.3
-    )
+    axis_x_txt = visual.text_rviz(name="axis", id=ids.pop(), text="X", x=dc.boat_x + 3.3, y=dc.boat_y)
+    axis_y_txt = visual.text_rviz(name="axis", id=ids.pop(), text="Y", x=dc.boat_x, y=dc.boat_y + 3.3)
 
     # 도킹 시작 지점
     enterence = visual.cylinder_rviz(
@@ -165,18 +157,10 @@ def visualize(dc, forward_point, inrange_obstacles, danger_angels):
     # 장애물, 탐색 범위
     if dc.state == 0:
         # angle_range (탐색 범위)
-        min_angle_x = (
-            dc.ob_dist_range * math.cos(math.radians(dc.psi + dc.ob_angle_range[0])) + dc.boat_x
-        )
-        min_angle_y = (
-            dc.ob_dist_range * math.sin(math.radians(dc.psi + dc.ob_angle_range[0])) + dc.boat_y
-        )
-        max_angle_x = (
-            dc.ob_dist_range * math.cos(math.radians(dc.psi + dc.ob_angle_range[1])) + dc.boat_x
-        )
-        max_angle_y = (
-            dc.ob_dist_range * math.sin(math.radians(dc.psi + dc.ob_angle_range[1])) + dc.boat_y
-        )
+        min_angle_x = dc.ob_dist_range * math.cos(math.radians(dc.psi + dc.ob_angle_range[0])) + dc.boat_x
+        min_angle_y = dc.ob_dist_range * math.sin(math.radians(dc.psi + dc.ob_angle_range[0])) + dc.boat_y
+        max_angle_x = dc.ob_dist_range * math.cos(math.radians(dc.psi + dc.ob_angle_range[1])) + dc.boat_x
+        max_angle_y = dc.ob_dist_range * math.sin(math.radians(dc.psi + dc.ob_angle_range[1])) + dc.boat_y
         angle_range = visual.linelist_rviz(
             name="angle_range",
             id=ids.pop(),
@@ -216,25 +200,13 @@ def visualize(dc, forward_point, inrange_obstacles, danger_angels):
         inrange_obs_world = []
         for ob in inrange_obstacles:
             begin_x = (
-                dc.boat_x
-                + (-ob.begin.x) * math.cos(math.radians(dc.psi))
-                - ob.begin.y * math.sin(math.radians(dc.psi))
+                dc.boat_x + (-ob.begin.x) * math.cos(math.radians(dc.psi)) - ob.begin.y * math.sin(math.radians(dc.psi))
             )
             begin_y = (
-                dc.boat_y
-                + (-ob.begin.x) * math.sin(math.radians(dc.psi))
-                + ob.begin.y * math.cos(math.radians(dc.psi))
+                dc.boat_y + (-ob.begin.x) * math.sin(math.radians(dc.psi)) + ob.begin.y * math.cos(math.radians(dc.psi))
             )
-            end_x = (
-                dc.boat_x
-                + (-ob.end.x) * math.cos(math.radians(dc.psi))
-                - ob.end.y * math.sin(math.radians(dc.psi))
-            )
-            end_y = (
-                dc.boat_y
-                + (-ob.end.x) * math.sin(math.radians(dc.psi))
-                + ob.end.y * math.cos(math.radians(dc.psi))
-            )
+            end_x = dc.boat_x + (-ob.end.x) * math.cos(math.radians(dc.psi)) - ob.end.y * math.sin(math.radians(dc.psi))
+            end_y = dc.boat_y + (-ob.end.x) * math.sin(math.radians(dc.psi)) + ob.end.y * math.cos(math.radians(dc.psi))
             inrange_obs_world.append([begin_x, begin_y])
             inrange_obs_world.append([end_x, end_y])
         obstacles = visual.linelist_rviz(

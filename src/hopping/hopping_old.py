@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+import copy
 import math
 import os
 import sys
-import copy
 
 import numpy as np
 import pymap3d as pm
@@ -15,8 +15,8 @@ from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import utils.visualizer as visual
 import utils.gnss_converter as gc
+import utils.visualizer as visual
 
 
 def RAD2DEG(x):
@@ -53,7 +53,7 @@ class Goal:
 
         self.waypoint_idx = 1  # 지금 향하고 있는 waypoint 번호
         self.remained_waypoints = {}
-        self.gnss_waypoint = rospy.get_param("waypoint_List/waypoints") # geodetic
+        self.gnss_waypoint = rospy.get_param("waypoint_List/waypoints")  # geodetic
         for idx, waypoint in enumerate(self.gnss_waypoint):
             n, e, _ = gc.enu_convert(waypoint)  # ENU 좌표계로 변환
             self.remained_waypoints[idx + 1] = [e, n]
@@ -251,9 +251,7 @@ class Goal:
             color_g=119,
             color_b=252,
         )
-        psi_txt = visual.text_rviz(
-            name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
-        )
+        psi_txt = visual.text_rviz(name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y)
 
         # desire_arrow_end_x = 3 * math.sin(math.radians(self.t)) + self.boat_x
         # desire_arrow_end_y = 3 * math.cos(math.radians(self.t)) + self.boat_y
@@ -296,22 +294,22 @@ class Goal:
             color_g=255,
             scale=0.1,
         )
-        axis_x_txt = visual.text_rviz(
-            name="axis", id=ids.pop(), text="X", x=self.boat_x + 3.3, y=self.boat_y
-        )
-        axis_y_txt = visual.text_rviz(
-            name="axis", id=ids.pop(), text="Y", x=self.boat_x, y=self.boat_y + 3.3
-        )
+        axis_x_txt = visual.text_rviz(name="axis", id=ids.pop(), text="X", x=self.boat_x + 3.3, y=self.boat_y)
+        axis_y_txt = visual.text_rviz(name="axis", id=ids.pop(), text="Y", x=self.boat_x, y=self.boat_y + 3.3)
 
         boundary = visual.linelist_rviz(
             name="boundary",
             id=ids.pop(),
             lines=[
-                self.boundary[0], self.boundary[1], 
-                self.boundary[1], self.boundary[2],
-                self.boundary[2], self.boundary[3],
-                self.boundary[3], self.boundary[0]
-                ],
+                self.boundary[0],
+                self.boundary[1],
+                self.boundary[1],
+                self.boundary[2],
+                self.boundary[2],
+                self.boundary[3],
+                self.boundary[3],
+                self.boundary[0],
+            ],
             color_r=59,
             color_g=196,
             color_b=212,
@@ -447,7 +445,7 @@ def main():
             goal.trajectory.append([goal.boat_x, goal.boat_y])
             if goal.arrival_check():
                 goal.set_next_point()
-                
+
             goal.errSum = 0.0  # error initialization
             goal.control_publisher()
             goal.prt()

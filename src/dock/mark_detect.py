@@ -217,9 +217,7 @@ def draw_mark(window, contour, vertices, area, box_points, center_point, is_targ
     window = cv2.drawContours(window, [contour], -1, color, -1)  # 도형 그리기
     window = cv2.rectangle(window, box_points[0], box_points[1], color, 1)  # 박스 그리기
     window = cv2.circle(window, (center_point[1], center_point[0]), 2, (0, 0, 255), 2)  # 중심점 그리기
-    window = cv2.putText(
-        window, caption, box_points[0], cv2.FONT_HERSHEY_PLAIN, 1, color, 1, cv2.LINE_AA
-    )  # 글씨 쓰기
+    window = cv2.putText(window, caption, box_points[0], cv2.FONT_HERSHEY_PLAIN, 1, color, 1, cv2.LINE_AA)  # 글씨 쓰기
 
     return window  # 잘 안그려지면 window 새로 할당하기
 
@@ -261,9 +259,7 @@ def test_with_img():
     cv2.createTrackbar("color2 max", "controller", color_range[1][1], 255, lambda x: x)
     cv2.createTrackbar("color3 min", "controller", color_range[0][2], 255, lambda x: x)
     cv2.createTrackbar("color3 max", "controller", color_range[1][2], 255, lambda x: x)
-    cv2.createTrackbar(
-        "mark_detect_area", "controller", mark_detect_area, 100, lambda x: x
-    )  # X 100 하기
+    cv2.createTrackbar("mark_detect_area", "controller", mark_detect_area, 100, lambda x: x)  # X 100 하기
 
     while True:
         cv2.moveWindow("controller", 0, 0)

@@ -37,9 +37,7 @@ def visualize(hc):
         color_g=119,
         color_b=252,
     )
-    psi_txt = visual.text_rviz(
-        name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
-    )
+    psi_txt = visual.text_rviz(name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y)
 
     desire_arrow_end_x = 3 * math.cos(math.radians(hc.psi_desire)) + hc.boat_x
     desire_arrow_end_y = 3 * math.sin(math.radians(hc.psi_desire)) + hc.boat_y
@@ -82,12 +80,8 @@ def visualize(hc):
         color_g=255,
         scale=0.1,
     )
-    axis_x_txt = visual.text_rviz(
-        name="axis", id=ids.pop(), text="X", x=hc.boat_x + 3.3, y=hc.boat_y
-    )
-    axis_y_txt = visual.text_rviz(
-        name="axis", id=ids.pop(), text="Y", x=hc.boat_x, y=hc.boat_y + 3.3
-    )
+    axis_x_txt = visual.text_rviz(name="axis", id=ids.pop(), text="X", x=hc.boat_x + 3.3, y=hc.boat_y)
+    axis_y_txt = visual.text_rviz(name="axis", id=ids.pop(), text="Y", x=hc.boat_x, y=hc.boat_y + 3.3)
 
     all_markers = visual.marker_array_rviz(
         [

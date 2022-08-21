@@ -2,7 +2,9 @@
 # -*- coding:utf-8 -*-
 
 from math import pow, sqrt
+
 # TODO 정리
+
 
 class Point_Set:
     def __init__(self):
@@ -31,7 +33,7 @@ class Point_Set:
         b = p - self.begin
 
         if a.dist_squared_from_origin() != 0:
-            projection =  self.begin + a * (a.dot(b) / a.dist_squared_from_origin())
+            projection = self.begin + a * (a.dot(b) / a.dist_squared_from_origin())
         else:
             projection = self.begin
         return projection

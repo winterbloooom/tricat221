@@ -79,9 +79,7 @@ def main():
     rospy.init_node("MAF_IMU", anonymous=True)
     rate = rospy.Rate(10)
     imu_maf = IMU_MAF()
-    file_name = (
-        "/home/lumos/tricat/src/tricat221/src/" + time.strftime("%Y-%m-%d_%H-%M-%S") + ".csv"
-    )
+    file_name = "/home/lumos/tricat/src/tricat221/src/" + time.strftime("%Y-%m-%d_%H-%M-%S") + ".csv"
     rospy.sleep(1)
 
     while not rospy.is_shutdown():

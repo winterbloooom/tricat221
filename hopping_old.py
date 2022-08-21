@@ -277,9 +277,7 @@ class Goal:
                 id=ids.pop(),
                 x=self.goal_list[idx][0],
                 y=self.goal_list[idx][1],
-                text=str(round(self.goal_list[idx][0], 2))
-                + ", "
-                + str(round(self.goal_list[idx][1], 2)),
+                text=str(round(self.goal_list[idx][0], 2)) + ", " + str(round(self.goal_list[idx][1], 2)),
                 scale=1.2,
             )
             visual.marker_array_append_rviz(all_markers, waypoint_txt)

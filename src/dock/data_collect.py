@@ -22,15 +22,13 @@ import dock.mark_detect as mark_detect
 import utils.visualizer as visual
 from utils.tools import *
 
-
 # TODO 정리
+
 
 class Data_Collection:
     def __init__(self):
         rospy.Subscriber("/ublox_gps/fix", NavSatFix, self.gps_fix_callback, queue_size=1)
-        self.heading_sub = rospy.Subscriber(
-            "/heading", Float64, self.heading_callback, queue_size=1
-        )
+        self.heading_sub = rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
         self.cam_sub = rospy.Subscriber("/usb_cam/image_raw", Image, self.cam_callback)
         self.bridge = CvBridge()
 
@@ -115,15 +113,9 @@ class Data_Collection:
         cv2.createTrackbar("color2 max", "controller", self.color_range[1][1], 255, lambda x: x)
         cv2.createTrackbar("color3 min", "controller", self.color_range[0][2], 255, lambda x: x)
         cv2.createTrackbar("color3 max", "controller", self.color_range[1][2], 255, lambda x: x)
-        cv2.createTrackbar(
-            "mark_detect_area", "controller", self.mark_detect_area, 3000, lambda x: x
-        )
-        cv2.createTrackbar(
-            "target_detect_area", "controller", self.target_detect_area, 3000, lambda x: x
-        )
-        cv2.createTrackbar(
-            "arrival_target_area", "controller", self.arrival_target_area, 8000, lambda x: x
-        )
+        cv2.createTrackbar("mark_detect_area", "controller", self.mark_detect_area, 3000, lambda x: x)
+        cv2.createTrackbar("target_detect_area", "controller", self.target_detect_area, 3000, lambda x: x)
+        cv2.createTrackbar("arrival_target_area", "controller", self.arrival_target_area, 8000, lambda x: x)
 
     def gps_fix_callback(self, msg):
         self.lat, self.lon = msg.latitude, msg.longitude
@@ -234,9 +226,7 @@ class Data_Collection:
         print("GPS : lat - {} / lon - {}".format(self.lat, self.lon))
         print("")
 
-        print(
-            "State: {}  (0: Rotating Heading\t1: Detecting Target\t2: Docking)".format(self.state)
-        )
+        print("State: {}  (0: Rotating Heading\t1: Detecting Target\t2: Docking)".format(self.state))
         print("Shape: {}  (0: Triangle\t\t1: Rectangle\t\t2: Circle)".format(self.target_shape))
         print("")
 
@@ -253,9 +243,7 @@ class Data_Collection:
             else:
                 print("Stopping Boat >>>>>>> {:>2d} / {:>2d}".format(self.stop_cnt, self.stop_time))
             print("")
-            print(
-                "{:^8} - {:^8} = {:^8} {:->9} {:^5}".format("desire", "psi", "error", ">", "servo")
-            )
+            print("{:^8} - {:^8} = {:^8} {:->9} {:^5}".format("desire", "psi", "error", ">", "servo"))
             print(
                 "{:>8.2f} - {:>8.2f} = {:>8.2f} {:>9} {:>5} ( {:^5} )".format(
                     self.psi_desire,
@@ -269,18 +257,10 @@ class Data_Collection:
 
         elif self.state == 1:
             print("Target Shape : {} | Color : {}".format(self.target_shape, self.target_color))
-            print(
-                "Waiting..... : {:>4d} / {:>4d}".format(
-                    self.mark_check_cnt, self.target_detect_time
-                )
-            )
-            print(
-                "Target Cnt   : {:>4d} / {:>4d}".format(self.detected_cnt, self.target_detect_cnt)
-            )
+            print("Waiting..... : {:>4d} / {:>4d}".format(self.mark_check_cnt, self.target_detect_time))
+            print("Target Cnt   : {:>4d} / {:>4d}".format(self.detected_cnt, self.target_detect_cnt))
             print("")
-            print(
-                "Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area)
-            )
+            print("Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area))
             print(
                 "Target Area  : {:>7,.0f} / {:>7,.0f} ({:>5})".format(
                     self.target[0] if len(self.target) != 0 else 0,
@@ -297,9 +277,7 @@ class Data_Collection:
 
         elif self.state == 2:
             error_angle_dir_str = "( Right )" if error_angle > 0 else "(  Left )"
-            print(
-                "Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area)
-            )
+            print("Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area))
             print(
                 "Target Area  : {:>7,.0f} / {:>7,.0f} ({:>5})".format(
                     self.target[0] if len(self.target) != 0 else 0,
@@ -314,11 +292,7 @@ class Data_Collection:
                 )
             )
             print("")
-            print(
-                "mid - {:>6} = {:>11} {:->4} {:>11}".format(
-                    "target", "error_pixel", ">", "error_angle"
-                )
-            )
+            print("mid - {:>6} = {:>11} {:->4} {:>11}".format("target", "error_pixel", ">", "error_angle"))
             print(
                 "320 - {:>6,.0f} = {:>11,.0f} {:>4} {:>11.2f} {:>9}".format(
                     self.target[1] if len(self.target) != 0 else 0,
@@ -361,9 +335,7 @@ class Data_Collection:
             color_g=119,
             color_b=252,
         )
-        psi_txt = visual.text_rviz(
-            name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
-        )
+        psi_txt = visual.text_rviz(name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y)
 
         # psi_desire (가고 싶은 각도)
         desire_arrow_end_x = 3 * math.cos(math.radians(self.psi_desire))
@@ -489,14 +461,14 @@ def main():
                 error_angle = error_angle = dc.station_dir - dc.psi
                 error_angle = rearrange_angle(error_angle)
             else:
-                error_angle = control.pixel_to_degree(
-                    dc.target, dc.pixel_alpha, dc.angle_range
-                )  # 양수면 오른쪽으로 가야 함
+                error_angle = control.pixel_to_degree(dc.target, dc.pixel_alpha, dc.angle_range)  # 양수면 오른쪽으로 가야 함
             u_thruster = dc.thruster_station
 
         dc.psi_desire = rearrange_angle(dc.psi + error_angle)  # 월드좌표계로 '가야 할 각도'를 계산함
 
-        u_servo = control.degree_to_servo(error_angle=error_angle, angle_alpha=dc.angle_alpha, angle_range=dc.angle_range, servo_range=dc.servo_range)
+        u_servo = control.degree_to_servo(
+            error_angle=error_angle, angle_alpha=dc.angle_alpha, angle_range=dc.angle_range, servo_range=dc.servo_range
+        )
 
         dc.servo_pub.publish(u_servo)
         dc.thruster_pub.publish(u_thruster)

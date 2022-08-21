@@ -38,6 +38,7 @@ Notes:
 
 import os
 import sys
+
 import cv2
 import rospy
 from sensor_msgs.msg import LaserScan
@@ -45,9 +46,9 @@ from visualization_msgs.msg import MarkerArray
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
+import utils.visualizer as visual
 from datatypes.point_class import *
 from datatypes.point_set_class import *
-import utils.visualizer as visual
 from tricat221.msg import Obstacle, ObstacleList
 
 
@@ -77,11 +78,19 @@ class Lidar_Converter:
         # trackbar
         if self.controller:
             cv2.namedWindow("controller")
-            cv2.createTrackbar("max_gap_in_set", "controller", rospy.get_param("max_gap_in_set"), 5, lambda x: x)  # X 0.1 meter
+            cv2.createTrackbar(
+                "max_gap_in_set", "controller", rospy.get_param("max_gap_in_set"), 5, lambda x: x
+            )  # X 0.1 meter
             cv2.createTrackbar("point_set_size", "controller", rospy.get_param("point_set_size"), 30, lambda x: x)
-            cv2.createTrackbar("max_dist_to_ps_line", "controller", rospy.get_param("max_dist_to_ps_line"), 5, lambda x: x)  # X 0.1 meter
-            cv2.createTrackbar("min_wall_length", "controller", rospy.get_param("min_wall_length"), 50, lambda x: x)  # X 0.1 meter
-            cv2.createTrackbar("wall_particle_length", "controller", rospy.get_param("wall_particle_length"), 50, lambda x: x)  # X 0.1 meter
+            cv2.createTrackbar(
+                "max_dist_to_ps_line", "controller", rospy.get_param("max_dist_to_ps_line"), 5, lambda x: x
+            )  # X 0.1 meter
+            cv2.createTrackbar(
+                "min_wall_length", "controller", rospy.get_param("min_wall_length"), 50, lambda x: x
+            )  # X 0.1 meter
+            cv2.createTrackbar(
+                "wall_particle_length", "controller", rospy.get_param("wall_particle_length"), 50, lambda x: x
+            )  # X 0.1 meter
 
     def get_trackbar_pos(self):
         """get trackbar positions and set each values"""
@@ -114,7 +123,7 @@ class Lidar_Converter:
                 p = Point.polar_to_cartesian(r, phi)
                 self.input_points.append(p)
             phi += msg.angle_increment
-        
+
         # subscriber와 publisher의 sink를 맞추기 위해 이곳에서 모두 진행
         self.get_trackbar_pos()
         self.process_points()
@@ -133,10 +142,10 @@ class Lidar_Converter:
 
     def group_points(self):
         """Group adjacent raw scanning points
-        
+
         Notes:
             "del point_set"
-                파이썬은 변수 자체가 포인터 역할을 하므로, 
+                파이썬은 변수 자체가 포인터 역할을 하므로,
                 다른 그룹을 만들고자 단순히 이전 point_set의 인스턴스 변수들을 초기화하면
                 이전에 append 되었던 point_set들도 모두 동일한 값으로 바뀜
                 따라서 메모리 확보를 위해 아예 변수 지우고 다시 선언함
@@ -146,10 +155,10 @@ class Lidar_Converter:
         for p in self.input_points:
             if p.dist_btw_points(point_set.end) > self.max_gap_in_set:
                 if point_set.set_size > self.point_set_size:
-                    self.point_sets_list.append(point_set) # set of point groups
-                
-                del point_set # delete previous group instance
-                point_set = Point_Set() # new group
+                    self.point_sets_list.append(point_set)  # set of point groups
+
+                del point_set  # delete previous group instance
+                point_set = Point_Set()  # new group
                 point_set.append_point(p)
             else:
                 point_set.append_point(p)
@@ -167,12 +176,12 @@ class Lidar_Converter:
             ps (Point_Set): querying point set(group)
         """
         max_distance = 0  # 그룹의 첫점 ~ 끝점 이은 직선으로부터 가장 멀리 떨어진 점까지의 거리
-        split_idx = 0 # max_distance를 가지는 점의 그룹 내 인덱스
-        point_idx = 0 # 탐색하고 있는 점의 인덱스
+        split_idx = 0  # max_distance를 가지는 점의 그룹 내 인덱스
+        point_idx = 0  # 탐색하고 있는 점의 인덱스
 
         # find the farthest point from group
         for p in ps.point_set:
-            dist_to_ps_line = ps.dist_to_point(p) # distance from line to point
+            dist_to_ps_line = ps.dist_to_point(p)  # distance from line to point
             # print(p.x, "라인까지 거리", dist_to_ps_line)
             if dist_to_ps_line > max_distance:
                 max_distance = dist_to_ps_line
@@ -182,10 +191,7 @@ class Lidar_Converter:
         # split groups
         if max_distance > self.max_dist_to_ps_line:
             # if two splitted groups would be too small, don't split this
-            if (
-                split_idx < self.point_set_size
-                or (ps.set_size - split_idx) < self.point_set_size
-            ):
+            if split_idx < self.point_set_size or (ps.set_size - split_idx) < self.point_set_size:
                 return
 
             ps1 = Point_Set()
@@ -205,7 +211,7 @@ class Lidar_Converter:
             # print("2번 ps의 첫 점 x", point_sets_list[2].point_set[0].x, "ps 크기 ", len(point_sets_list[2].point_set))
             # print("3번 ps의 첫 점 x", point_sets_list[3].point_set[0].x, "ps 크기 ", len(point_sets_list[3].point_set))
 
-            del self.point_sets_list[self.point_sets_list.index(ps)] # 나눠서 저장한 뒤 원본 그룹 삭제
+            del self.point_sets_list[self.point_sets_list.index(ps)]  # 나눠서 저장한 뒤 원본 그룹 삭제
 
             # print("나눈 후 psl 크기 ", len(point_sets_list))
             # print("0번 ps의 첫 점 x", point_sets_list[0].point_set[0].x, "ps 크기 ", len(point_sets_list[0].point_set))
@@ -219,8 +225,8 @@ class Lidar_Converter:
 
     def classify_groups(self):
         """Classify groups(point sets) as Walls or Buoys
-        
-        If length of group is long, classify as wall and split it into small groups. 
+
+        If length of group is long, classify as wall and split it into small groups.
         Append it to final clustering result list after splitting in "split_wall()" function.
         If not, just append it to final clustering list ("obstacles")
         """
@@ -245,7 +251,7 @@ class Lidar_Converter:
                 del wall_particle
                 wall_particle = Point_Set()
             wall_particle.append_point(p)
-        self.obstacles.append(wall_particle) # last group
+        self.obstacles.append(wall_particle)  # last group
 
     def publish_obstacles(self):
         """Publish clustering results in (x, y) coordinate format"""
@@ -268,24 +274,30 @@ class Lidar_Converter:
         for p in self.input_points:
             input_points.append([p.x, p.y])
         input_points = visual.points_rviz(name="input_points", id=ids.pop(), points=input_points, color_r=255)
-        
-        filtered_points = [] # after delete too small groups after "group_points"
+
+        filtered_points = []  # after delete too small groups after "group_points"
         for ps in self.point_sets_list:
             for p in ps.point_set:
                 filtered_points.append([p.x, p.y])
-        filtered_points = visual.points_rviz(name="filtered_points", id=ids.pop(), points=filtered_points, color_r=235, color_g=128, color_b=52)
+        filtered_points = visual.points_rviz(
+            name="filtered_points", id=ids.pop(), points=filtered_points, color_r=235, color_g=128, color_b=52
+        )
 
         point_set = []  # after "split_group", all groups(point sets)
         for ps in self.point_sets_list:
             point_set.append([ps.begin.x, ps.begin.y])
             point_set.append([ps.end.x, ps.end.y])
-        point_set = visual.linelist_rviz(name="point_set", id=ids.pop(), lines=point_set, color_r=55, color_g=158, color_b=54, scale=0.1)
-        
+        point_set = visual.linelist_rviz(
+            name="point_set", id=ids.pop(), lines=point_set, color_r=55, color_g=158, color_b=54, scale=0.1
+        )
+
         obstacle = []  # after "split_wall", final clustering results
         for ob in self.obstacles:
             obstacle.append([ob.begin.x, ob.begin.y])
             obstacle.append([ob.end.x, ob.end.y])
-        obstacle = visual.linelist_rviz(name="obstacle", id=ids.pop(), lines=obstacle, color_r=10, color_g=81, color_b=204, scale=0.1)
+        obstacle = visual.linelist_rviz(
+            name="obstacle", id=ids.pop(), lines=obstacle, color_r=10, color_g=81, color_b=204, scale=0.1
+        )
 
         all_markers = visual.marker_array_rviz([input_points, filtered_points, point_set, obstacle])
         self.rviz_pub.publish(all_markers)

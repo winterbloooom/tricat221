@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+import math
 import os
 import sys
-import math
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
@@ -23,14 +23,16 @@ def degree_to_servo(error_angle, angle_alpha, angle_range, servo_range):
     u_angle = (-error_angle) * angle_alpha  # 조절 상수 곱해 감도 조절  # 왼쪽이 더 큰 값을 가져야 하므로
 
     # degree에서 servo로 mapping
-    u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (angle_range[1] - angle_range[0]) + servo_range[0]
+    u_servo = (u_angle - angle_range[0]) * (servo_range[1] - servo_range[0]) / (
+        angle_range[1] - angle_range[0]
+    ) + servo_range[0]
 
     # servo motor 제어 가능 범위 내부에 머무르도록 함
     if u_servo > servo_range[1]:
         u_servo = servo_range[1]
     elif u_servo < servo_range[0]:
         u_servo = servo_range[0]
-        
+
     return int(u_servo)
 
 
@@ -100,5 +102,13 @@ def follow_station_dir(station_dir, projection, boat, psi, length=1):
         projection[0] + length * math.cos(math.radians(station_dir)),
         projection[1] + length * math.sin(math.radians(station_dir)),
     ]
-    error_angle = math.degrees(math.atan2(forward_point[1] - boat[1],forward_point[0] - boat[0],))- psi
+    error_angle = (
+        math.degrees(
+            math.atan2(
+                forward_point[1] - boat[1],
+                forward_point[0] - boat[0],
+            )
+        )
+        - psi
+    )
     return error_angle, forward_point

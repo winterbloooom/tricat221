@@ -16,11 +16,11 @@ from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
 
-import datatypes.point_class
-import utils.obstacle_avoidance as oa
-import utils.gnss_converter as gc
-import utils.visualizer as visual
 import control.control_tools as control
+import datatypes.point_class
+import utils.gnss_converter as gc
+import utils.obstacle_avoidance as oa
+import utils.visualizer as visual
 from tricat221.msg import ObstacleList
 from utils.tools import *
 
@@ -31,7 +31,7 @@ class Autonomous:
         self.boat_x, self.boat_y = 0, 0
         self.goal_x, self.goal_y, _ = gc.enu_convert(rospy.get_param("autonomous_goal"))
         self.trajectory = []  # 지금까지 이동한 궤적
-        boundary = rospy.get_param("boundary2") # TODO
+        boundary = rospy.get_param("boundary2")  # TODO
         self.boundary = []
         for p in boundary:
             self.boundary.append(list(gc.enu_convert(p)))
@@ -204,11 +204,7 @@ class Autonomous:
             servo_value_str = ">" * ((self.servo_middle - u_servo) // 5)  # go right
 
         print("")
-        print(
-            "{:^9}   {:^6} - {:^6} = {:^6} {:->9} {:^5}".format(
-                "goal", "desire", "psi", "error", ">", "servo"
-            )
-        )
+        print("{:^9}   {:^6} - {:^6} = {:^6} {:->9} {:^5}".format("goal", "desire", "psi", "error", ">", "servo"))
         print(
             "{:>9}   {:>6.2f} - {:>6.2f} = {:>6.2f} {:>9} {:>5} ( {:^5} )".format(
                 psi_goal_dir_str,
@@ -227,17 +223,21 @@ class Autonomous:
 
     def visualize(self):
         ids = list(range(0, 100))
-        
+
         # 경기장
         boundary = visual.linelist_rviz(
             name="boundary",
             id=ids.pop(),
             lines=[
-                self.boundary[0], self.boundary[1], 
-                self.boundary[1], self.boundary[2],
-                self.boundary[2], self.boundary[3],
-                self.boundary[3], self.boundary[0]
-                ],
+                self.boundary[0],
+                self.boundary[1],
+                self.boundary[1],
+                self.boundary[2],
+                self.boundary[2],
+                self.boundary[3],
+                self.boundary[3],
+                self.boundary[0],
+            ],
             color_r=59,
             color_g=196,
             color_b=212,
@@ -314,9 +314,7 @@ class Autonomous:
         axis_y_txt = visual.text_rviz(name="axis", id=15, text="Y", x=self.boat_x, y=self.boat_y + 3.3)
 
         # 지나온 경로
-        traj = visual.points_rviz(
-            name="traj", id=ids.pop(), points=self.trajectory, color_g=180, scale=0.05
-        )
+        traj = visual.points_rviz(name="traj", id=ids.pop(), points=self.trajectory, color_g=180, scale=0.05)
 
         # heading
         psi_arrow_end_x = 2 * math.cos(math.radians(self.psi)) + self.boat_x
@@ -332,9 +330,7 @@ class Autonomous:
             color_g=119,
             color_b=252,
         )
-        psi_txt = visual.text_rviz(
-            name="psi", id=5, text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
-        )
+        psi_txt = visual.text_rviz(name="psi", id=5, text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y)
 
         # psi_desire (가고 싶은 각도)
         desire_arrow_end_x = 3 * math.cos(math.radians(self.psi_desire)) + self.boat_x
@@ -357,15 +353,13 @@ class Autonomous:
         # danger_angles
         dangers = []
         for angle in self.danger_angles:
-            end_point_x = (
-                self.ob_dist_range * math.cos(math.radians(self.psi + angle)) + self.boat_x
-            )
-            end_point_y = (
-                self.ob_dist_range * math.sin(math.radians(self.psi + angle)) + self.boat_y
-            )
+            end_point_x = self.ob_dist_range * math.cos(math.radians(self.psi + angle)) + self.boat_x
+            end_point_y = self.ob_dist_range * math.sin(math.radians(self.psi + angle)) + self.boat_y
             dangers.append([self.boat_x, self.boat_y])
             dangers.append([end_point_x, end_point_y])
-        danger_angles = visual.linelist_rviz(name="obs", id=ids.pop(), lines=dangers, color_r=217, color_g=217, color_b=43, color_a=100, scale=0.02)
+        danger_angles = visual.linelist_rviz(
+            name="obs", id=ids.pop(), lines=dangers, color_r=217, color_g=217, color_b=43, color_a=100, scale=0.02
+        )
 
         # inrange obstacles
         inrange_obs_world = []  # span 미포함
@@ -392,25 +386,15 @@ class Autonomous:
             )
             inrange_obs_world.append([begin_x, begin_y])
             inrange_obs_world.append([end_x, end_y])
-        obstacles = visual.linelist_rviz(name="obs", id=ids.pop(), lines=inrange_obs_world, color_r=237, color_g=234, color_b=74, scale=0.1)
+        obstacles = visual.linelist_rviz(
+            name="obs", id=ids.pop(), lines=inrange_obs_world, color_r=237, color_g=234, color_b=74, scale=0.1
+        )
 
         # angle_range (탐색 범위)
-        min_angle_x = (
-            self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[0]))
-            + self.boat_x
-        )
-        min_angle_y = (
-            self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[0]))
-            + self.boat_y
-        )
-        max_angle_x = (
-            self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[1]))
-            + self.boat_x
-        )
-        max_angle_y = (
-            self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[1]))
-            + self.boat_y
-        )
+        min_angle_x = self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[0])) + self.boat_x
+        min_angle_y = self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[0])) + self.boat_y
+        max_angle_x = self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[1])) + self.boat_x
+        max_angle_y = self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[1])) + self.boat_y
         angle_range = visual.linelist_rviz(
             name="angle_range",
             id=ids.pop(),
@@ -430,25 +414,32 @@ class Autonomous:
         pcd = []
         if self.show_raw_pcd:
             for p in self.input_points:
-                x = (
-                    self.boat_x
-                    + (-p.x) * math.cos(math.radians(self.psi))
-                    - p.y * math.sin(math.radians(self.psi))
-                )
-                y = (
-                    self.boat_y
-                    + (-p.x) * math.sin(math.radians(self.psi))
-                    + p.y * math.cos(math.radians(self.psi))
-                )
+                x = self.boat_x + (-p.x) * math.cos(math.radians(self.psi)) - p.y * math.sin(math.radians(self.psi))
+                y = self.boat_y + (-p.x) * math.sin(math.radians(self.psi)) + p.y * math.cos(math.radians(self.psi))
                 pcd.append([x, y])
         pcd = visual.points_rviz(name="pcd", id=ids.pop(), points=pcd, color_r=255, scale=0.08)
 
         all_markers = visual.marker_array_rviz(
             [
-                boundary, goal, goal_txt, goal_range,
-                boat_txt, traj, goal_line, axis_x, axis_y, axis_x_txt, axis_y_txt,
-                psi, psi_txt, psi_desire, psi_desire_txt,
-                danger_angles, obstacles, angle_range, pcd,
+                boundary,
+                goal,
+                goal_txt,
+                goal_range,
+                boat_txt,
+                traj,
+                goal_line,
+                axis_x,
+                axis_y,
+                axis_x_txt,
+                axis_y_txt,
+                psi,
+                psi_txt,
+                psi_desire,
+                psi_desire_txt,
+                danger_angles,
+                obstacles,
+                angle_range,
+                pcd,
             ]
         )
         self.visual_rviz_pub.publish(all_markers)
@@ -474,10 +465,7 @@ def main():
             auto.trajectory.append([auto.boat_x, auto.boat_y])  # 이동 경로 추가
 
             # 현재 heading에서 목표로 갈 때 돌려야 할 각도 업데이트
-            auto.psi_goal = (
-                math.degrees(math.atan2(auto.goal_y - auto.boat_y, auto.goal_x - auto.boat_x))
-                - auto.psi
-            )
+            auto.psi_goal = math.degrees(math.atan2(auto.goal_y - auto.boat_y, auto.goal_x - auto.boat_x)) - auto.psi
             auto.psi_goal = rearrange_angle(auto.psi_goal)
 
             # 장애물 탐지. 범위 내에 있는 장애물을 필터링하고, 장애물이 있는 각도 리스트를 만듦
@@ -495,13 +483,18 @@ def main():
                 danger_angles=auto.danger_angles,
                 angle_to_goal=auto.psi_goal,
                 angle_range=auto.ob_angle_range,
-            )  
+            )
 
             # 월드좌표계로 '가야 할 각도'를 계산함
             auto.psi_desire = rearrange_angle(auto.psi + error_angle)
-            
+
             # degree 단위를 servo moter 단위로 변경
-            u_servo = control.degree_to_servo(error_angle=error_angle, angle_alpha=auto.angle_alpha, angle_range=auto.rotate_angle_range, servo_range=auto.servo_range)
+            u_servo = control.degree_to_servo(
+                error_angle=error_angle,
+                angle_alpha=auto.angle_alpha,
+                angle_range=auto.rotate_angle_range,
+                servo_range=auto.servo_range,
+            )
             # u_servo = moving_avg_filter(auto.filter_queue, auto.filter_queue_size, u_servo)
 
             # 제어명령

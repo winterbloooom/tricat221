@@ -11,6 +11,7 @@ import rospy
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
+import visualization.rviz_viewer as rv
 from geometry_msgs.msg import Point, Pose, Vector3
 from sensor_msgs.msg import Imu
 from std_msgs.msg import Float64, UInt16
@@ -18,22 +19,15 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 import datatypes.point_class as pc
 import utils.gnss_converter as gc
-import visualization.rviz_viewer as rv
 from tricat221.msg import Obstacle, ObstacleList
 
 
 class Autonomous:
     def __init__(self):
         ## subscribers
-        self.heading_sub = rospy.Subscriber(
-            "/heading", Float64, self.heading_callback, queue_size=1
-        )
-        self.enu_pos_sub = rospy.Subscriber(
-            "/enu_position", Point, self.boat_position_callback, queue_size=1
-        )
-        self.obstacle_sub = rospy.Subscriber(
-            "/obstacles", ObstacleList, self.obstacle_callback, queue_size=1
-        )
+        self.heading_sub = rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
+        self.enu_pos_sub = rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
+        self.obstacle_sub = rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback, queue_size=1)
         self.yaw_rate_sub = rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback, queue_size=1)
 
         ## publishers
@@ -44,9 +38,7 @@ class Autonomous:
         self.rviz_angles_pub = rospy.Publisher(
             "/angles_rviz", MarkerArray, queue_size=0
         )  # psi, psi_desire, angle_min, angle_max
-        self.rviz_points_pub = rospy.Publisher(
-            "/points_rviz", MarkerArray, queue_size=0
-        )  # boat, obstacle
+        self.rviz_points_pub = rospy.Publisher("/points_rviz", MarkerArray, queue_size=0)  # boat, obstacle
         self.rviz_goal_pub = rospy.Publisher("/goal_rviz", Marker, queue_size=0)  # 목표점
         self.rviz_goal_txt_pub = rospy.Publisher("/goal_txt_rviz", Marker, queue_size=0)  # 목표점
         self.rviz_traj_pub = rospy.Publisher("/traj_rviz", Marker, queue_size=0)  # 지나온 경로\
@@ -61,9 +53,7 @@ class Autonomous:
         self.rviz_goal_txt = rv.RvizMarker("goal_txt", 100, 9, p_scale=0, r=1, g=1, b=1)
         self.rviz_goal_txt.marker.scale.z = 0.5
         self.rviz_goal_txt.marker.pose.position = Point(self.goal_x, self.goal_y, 0)
-        self.rviz_goal_txt.marker.text = (
-            "(" + str(round(self.goal_x, 2)) + ", " + str(round(self.goal_y, 2)) + ")"
-        )
+        self.rviz_goal_txt.marker.text = "(" + str(round(self.goal_x, 2)) + ", " + str(round(self.goal_y, 2)) + ")"
         self.rviz_goal_txt.append_marker_point(self.goal_x, self.goal_y)
 
         ## about position
@@ -78,10 +68,7 @@ class Autonomous:
         self.angle_increment = rospy.get_param("angle_increment")  # 각도 계산할 단위각
         self.span_angle = rospy.get_param("span_angle")
         self.angle_risk = [
-            0
-            for ang in range(
-                self.angle_min, self.angle_max + self.angle_increment, self.angle_increment
-            )
+            0 for ang in range(self.angle_min, self.angle_max + self.angle_increment, self.angle_increment)
         ]
         # 목표각 탐색 범위임. TODO : 수정 필요할 수도!
         self.psi = 0
@@ -178,10 +165,7 @@ class Autonomous:
     def calc_angle_risk(self):
         """각도 위험도 구하기"""
         self.angle_risk = [
-            0
-            for ang in range(
-                self.angle_min, self.angle_max + self.angle_increment, self.angle_increment
-            )
+            0 for ang in range(self.angle_min, self.angle_max + self.angle_increment, self.angle_increment)
         ]
         self.calc_ob_risk()  # (1) 장애물이 존재하는 각도 (2) 지금 배와 가까운 곳에 존재하는 장애물의 각도 등을 기준으로 점수 메기기
         self.calc_goal_risk()  # (3) 목표점에 가까운 각도는 적은 위험 멀면 큰 위험
@@ -204,9 +188,7 @@ class Autonomous:
             if middle_ang < self.angle_min or middle_ang > self.angle_max:
                 continue  # min_angle, max_angle 벗어난 것 처리함. TODO 잘 들어가는지 확인
             else:
-                self.inrange_obstacle.append(
-                    ob
-                )  # 계산 범위에 있는 장애물임 # TODO 나중에는 Rviz 상에서 보도록 span도 추가해서보자
+                self.inrange_obstacle.append(ob)  # 계산 범위에 있는 장애물임 # TODO 나중에는 Rviz 상에서 보도록 span도 추가해서보자
 
             if (begin_ang - self.span_angle) > self.angle_min:
                 start_ang = round(begin_ang - self.span_angle)
@@ -230,9 +212,7 @@ class Autonomous:
             dist = math.sqrt(
                 pow(middle_x, 2.0) + pow(middle_y, 2.0)
             )  # 장애물 중점에서 배까지 거리 / 07월 26일. 지금은 선박중점이니까 boat-x로 배에서 뺄 필요 없을 듯
-            self.angle_risk[middle_ang_idx] -= (
-                dist * self.ob_near_coefficient
-            )  # 거리에 비례해 곱해줌. 때문에 해당 계수는 1 이하여야함
+            self.angle_risk[middle_ang_idx] -= dist * self.ob_near_coefficient  # 거리에 비례해 곱해줌. 때문에 해당 계수는 1 이하여야함
 
     def calc_goal_risk(self):  # 목표점에 가까워야 하니까 위험도는 낮아짐.
         error_goal_ang = self.psi_goal - self.psi  # 선박고정좌표계 기준 도착지까지 각도
@@ -242,9 +222,7 @@ class Autonomous:
                 ang = idx * self.angle_increment + self.angle_min
                 delta_ang = abs(error_goal_ang - ang)  # TODO 값 확인하기
                 if delta_ang <= self.goal_risk_range:
-                    self.angle_risk[idx] += (
-                        1 * self.goal_orient_coefficient
-                    )  # 해당 각도가 목표점과 많이 떨어져 있지 않음. 값을 조금만 더해줌
+                    self.angle_risk[idx] += 1 * self.goal_orient_coefficient  # 해당 각도가 목표점과 많이 떨어져 있지 않음. 값을 조금만 더해줌
                 elif delta_ang <= (self.goal_risk_range * 2):
                     self.angle_risk[idx] += 2 * self.goal_orient_coefficient
                 elif delta_ang <= (self.goal_risk_range * 3):
@@ -281,9 +259,7 @@ class Autonomous:
 
     def calc_psi_desire(self):
         # 가장 위험도 낮은 각도의 인덱스
-        self.error_angle = (
-            self.angle_risk.index(min(self.angle_risk)) * self.angle_increment + self.angle_min
-        )
+        self.error_angle = self.angle_risk.index(min(self.angle_risk)) * self.angle_increment + self.angle_min
         # TODO 계산식 맞는지 확인할 것 / 선박고정좌표계 기준값 -> 그대로 error_angle에 해당함
         self.psi_desire = self.error_angle + self.psi  # TODO 쓸 지는 모르겠지만 일단 계산해둠
 
@@ -318,15 +294,11 @@ class Autonomous:
         # self.calc_distance_to_goal()
         # self.u_thruster = self.distance_PID()
 
-        self.trajectory.append(
-            [self.boat_x, self.boat_y]
-        )  # 현재 위치(지나온 경로의 하나가 될 점) 업데이트 # TODO 이거 왜 배열로 담아??(저장 이유?)
+        self.trajectory.append([self.boat_x, self.boat_y])  # 현재 위치(지나온 경로의 하나가 될 점) 업데이트 # TODO 이거 왜 배열로 담아??(저장 이유?)
         self.rviz_traj.append_marker_point(self.boat_x, self.boat_y)
 
         self.servo_pub.publish(self.u_servo)
-        self.thruster_pub.publish(
-            self.thruster_average
-        )  # TODO thruster도 PID 할 필요 없다면 굳이 여기 위치시킬 필요 있나?
+        self.thruster_pub.publish(self.thruster_average)  # TODO thruster도 PID 할 필요 없다면 굳이 여기 위치시킬 필요 있나?
 
     def print_state(self):
         if self.cnt < 10:
@@ -337,15 +309,11 @@ class Autonomous:
         print("")  # TODO : 자릿수 맞추기 / 더 출력해봐야 할 것 있나?
         print("Boat loc : [{0}, {1}]".format(self.boat_x, self.boat_y))
         print("Goal : [{0}, {1}]".format(self.goal_x, self.goal_y))
-        print(
-            "Dist. to Goal: {0} m | Ang. to Goal: {1}".format(self.distance_to_goal, self.psi_goal)
-        )
+        print("Dist. to Goal: {0} m | Ang. to Goal: {1}".format(self.distance_to_goal, self.psi_goal))
         print("index of min angle risk: {0}".format(self.angle_risk.index(min(self.angle_risk))))
         # print(self.angle_risk)
         print("psi(heading): {0}, psi_desire(wanna go): {1}".format(self.psi, self.psi_desire))
-        print(
-            "Error Angle(psi-desire): {0} deg | Servo : {1}".format(self.error_angle, self.u_servo)
-        )
+        print("Error Angle(psi-desire): {0} deg | Servo : {1}".format(self.error_angle, self.u_servo))
         print("")
 
         self.cnt = 0
@@ -362,9 +330,7 @@ class Autonomous:
             2 * math.sin(math.radians(self.psi)) + self.boat_y,
         )
 
-        psi_desire = rv.RvizMarker(
-            "psi_d", 5, 0, a_x_scale=0.2, a_y_scale=0.4, r=0.39, g=0.58, b=0.93
-        )
+        psi_desire = rv.RvizMarker("psi_d", 5, 0, a_x_scale=0.2, a_y_scale=0.4, r=0.39, g=0.58, b=0.93)
         psi_desire.append_marker_point(self.boat_x, self.boat_y)
         psi_desire.append_marker_point(
             2 * math.cos(math.radians(self.psi_desire)) + self.boat_x,

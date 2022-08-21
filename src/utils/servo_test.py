@@ -14,6 +14,7 @@ from std_msgs.msg import UInt16
 
 # TODO 삭제할까?
 
+
 class ServoTest:
     def __init__(self):
         self.servo_pub = rospy.Publisher("/servo", UInt16, queue_size=0)
@@ -27,12 +28,8 @@ class ServoTest:
 
         cv2.namedWindow("trackbar")
         cv2.createTrackbar("angle_range", "trackbar", 80, 90, lambda x: x)
-        cv2.createTrackbar(
-            "servo_right (low)   [68 or 71]", "trackbar", self.servo_range[0], 80, lambda x: x
-        )
-        cv2.createTrackbar(
-            "servo_left (high) [118 or 121]", "trackbar", self.servo_range[1], 130, lambda x: x
-        )
+        cv2.createTrackbar("servo_right (low)   [68 or 71]", "trackbar", self.servo_range[0], 80, lambda x: x)
+        cv2.createTrackbar("servo_left (high) [118 or 121]", "trackbar", self.servo_range[1], 130, lambda x: x)
         cv2.createTrackbar("ROTATE HEADING", "trackbar", 90, 180, lambda x: x)  # - 90 해서 연산
 
     def degree_to_servo(self, error_angle):

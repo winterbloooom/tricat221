@@ -15,8 +15,8 @@ from geometry_msgs.msg import Point
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
 
-import utils.gnss_converter as gc
 import hopping.hopping_visualize as hv
+import utils.gnss_converter as gc
 from utils.tools import *
 
 
@@ -31,7 +31,7 @@ class Hopping:
             n, e, _ = gc.enu_convert(waypoint)  # ENU 좌표계로 변환
             self.remained_waypoints[idx + 1] = [n, e]  # 축이 반대이므로 순서 바꿔 할당.
         self.waypoints = copy.deepcopy(self.remained_waypoints)
-        self.boat_y, self.boat_x = 0, 0 # 배의 좌표
+        self.boat_y, self.boat_x = 0, 0  # 배의 좌표
         self.goal_x = self.remained_waypoints[self.waypoint_idx][0]  # 다음 목표 x좌표
         self.goal_y = self.remained_waypoints[self.waypoint_idx][1]  # 다음 목표 y좌표
         self.trajectory = []  # 지금껏 이동한 궤적
@@ -177,10 +177,7 @@ class Hopping:
 
     def calc_error_angle(self):
         # hopping에서는 error_angle이 곧 psi_goal임
-        self.psi_goal = (
-            math.degrees(math.atan2(self.goal_y - self.boat_y, self.goal_x - self.boat_x))
-            - self.psi
-        )
+        self.psi_goal = math.degrees(math.atan2(self.goal_y - self.boat_y, self.goal_x - self.boat_x)) - self.psi
         self.psi_goal = rearrange_angle(self.psi_goal)
         self.error_angle = self.psi_goal
         self.psi_desire = rearrange_angle(self.psi + self.error_angle)
@@ -190,9 +187,9 @@ class Hopping:
         # 조절 상수 곱해 감도 조절  # 왼쪽이 더 큰 값을 가져야 하므로
 
         # degree에서 servo로 mapping
-        u_servo = (u_angle - self.rotate_angle_range[0]) * (
-            self.servo_range[1] - self.servo_range[0]
-        ) / (self.rotate_angle_range[1] - self.rotate_angle_range[0]) + self.servo_range[0]
+        u_servo = (u_angle - self.rotate_angle_range[0]) * (self.servo_range[1] - self.servo_range[0]) / (
+            self.rotate_angle_range[1] - self.rotate_angle_range[0]
+        ) + self.servo_range[0]
 
         # servo motor 제어 가능 범위 내부에 머무르도록 함
         if u_servo > self.servo_range[1]:
@@ -242,18 +239,10 @@ class Hopping:
         print("{:>9} - {:>9} = {:>7}".format("desire", "psi", "error"))
 
         if self.error_angle > 0:
-            print(
-                "({:7.2f}) - ({:7.2f}) = ({:6.2f}) [Right]".format(
-                    self.psi_desire, self.psi, self.error_angle
-                )
-            )
+            print("({:7.2f}) - ({:7.2f}) = ({:6.2f}) [Right]".format(self.psi_desire, self.psi, self.error_angle))
             print("Servo : |-------|--{:->3d}--|".format(self.u_servo))
         else:
-            print(
-                "({:7.2f}) - ({:7.2f}) = ({:6.2f}) [ Left]".format(
-                    self.psi_desire, self.psi, self.error_angle
-                )
-            )
+            print("({:7.2f}) - ({:7.2f}) = ({:6.2f}) [ Left]".format(self.psi_desire, self.psi, self.error_angle))
             print("Servo : |--{:-<3d}--|-------|".format(self.u_servo))
 
         print("Distance : {:5.2f} m".format(self.distance_to_goal))

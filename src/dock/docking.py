@@ -21,8 +21,8 @@ from visualization_msgs.msg import MarkerArray
 import control.control_tools as control
 import dock.dock_visualize as dock_visualize
 import dock.mark_detect as mark_detect
-import utils.obstacle_avoidance as oa
 import utils.gnss_converter as gc
+import utils.obstacle_avoidance as oa
 from tricat221.msg import ObstacleList
 from utils.tools import *
 
@@ -30,15 +30,9 @@ from utils.tools import *
 class Docking:
     def __init__(self):
         # subscribers
-        self.heading_sub = rospy.Subscriber(
-            "/heading", Float64, self.heading_callback, queue_size=1
-        )
-        self.enu_pos_sub = rospy.Subscriber(
-            "/enu_position", Point, self.boat_position_callback, queue_size=1
-        )
-        self.obstacle_sub = rospy.Subscriber(
-            "/obstacles", ObstacleList, self.obstacle_callback, queue_size=1
-        )
+        self.heading_sub = rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
+        self.enu_pos_sub = rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
+        self.obstacle_sub = rospy.Subscriber("/obstacles", ObstacleList, self.obstacle_callback, queue_size=1)
         self.cam_sub = rospy.Subscriber("/usb_cam/image_raw", Image, self.cam_callback)
         self.bridge = CvBridge()
 
@@ -357,9 +351,7 @@ class Docking:
 
         if self.state == 6:
             error_angle_dir_str = "( Right )" if error_angle > 0 else "(  Left )"
-            print(
-                "Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area)
-            )
+            print("Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area))
             print(
                 "Target Area  : {:>7,.0f} / {:>7,.0f} ({:>5})".format(
                     self.target[0] if len(self.target) != 0 else 0,
@@ -374,11 +366,7 @@ class Docking:
                 )
             )
             print("")
-            print(
-                "mid - {:>6} = {:>11} {:->4} {:>11}".format(
-                    "target", "error_pixel", ">", "error_angle"
-                )
-            )
+            print("mid - {:>6} = {:>11} {:->4} {:>11}".format("target", "error_pixel", ">", "error_angle"))
             print(
                 "320 - {:>6,.0f} = {:>11,.0f} {:>4} {:>11.2f} {:>9}".format(
                     self.target[1] if len(self.target) != 0 else 0,
@@ -397,11 +385,7 @@ class Docking:
                 servo_value_str = "<" * ((self.servo_middle - u_servo) // 5)  # go left
             else:
                 servo_value_str = ">" * ((self.servo_middle - u_servo) // 5)  # go right
-            print(
-                "{:^9}   {:^8} - {:^8} = {:^8} {:->9} {:^5}".format(
-                    "goal", "desire", "psi", "error", ">", "servo"
-                )
-            )
+            print("{:^9}   {:^8} - {:^8} = {:^8} {:->9} {:^5}".format("goal", "desire", "psi", "error", ">", "servo"))
             print(
                 "{:>9}   {:>8.2f} - {:>8.2f} = {:>8.2f} {:>9} {:>5} ( {:^5} )".format(
                     psi_goal_dir_str,
@@ -429,9 +413,7 @@ class Docking:
             else:
                 print("Stopping Boat >>>>>>> {:>2d} / {:>2d}".format(self.stop_cnt, self.stop_time))
             print("")
-            print(
-                "{:^8} - {:^8} = {:^8} {:->9} {:^5}".format("desire", "psi", "error", ">", "servo")
-            )
+            print("{:^8} - {:^8} = {:^8} {:->9} {:^5}".format("desire", "psi", "error", ">", "servo"))
             print(
                 "{:>8.2f} - {:>8.2f} = {:>8.2f} {:>9} {:>5} ( {:^5} )".format(
                     self.psi_desire,
@@ -445,18 +427,10 @@ class Docking:
 
         elif self.state == 5:
             print("Target Shape : {} | Color : {}".format(self.target_shape, self.target_color))
-            print(
-                "Waiting..... : {:>4d} / {:>4d}".format(
-                    self.mark_check_cnt, self.target_detect_time
-                )
-            )
-            print(
-                "Target Cnt   : {:>4d} / {:>4d}".format(self.detected_cnt, self.target_detect_cnt)
-            )
+            print("Waiting..... : {:>4d} / {:>4d}".format(self.mark_check_cnt, self.target_detect_time))
+            print("Target Cnt   : {:>4d} / {:>4d}".format(self.detected_cnt, self.target_detect_cnt))
             print("")
-            print(
-                "Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area)
-            )
+            print("Mark Area    : {:>7,.0f} / {:>7,.0f}".format(self.mark_area, self.mark_detect_area))
 
         print("")
         print("Thruster  : {}".format(u_thruster))
@@ -637,7 +611,12 @@ def main():
 
         docking.psi_desire = rearrange_angle(docking.psi + error_angle)  # 월드좌표계로 '가야 할 각도'를 계산함
 
-        u_servo = control.degree_to_servo(error_angle=error_angle, angle_alpha=docking.angle_alpha, angle_range=docking.angle_range, servo_range=docking.servo_range)
+        u_servo = control.degree_to_servo(
+            error_angle=error_angle,
+            angle_alpha=docking.angle_alpha,
+            angle_range=docking.angle_range,
+            servo_range=docking.servo_range,
+        )
         # u_servo = int(moving_avg_filter(docking.filter_queue, docking.filter_queue_size, u_servo))
 
         docking.servo_pub.publish(u_servo)

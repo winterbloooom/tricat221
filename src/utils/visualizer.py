@@ -5,6 +5,7 @@
 
 import os
 import sys
+
 from geometry_msgs.msg import Point, Vector3
 from std_msgs.msg import ColorRGBA
 from visualization_msgs.msg import Marker, MarkerArray
@@ -41,11 +42,11 @@ def basic_setting(name, id, color_r, color_g, color_b, color_a=255):
 
 def del_mark(name, id):
     """delete existing marker if not necessary
-    
+
     Args:
         * name (str) : Marker name
         * id (int) : Marker id
-        
+
     Returns:
         marker (Marker): Marker object to delete
     """
@@ -215,5 +216,5 @@ def marker_array_append_rviz(marker_array, marker):
         MarkerArray : MarkerArray object
     """
     marker_array.markers.append(marker)
-    
+
     return marker_array

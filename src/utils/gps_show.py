@@ -24,6 +24,7 @@ Note:
 
 import os
 import sys
+
 import cv2
 import pymap3d as pm
 import rospy
@@ -32,19 +33,19 @@ from visualization_msgs.msg import MarkerArray
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-import utils.visualizer as visual
 import utils.gnss_converter as gc
-
+import utils.visualizer as visual
 
 # set module attributes
 origin = rospy.get_param("origin")
-enu_coord = [0, 0, 0] # N(x), E(y), U(z)
+enu_coord = [0, 0, 0]  # N(x), E(y), U(z)
 geodetic_coord = [0, 0, 0]
 
 # set trackbar
 cv2.namedWindow("controller")
 cv2.createTrackbar("x", "controller", 100, 200, lambda x: x)
 cv2.createTrackbar("y", "controller", 100, 200, lambda x: x)
+
 
 def gps_fix_callback(msg):
     """Subscribe geodetic coordinate from GPS and save both geodetic and ENU coordinates
@@ -55,12 +56,13 @@ def gps_fix_callback(msg):
     geodetic_coord[0], geodetic_coord[1], geodetic_coord[2] = msg.latitude, msg.longitude, msg.altitude
     enu_coord[0], enu_coord[1], enu_coord[2] = gc.enu_convert(geodetic_coord)
 
+
 def geodetic_convert(enu):
     """Convert ENU coordinate to geodetic(dd.mmmmmm) system
-    
+
     Args:
-        enu (list): 
-            ENU coordinate to convert to DD.MMMMMM format. 
+        enu (list):
+            ENU coordinate to convert to DD.MMMMMM format.
             U(Up, latitude) value is not accurate, just arbitrarily picked (ususally 0 or -1)
 
     Returns:
@@ -75,7 +77,7 @@ def get_trackbar_pos():
 
     Returns:
         x, y (float): the location of picked point
-    
+
     Notes:
         * scale = 0.5 meters
         * the trackbar value "0" means "-50 meters", "100" means "0 meters", and "200" means "+50 meters"
@@ -113,11 +115,15 @@ def main():
             name="boundary",
             id=ids.pop(),
             lines=[
-                boundary1_enu[0], boundary1_enu[1], 
-                boundary1_enu[1], boundary1_enu[2],
-                boundary1_enu[2], boundary1_enu[3],
-                boundary1_enu[3], boundary1_enu[0]
-                ],
+                boundary1_enu[0],
+                boundary1_enu[1],
+                boundary1_enu[1],
+                boundary1_enu[2],
+                boundary1_enu[2],
+                boundary1_enu[3],
+                boundary1_enu[3],
+                boundary1_enu[0],
+            ],
             color_r=59,
             color_g=196,
             color_b=212,
@@ -128,11 +134,15 @@ def main():
             name="boundary",
             id=ids.pop(),
             lines=[
-                boundary2_enu[0], boundary2_enu[1], 
-                boundary2_enu[1], boundary2_enu[2],
-                boundary2_enu[2], boundary2_enu[3],
-                boundary2_enu[3], boundary2_enu[0]
-                ],
+                boundary2_enu[0],
+                boundary2_enu[1],
+                boundary2_enu[1],
+                boundary2_enu[2],
+                boundary2_enu[2],
+                boundary2_enu[3],
+                boundary2_enu[3],
+                boundary2_enu[0],
+            ],
             color_r=59,
             color_g=196,
             color_b=212,
@@ -160,8 +170,10 @@ def main():
             id=ids.pop(),
             x=enu_coord[0],
             y=enu_coord[1],
-            text="({:>4.2f}, {:>4.2f})\n({}, {})".format(enu_coord[0], enu_coord[1], geodetic_coord[0], geodetic_coord[1]),
-            scale=0.8
+            text="({:>4.2f}, {:>4.2f})\n({}, {})".format(
+                enu_coord[0], enu_coord[1], geodetic_coord[0], geodetic_coord[1]
+            ),
+            scale=0.8,
         )
 
         picked_point = visual.point_rviz(
@@ -173,7 +185,7 @@ def main():
             x=x,
             y=y,
             text="({:>4.2f}, {:>4.2f})\n({}, {})".format(x, y, picked_geo[0], picked_geo[1]),
-            scale=0.8
+            scale=0.8,
         )
 
         all_markers = visual.marker_array_rviz(
@@ -207,7 +219,9 @@ def main():
                 id=ids.pop(),
                 x=boundary1_enu[idx][0],
                 y=boundary1_enu[idx][1],
-                text="({:>6.4f}, {:>6.4f})\n({:>8.6f}, {:>9.6f})".format(boundary1_enu[idx][0], boundary1_enu[idx][1], boundary1_geo[idx][0], boundary1_geo[idx][1]),
+                text="({:>6.4f}, {:>6.4f})\n({:>8.6f}, {:>9.6f})".format(
+                    boundary1_enu[idx][0], boundary1_enu[idx][1], boundary1_geo[idx][0], boundary1_geo[idx][1]
+                ),
             )
             visual.marker_array_append_rviz(all_markers, point_txt)
 
@@ -229,7 +243,9 @@ def main():
                 id=ids.pop(),
                 x=boundary2_enu[idx][0],
                 y=boundary2_enu[idx][1],
-                text="({:>6.4f}, {:>6.4f})\n({:>8.6f}, {:>9.6f})".format(boundary2_enu[idx][0], boundary2_enu[idx][1], boundary2_geo[idx][0], boundary2_geo[idx][1]),
+                text="({:>6.4f}, {:>6.4f})\n({:>8.6f}, {:>9.6f})".format(
+                    boundary2_enu[idx][0], boundary2_enu[idx][1], boundary2_geo[idx][0], boundary2_geo[idx][1]
+                ),
             )
             visual.marker_array_append_rviz(all_markers, point_txt)
 

@@ -32,12 +32,8 @@ class Fuzzy:
         self.trajectory = []  # 지금껏 이동한 궤적
 
         self.yaw_rate_sub = rospy.Subscriber("/imu/data", Imu, self.yaw_rate_callback)
-        self.heading_sub = rospy.Subscriber(
-            "/heading", Float64, self.heading_callback, queue_size=1
-        )
-        self.enu_pos_sub = rospy.Subscriber(
-            "/enu_position", Point, self.boat_position_callback, queue_size=1
-        )
+        self.heading_sub = rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
+        self.enu_pos_sub = rospy.Subscriber("/enu_position", Point, self.boat_position_callback, queue_size=1)
         self.lidar_sub = rospy.Subscriber("/scan", LaserScan, self.lidar_callback, queue_size=1)
 
         self.distance_to_goal = 100000  # 배~목적지 거리. max 연산이므로 큰 값을 초기 할당
@@ -109,10 +105,7 @@ class Fuzzy:
         self.ranges = data.ranges  # list
 
     def calc_psi_goal(self):
-        self.psi_goal = (
-            math.degrees(math.atan2(self.goal_y - self.boat_y, self.goal_x - self.boat_x))
-            - self.psi
-        )
+        self.psi_goal = math.degrees(math.atan2(self.goal_y - self.boat_y, self.goal_x - self.boat_x)) - self.psi
 
     def arrival_check(self):
         self.distance_to_goal = math.hypot(self.boat_x - self.goal_x, self.boat_y - self.goal_y)
@@ -298,9 +291,7 @@ class Fuzzy:
             print("Dangerous Point | {:>4} deg / {:>2} m".format("None", "None"))
         else:
             print(
-                "Dangerous Point | {:>4.2f} deg / {:>2.1f} m".format(
-                    self.danger_ob["pi"], self.danger_ob["distance"]
-                )
+                "Dangerous Point | {:>4.2f} deg / {:>2.1f} m".format(self.danger_ob["pi"], self.danger_ob["distance"])
             )
         print("")
 
@@ -368,9 +359,7 @@ class Fuzzy:
         )
 
         # 지나온 경로
-        traj = visual.points_rviz(
-            name="traj", id=ids.pop(), points=self.trajectory, color_g=180, scale=0.05
-        )
+        traj = visual.points_rviz(name="traj", id=ids.pop(), points=self.trajectory, color_g=180, scale=0.05)
 
         # heading
         psi_arrow_end_x = 2 * math.cos(math.radians(self.psi)) + self.boat_x
@@ -386,9 +375,7 @@ class Fuzzy:
             color_g=119,
             color_b=252,
         )
-        psi_txt = visual.text_rviz(
-            name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y
-        )
+        psi_txt = visual.text_rviz(name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y)
 
         # 배로부터 목표지점까지 이은 선분
         goal_line = visual.linelist_rviz(
@@ -403,12 +390,8 @@ class Fuzzy:
 
         # danger obstacle
         if len(self.ranges) != 0 and len(self.danger_ob) != 0:
-            x = self.boat_x + self.danger_ob["distance"] * math.cos(
-                math.radians(self.psi + self.danger_ob["pi"])
-            )
-            y = self.boat_y + self.danger_ob["distance"] * math.sin(
-                math.radians(self.psi + self.danger_ob["pi"])
-            )
+            x = self.boat_x + self.danger_ob["distance"] * math.cos(math.radians(self.psi + self.danger_ob["pi"]))
+            y = self.boat_y + self.danger_ob["distance"] * math.sin(math.radians(self.psi + self.danger_ob["pi"]))
 
             obstacle = visual.point_rviz(
                 name="obstacle",
@@ -445,12 +428,8 @@ class Fuzzy:
             color_g=255,
             scale=0.1,
         )
-        axis_x_txt = visual.text_rviz(
-            name="axis", id=ids.pop(), text="X", x=self.boat_x + 3.3, y=self.boat_y
-        )
-        axis_y_txt = visual.text_rviz(
-            name="axis", id=ids.pop(), text="Y", x=self.boat_x, y=self.boat_y + 3.3
-        )
+        axis_x_txt = visual.text_rviz(name="axis", id=ids.pop(), text="X", x=self.boat_x + 3.3, y=self.boat_y)
+        axis_y_txt = visual.text_rviz(name="axis", id=ids.pop(), text="Y", x=self.boat_x, y=self.boat_y + 3.3)
 
         # angle_range (탐색 범위)
         min_angle_x = 2.8 * math.cos(math.radians(self.psi - 70)) + self.boat_x
@@ -490,9 +469,7 @@ class Fuzzy:
                 else:
                     pcd.append([x, y])
         all_obs = visual.points_rviz(name="pcd", id=ids.pop(), points=pcd, color_g=100, scale=0.08)
-        in_obs = visual.points_rviz(
-            name="pcd", id=ids.pop(), points=pcd_in, color_b=100, scale=0.08
-        )
+        in_obs = visual.points_rviz(name="pcd", id=ids.pop(), points=pcd_in, color_b=100, scale=0.08)
         to_all_obs = visual.linelist_rviz(
             name="pcd",
             id=ids.pop(),

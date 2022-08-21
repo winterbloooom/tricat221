@@ -5,6 +5,7 @@ from math import atan2, cos, degrees, pow, sin, sqrt
 
 # TODO 정리
 
+
 class Point:
     def __init__(self, x, y):
         self.x = x
