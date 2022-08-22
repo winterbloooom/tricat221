@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+"""
+# TODO 시뮬레이션 돌아갈 정도로 고쳐놓기
+"""
+
 import math
 import os
 import sys
@@ -11,15 +15,14 @@ import rospy
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
-import visualization.rviz_viewer as rv
-from geometry_msgs.msg import Point, Pose, Vector3
+from geometry_msgs.msg import Point
 from sensor_msgs.msg import Imu
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import Marker, MarkerArray
 
 import datatypes.point_class as pc
 import utils.gnss_converter as gc
-from tricat221.msg import Obstacle, ObstacleList
+from tricat221.msg import ObstacleList
 
 
 class Autonomous:
@@ -306,7 +309,7 @@ class Autonomous:
             return
 
         print("-" * 20)
-        print("")  # TODO : 자릿수 맞추기 / 더 출력해봐야 할 것 있나?
+        print("")
         print("Boat loc : [{0}, {1}]".format(self.boat_x, self.boat_y))
         print("Goal : [{0}, {1}]".format(self.goal_x, self.goal_y))
         print("Dist. to Goal: {0} m | Ang. to Goal: {1}".format(self.distance_to_goal, self.psi_goal))
@@ -317,143 +320,6 @@ class Autonomous:
         print("")
 
         self.cnt = 0
-
-    def view_rviz(self):
-        "deprecated"
-        rviz_points_arr = MarkerArray()
-        rviz_ang_arr = MarkerArray()
-
-        heading = rv.RvizMarker("heading", 4, 0, a_x_scale=0.2, a_y_scale=0.4, g=0.55, b=0.55)
-        heading.append_marker_point(self.boat_x, self.boat_y)
-        heading.append_marker_point(
-            2 * math.cos(math.radians(self.psi)) + self.boat_x,
-            2 * math.sin(math.radians(self.psi)) + self.boat_y,
-        )
-
-        psi_desire = rv.RvizMarker("psi_d", 5, 0, a_x_scale=0.2, a_y_scale=0.4, r=0.39, g=0.58, b=0.93)
-        psi_desire.append_marker_point(self.boat_x, self.boat_y)
-        psi_desire.append_marker_point(
-            2 * math.cos(math.radians(self.psi_desire)) + self.boat_x,
-            2 * math.sin(math.radians(self.psi_desire)) + self.boat_y,
-        )
-
-        psi_desire_txt = rv.RvizMarker("psi_d_txt", 13, 9, r=1, g=1, b=1)
-        psi_desire_txt.marker.scale.z = 0.5
-        psi_desire_txt.marker.text = "psi_desire"
-        psi_desire_txt.marker.pose.position = Point(
-            2.2 * math.cos(math.radians(self.psi_desire)) + self.boat_x,
-            2.2 * math.sin(math.radians(self.psi_desire)) + self.boat_y,
-            0,
-        )
-
-        boat = rv.RvizMarker("boat", 6, 8, p_scale=0.2, r=1)
-        boat.append_marker_point(self.boat_x, self.boat_y)
-
-        ob_mark = rv.RvizMarker("obstacles", 7, 5, p_scale=0.05, r=1, b=1)
-        for ob in self.obstacle:
-            """
-            (우리는 x, y가 바뀌어야 함)(부호도 반대) -> 그러니까 똑같네???
-            ycos + xsin = y'
-            -ysin + xcos = x'
-            """
-            # begin_x = self.boat_x + ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.y * math.sin(math.radians(self.psi))
-            # begin_y = self.boat_y + ob.begin.x * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
-            # end_x = self.boat_x + ob.end.x * math.cos(math.radians(self.psi)) - ob.end.y * math.sin(math.radians(self.psi))
-            # end_y = self.boat_y + ob.end.x * math.sin(math.radians(self.psi)) + ob.end.y * math.cos(math.radians(self.psi))
-
-            # ob_mark.append_marker_point(begin_x, begin_y)
-            # ob_mark.append_marker_point(end_x, end_y)
-
-            begin_x = (
-                self.boat_x
-                + (-ob.begin.x) * math.cos(math.radians(self.psi))
-                - ob.begin.y * math.sin(math.radians(self.psi))
-            )
-            begin_y = (
-                self.boat_y
-                + (-ob.begin.x) * math.sin(math.radians(self.psi))
-                + ob.begin.y * math.cos(math.radians(self.psi))
-            )
-            end_x = (
-                self.boat_x
-                + (-ob.end.x) * math.cos(math.radians(self.psi))
-                - ob.end.y * math.sin(math.radians(self.psi))
-            )
-            end_y = (
-                self.boat_y
-                + (-ob.end.x) * math.sin(math.radians(self.psi))
-                + ob.end.y * math.cos(math.radians(self.psi))
-            )
-
-            ob_mark.append_marker_point(begin_x, begin_y)
-            ob_mark.append_marker_point(end_x, end_y)
-
-            # ob_mark.append_marker_point(self.boat_x - ob.begin.x, self.boat_y + ob.begin.y)
-            # ob_mark.append_marker_point(self.boat_x - ob.end.x, self.boat_y + ob.end.y)
-
-        inrange_ob_mark = rv.RvizMarker("inrange_obstacles", 12, 5, p_scale=0.1, r=1, g=1)
-        for ob in self.inrange_obstacle:
-            # begin_x = self.boat_x + ob.begin.x * math.cos(math.radians(self.psi)) - ob.begin.y * math.sin(math.radians(self.psi))
-            # begin_y = self.boat_y + ob.begin.x * math.sin(math.radians(self.psi)) + ob.begin.y * math.cos(math.radians(self.psi))
-            # end_x = self.boat_x + ob.end.x * math.cos(math.radians(self.psi)) - ob.end.y * math.sin(math.radians(self.psi))
-            # end_y = self.boat_y + ob.end.x * math.sin(math.radians(self.psi)) + ob.end.y * math.cos(math.radians(self.psi))
-
-            begin_x = (
-                self.boat_x
-                + (-ob.begin.x) * math.cos(math.radians(self.psi))
-                - ob.begin.y * math.sin(math.radians(self.psi))
-            )
-            begin_y = (
-                self.boat_y
-                + (-ob.begin.x) * math.sin(math.radians(self.psi))
-                + ob.begin.y * math.cos(math.radians(self.psi))
-            )
-            end_x = (
-                self.boat_x
-                + (-ob.end.x) * math.cos(math.radians(self.psi))
-                - ob.end.y * math.sin(math.radians(self.psi))
-            )
-            end_y = (
-                self.boat_y
-                + (-ob.end.x) * math.sin(math.radians(self.psi))
-                + ob.end.y * math.cos(math.radians(self.psi))
-            )
-
-            inrange_ob_mark.append_marker_point(begin_x, begin_y)
-            inrange_ob_mark.append_marker_point(end_x, end_y)
-
-            # inrange_ob_mark.append_marker_point(self.boat_x - ob.begin.x, self.boat_y + ob.begin.y)
-            # inrange_ob_mark.append_marker_point(self.boat_x - ob.end.x, self.boat_y + ob.end.y)
-
-        detect_start = rv.RvizMarker("detect_start", 9, 5, p_scale=0.06, r=0.5)
-        detect_start.append_marker_point(self.boat_x, self.boat_y)
-        detect_start.append_marker_point(
-            3 * math.cos(math.radians(self.psi + self.angle_min)) + self.boat_x,
-            3 * math.sin(math.radians(self.psi + self.angle_min)) + self.boat_y,
-        )
-
-        detect_end = rv.RvizMarker("detect_end", 10, 5, p_scale=0.06, g=0.5)
-        detect_end.append_marker_point(self.boat_x, self.boat_y)
-        detect_end.append_marker_point(
-            3 * math.cos(math.radians(self.psi + self.angle_max)) + self.boat_x,
-            3 * math.sin(math.radians(self.psi + self.angle_max)) + self.boat_y,
-        )
-
-        self.rviz_traj_pub.publish(self.rviz_traj.marker)
-        self.rviz_goal_pub.publish(self.rviz_goal.marker)
-        self.rviz_goal_txt_pub.publish(self.rviz_goal_txt.marker)
-
-        rviz_points_arr.markers.append(boat.marker)
-        rviz_points_arr.markers.append(ob_mark.marker)
-        rviz_points_arr.markers.append(inrange_ob_mark.marker)
-        self.rviz_points_pub.publish(rviz_points_arr)
-
-        rviz_ang_arr.markers.append(heading.marker)
-        rviz_ang_arr.markers.append(psi_desire.marker)
-        rviz_ang_arr.markers.append(psi_desire_txt.marker)
-        rviz_ang_arr.markers.append(detect_start.marker)
-        rviz_ang_arr.markers.append(detect_end.marker)
-        self.rviz_angles_pub.publish(rviz_ang_arr)
 
 
 def main():

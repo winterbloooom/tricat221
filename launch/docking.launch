@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <launch>
+	<!-- Camera -->
 	<node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
         <param name="video_device" value="/dev/video0" />
         <param name="autoexposure" value="false" />
         <param name="pixel_format" value="yuyv" />
         <param name="camera_frame_id" value="usb_cam" />
         <param name="io_method" value="mmap" />
-        
         <param name="image_width" value="640" />
         <param name="image_height" value="480" />
         <param name="exposure" value="3" />
@@ -16,7 +16,7 @@
     </node>
 	
 	<!--LiDAR-->
-	<node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
+	<node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode">
 		<param name="serial_port"         type="string" value="/dev/ttyLiDAR"/>  
 		<param name="serial_baudrate"     type="int"    value="256000"/>
 		<param name="frame_id"            type="string" value="laser"/>
@@ -34,18 +34,22 @@
 		<param name="baud_rate" value="115200" />
 	</node>
 
-	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true" output="screen"/>
+	<!-- Nodes -->
+	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true" />
 	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter" respawn="true"/>
-	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/>
+	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" />
 	<node pkg="tricat221" type="docking.py" name="docking" output="screen"/>
 	<node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>
 
-	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting3(docking).rviz" />
+	<!-- Visualization -->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_conf_docking.rviz" />
 	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/> -->
 
+	<!-- Record -->
+	<arg name="do_record" default="false" />
 	<node pkg="rosbag" type="record" name="rosbag_record" required="true" args="record /imu/data /imu/mag /scan /ublox_gps/fix /usb_cam/image_raw -O $(find tricat221)/data/rosbag/$(arg filename)" />
 	
-	<!--PARAMETER-->
+	<!-- Parameters -->
 	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
 	<rosparam command="load" file="$(find tricat221)/params/docking_params.yaml"/>
 	<rosparam command="load" file="$(find tricat221)/params/coordinates.yaml"/>

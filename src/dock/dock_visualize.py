@@ -108,7 +108,7 @@ def visualize(dc, forward_point, inrange_obstacles, danger_angels):
             axis_y,
             axis_x_txt,
             axis_y_txt,
-            enterence,
+            # enterence,
         ]
     )
 

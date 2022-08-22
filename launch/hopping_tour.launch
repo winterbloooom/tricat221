@@ -10,19 +10,27 @@
 		<param name="baud_rate" value="115200" />
 	</node>
 
+	<!-- Nodes -->
 	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true"/>
 	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter" respawn="true"/>
-	<node pkg="tricat221" type="hopping_tour.py" name="hoppingTour" output="screen"/>
-	<!-- <node pkg="tricat221" type="hopping_old.py" name="hoppingTour" output="screen"/> -->
-	<!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting6_2021hop.rviz" /> -->
 	<node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>
+	<!-- 2022 version -->
+	<node pkg="tricat221" type="hopping_tour.py" name="hoppingTour" output="screen"/>
+	<!-- 2021 version -->
+	<!-- <node pkg="tricat221" type="hopping_old.py" name="hoppingTour" output="screen"/> -->
 
+	<!-- Visualization -->
 	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/> -->
-	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" />
-	
+	<!-- 2022 version -->
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_conf_auto.rviz" />
+	<!-- 2021 version -->
+	<!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_conf_2021hop.rviz" /> -->
+
+	<!-- Record -->
+	<arg name="do_record" default="false" />
 	<node pkg="rosbag" type="record" name="rosbag_record" required="true" args="record -a -O $(find tricat221)/data/rosbag/$(arg filename)" />
 	
-	<!--PARAMETER-->
+	<!-- Parameters -->
 	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
 	<rosparam command="load" file="$(find tricat221)/params/hopping_params.yaml"/>
 	<rosparam command="load" file="$(find tricat221)/params/coordinates.yaml"/>

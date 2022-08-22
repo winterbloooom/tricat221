@@ -11,9 +11,16 @@ import utils.visualizer as visual
 
 
 def visualize(hc):
-    """hc: hopping class"""
-    ids = list(range(0, 100))
+    """Rviz visualization
 
+    Args:
+        hc (Hopping Class): 호핑투어 클래스
+    Returns:
+        all_markers (MarkerArray): Rviz로 Publish할 마커 리스트
+    """
+    ids = list(range(0, 100)) # marker id
+
+    # 현재 보트 위치 좌표
     boat = visual.text_rviz(
         name="boat",
         id=ids.pop(),
@@ -22,8 +29,10 @@ def visualize(hc):
         y=hc.boat_y - 0.3,
     )
 
+    # 이동 궤적
     traj = visual.points_rviz(name="traj", id=ids.pop(), points=hc.trajectory, color_g=255)
 
+    # 선수각
     psi_arrow_end_x = 2 * math.cos(math.radians(hc.psi)) + hc.boat_x
     psi_arrow_end_y = 2 * math.sin(math.radians(hc.psi)) + hc.boat_y
     psi = visual.arrow_rviz(
@@ -39,6 +48,7 @@ def visualize(hc):
     )
     psi_txt = visual.text_rviz(name="psi", id=ids.pop(), text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y)
 
+    # psi_desire (가고 싶은 각도)
     desire_arrow_end_x = 3 * math.cos(math.radians(hc.psi_desire)) + hc.boat_x
     desire_arrow_end_y = 3 * math.sin(math.radians(hc.psi_desire)) + hc.boat_y
     psi_desire = visual.arrow_rviz(
@@ -56,6 +66,7 @@ def visualize(hc):
         name="psi_desire", id=ids.pop(), text="desire", x=desire_arrow_end_x, y=desire_arrow_end_y
     )
 
+    # 배로부터 목표지점까지 이은 선분
     goal_line = visual.linelist_rviz(
         name="goal_line",
         id=ids.pop(),
@@ -66,6 +77,7 @@ def visualize(hc):
         scale=0.05,
     )
 
+    # 배와 함께 이동할 X, Y축
     axis_x = visual.linelist_rviz(
         name="axis_x",
         id=100,
@@ -99,9 +111,9 @@ def visualize(hc):
         ]
     )
 
-    # ====================== append
-    # remained waypoints
+    # 남은 waypoints
     for idx in range(hc.waypoint_idx, len(hc.waypoints) + 1):
+        # waypoints
         waypoint = visual.point_rviz(
             name="waypoints",
             id=ids.pop(),
@@ -113,7 +125,17 @@ def visualize(hc):
             scale=0.3,
         )
         visual.marker_array_append_rviz(all_markers, waypoint)
+        waypoint_txt = visual.text_rviz(
+            name="waypoints",
+            id=ids.pop(),
+            x=hc.remained_waypoints[idx][0],
+            y=hc.remained_waypoints[idx][1],
+            text=str(idx),
+            scale=1.2,
+        )
+        visual.marker_array_append_rviz(all_markers, waypoint_txt)
 
+        # waypoints의 도착 인정 범위
         goal_range = visual.cylinder_rviz(
             name="waypoints",
             id=ids.pop(),
@@ -126,18 +148,9 @@ def visualize(hc):
         )
         visual.marker_array_append_rviz(all_markers, goal_range)
 
-        waypoint_txt = visual.text_rviz(
-            name="waypoints",
-            id=ids.pop(),
-            x=hc.remained_waypoints[idx][0],
-            y=hc.remained_waypoints[idx][1],
-            text=str(idx),
-            scale=1.2,
-        )
-        visual.marker_array_append_rviz(all_markers, waypoint_txt)
-
-    # passed points
+    # 통과한 waypoints
     for idx in range(1, hc.waypoint_idx):
+        # waypoints
         waypoint = visual.point_rviz(
             name="waypoints",
             id=ids.pop(),
@@ -149,7 +162,17 @@ def visualize(hc):
             scale=0.3,
         )
         visual.marker_array_append_rviz(all_markers, waypoint)
+        waypoint_txt = visual.text_rviz(
+            name="waypoints",
+            id=ids.pop(),
+            x=hc.waypoints[idx][0],
+            y=hc.waypoints[idx][1],
+            text=str(idx),
+            scale=1.2,
+        )
+        visual.marker_array_append_rviz(all_markers, waypoint_txt)
 
+        # waypoints의 도착 인정 범위
         goal_range = visual.cylinder_rviz(
             name="waypoints",
             id=ids.pop(),
@@ -161,15 +184,5 @@ def visualize(hc):
             color_b=245,
         )
         visual.marker_array_append_rviz(all_markers, goal_range)
-
-        waypoint_txt = visual.text_rviz(
-            name="waypoints",
-            id=ids.pop(),
-            x=hc.waypoints[idx][0],
-            y=hc.waypoints[idx][1],
-            text=str(idx),
-            scale=1.2,
-        )
-        visual.marker_array_append_rviz(all_markers, waypoint_txt)
 
     return all_markers

@@ -1,33 +1,30 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+"""도킹의 Mode 4 ~ 6의 시험 및 카메라 데이터 수집을 위한 모듈"""
+
 import math
 import os
 import sys
-
 import numpy as np
 import rospy
-
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-
 import cv2
 from cv_bridge import CvBridge
-from geometry_msgs.msg import Point
 from sensor_msgs.msg import Image, NavSatFix
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
+
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 import control.control_tools as control
 import dock.mark_detect as mark_detect
 import utils.visualizer as visual
 from utils.tools import *
 
-# TODO 정리
-
 
 class Data_Collection:
     def __init__(self):
-        rospy.Subscriber("/ublox_gps/fix", NavSatFix, self.gps_fix_callback, queue_size=1)
+        self.gps_sub = rospy.Subscriber("/ublox_gps/fix", NavSatFix, self.gps_fix_callback, queue_size=1)
         self.heading_sub = rospy.Subscriber("/heading", Float64, self.heading_callback, queue_size=1)
         self.cam_sub = rospy.Subscriber("/usb_cam/image_raw", Image, self.cam_callback)
         self.bridge = CvBridge()
@@ -36,10 +33,13 @@ class Data_Collection:
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
         self.visual_rviz_pub = rospy.Publisher("/visual_rviz", MarkerArray, queue_size=0)
 
-        ### 상태
-        self.state = 0  # 0, 1, 2
-        self.target = []
-        self.lat, self.lon = 0, 0
+        self.state = 0
+        # 0: 헤딩 맞추는 중
+        # 1: 타겟 스캔 중
+        # 2: 스테이션 진입 중
+        self.target = [] # [area, center_col(pixel)]
+        self.target_found = False
+        self.lat, self.lon = 0, 0 # 현재 배의 geodetic 좌표
 
         ### 이미지
         self.raw_img = np.zeros((480, 640, 3), dtype=np.uint8)  # row, col, channel
@@ -48,12 +48,12 @@ class Data_Collection:
 
         ### 방향
         self.psi = 0  # 자북과 선수 사이 각
-        self.psi_desire = 0
-        self.station_dir = rospy.get_param("station_dir")
+        self.psi_desire = 0 # 이동하고 싶은 각
+        self.station_dir = rospy.get_param("station_dir") # 스테이션 방향 선수각
         self.ref_dir_range = rospy.get_param("ref_dir_range")  # 좌우로 얼마나 각도 허용할 건가
 
         ### 넓이
-        self.mark_area = 0
+        self.mark_area = 0 # 현재 계산된 표지의 넓이
         self.arrival_target_area = rospy.get_param("arrival_target_area")  # 도착이라 판단할 타겟 도형의 넓이
         self.mark_detect_area = rospy.get_param("mark_detect_area")  # 도형이 검출될 최소 넓이
         self.target_detect_area = rospy.get_param("target_detect_area")  # 타겟이라고 인정할 최소 넓이
@@ -105,7 +105,7 @@ class Data_Collection:
         ### 이미지뷰
         cv2.namedWindow("controller")
         cv2.createTrackbar("state", "controller", 1, 2, lambda x: x)
-        # cv2.createTrackbar("color", "controller", 0, 2, lambda x: x)
+        cv2.createTrackbar("color", "controller", 0, 2, lambda x: x)
         cv2.createTrackbar("shape", "controller", 0, 2, lambda x: x)
         cv2.createTrackbar("color1 min", "controller", self.color_range[0][0], 180, lambda x: x)
         cv2.createTrackbar("color1 max", "controller", self.color_range[1][0], 180, lambda x: x)
@@ -133,7 +133,6 @@ class Data_Collection:
     def get_trackbar_pos(self):
         """get trackbar poses and set each values"""
         self.state = cv2.getTrackbarPos("state", "controller")
-        # self.target_shape = cv2.getTrackbarPos("shape", "controller") + 3
         self.color_range[0][0] = cv2.getTrackbarPos("color1 min", "controller")
         self.color_range[1][0] = cv2.getTrackbarPos("color1 max", "controller")
         self.color_range[0][1] = cv2.getTrackbarPos("color2 min", "controller")
@@ -143,43 +142,48 @@ class Data_Collection:
         self.mark_detect_area = cv2.getTrackbarPos("mark_detect_area", "controller")
         self.target_detect_area = cv2.getTrackbarPos("target_detect_area", "controller")
         self.arrival_target_area = cv2.getTrackbarPos("arrival_target_area", "controller")
-        # color_pos = cv2.getTrackbarPos("color", "controller")
-        # if color_pos == 0:
-        #     color = "red"
-        # elif color_pos == 1:
-        #     color = "green"
-        # else:
-        #     color = "blue"
-        # self.target_color = color
-        # self.color_range = np.array(
-        #     [
-        #         [
-        #             self.all_color_ranges[self.target_color]["color1_lower"],
-        #             self.all_color_ranges[self.target_color]["color2_lower"],
-        #             self.all_color_ranges[self.target_color]["color3_lower"],
-        #         ],
-        #         [
-        #             self.all_color_ranges[self.target_color]["color1_upper"],
-        #             self.all_color_ranges[self.target_color]["color2_upper"],
-        #             self.all_color_ranges[self.target_color]["color3_upper"],
-        #         ],
-        #     ]
-        # )
+        shape_pos = cv2.getTrackbarPos("shape", "controller")
+        if shape_pos == 0:
+            self.target_shape = 3
+        elif shape_pos == 1:
+            self.target_shape = 5
+        else:
+            self.target_shape = 12
+        color_pos = cv2.getTrackbarPos("color", "controller")
+        if color_pos == 0:
+            color = "red"
+        elif color_pos == 1:
+            color = "green"
+        else:
+            color = "blue"
+        self.target_color = color
+        self.color_range = np.array(
+            [
+                [
+                    self.all_color_ranges[self.target_color]["color1_lower"],
+                    self.all_color_ranges[self.target_color]["color2_lower"],
+                    self.all_color_ranges[self.target_color]["color3_lower"],
+                ],
+                [
+                    self.all_color_ranges[self.target_color]["color1_upper"],
+                    self.all_color_ranges[self.target_color]["color2_upper"],
+                    self.all_color_ranges[self.target_color]["color3_upper"],
+                ],
+            ]
+        )
 
     def check_state(self):
         change_state = False
-        if self.state == 0:
-            # heading 스테이션쪽인지 판단
+        if self.state == 0: # heading 스테이션쪽인지 판단
             change_state = self.check_heading()
-        elif self.state == 2:
+        elif self.state == 2: # 마크 탐지
             if self.mark_check_cnt >= self.target_detect_time:
                 change_state = True
                 self.mark_check_cnt = 0
                 self.detected_cnt = 0
             else:
                 change_state = False
-        elif self.state == 3:
-            # 도킹 완료했는지 확인
+        elif self.state == 3: # 도킹 완료했는지 확인
             change_state = self.check_docked()
 
         if change_state:
@@ -190,17 +194,25 @@ class Data_Collection:
         else:
             return False
 
+
     def check_heading(self):
-        # 차잇값이 ref_dir_range 보다 작으면 잘 돌린 것
+        """선수각이 스테이션 방향을 향하고 있는지(허용 범위 내로 들어왔는지) 체크"""
         angle_to_station = self.station_dir - self.psi
-        if angle_to_station >= 180:  # 왼쪽으로 회전이 더 이득
-            angle_to_station = -180 + abs(angle_to_station) % 180
-        elif angle_to_station <= -180:
-            angle_to_station = 180 - abs(angle_to_station) % 180
+        angle_to_station = rearrange_angle(angle_to_station)
 
         return abs(angle_to_station) <= self.ref_dir_range
 
+
     def check_target(self, return_target=False):
+        """표지를 인식하고 타겟이면 타겟 정보를 반환
+        
+        Args:
+            return_target (bool): target 정보를 리턴할 것인지(True), Bool 정보를 리턴할 것인지(False)
+            
+        Returns:
+            True/False (bool): 타겟을 찾음(True), 찾지 못함(False)
+            target (list): 타겟을 찾았고, [넓이, 중앙지점] 정보를 담고 있음
+        """
         self.show_window()
         preprocessed = mark_detect.preprocess_image(self.raw_img, blur=True)
         self.hsv_img = mark_detect.select_color(preprocessed, self.color_range)  # 원하는 색만 필터링
@@ -209,6 +221,7 @@ class Data_Collection:
             self.target_shape,
             self.mark_detect_area,
             self.target_detect_area,
+            self.draw_contour,
         )  # target = [area, center_col] 형태로 타겟의 정보를 받음
 
         if return_target == True:
@@ -217,6 +230,14 @@ class Data_Collection:
             return False if len(target) == 0 else True
 
     def check_docked(self):
+        """스테이션에 도크되었는지 확인
+        
+        도킹 모드(6번)에서 마크를 탐지했을 때, 탐지가 되었다면 마크의 넓이를 기준으로 판단.
+        탐지가 되지 않았다면 도크되지 않았다고 판단.
+        
+        Returns:
+            True/False: 도킹 끝(True), 아직 안 끝남(False)
+        """
         if len(self.target) != 0:
             return self.target[0] >= self.arrival_target_area
         else:
@@ -226,7 +247,7 @@ class Data_Collection:
         print("GPS : lat - {} / lon - {}".format(self.lat, self.lon))
         print("")
 
-        print("State: {}  (0: Rotating Heading\t1: Detecting Target\t2: Docking)".format(self.state))
+        print("State: {}  (0: Rotating Heading\t1: Detecting Target\t2: dc)".format(self.state))
         print("Shape: {}  (0: Triangle\t\t1: Rectangle\t\t2: Circle)".format(self.target_shape))
         print("")
 
@@ -310,14 +331,19 @@ class Data_Collection:
         print("-" * 70)
 
     def show_window(self):
+        self.get_trackbar_pos()
         cv2.moveWindow("controller", 0, 0)
-        raw_img = cv2.resize(self.raw_img, dsize=(0, 0), fx=0.5, fy=0.5)
-        hsv_img = cv2.resize(self.hsv_img, dsize=(0, 0), fx=0.5, fy=0.5)
-        hsv_img = cv2.cvtColor(hsv_img, cv2.COLOR_GRAY2BGR)
-        col1 = np.vstack([raw_img, hsv_img])
-        col2 = cv2.resize(self.shape_img, dsize=(0, 0), fx=0.9, fy=1.0)
-        show_img = np.hstack([col1, col2])
-        cv2.imshow("controller", show_img)
+        if self.state in [5, 6]:
+            raw_img = cv2.resize(self.raw_img, dsize=(0, 0), fx=0.5, fy=0.5) # 카메라 데이터 원본
+            hsv_img = cv2.resize(self.hsv_img, dsize=(0, 0), fx=0.5, fy=0.5) # 색 추출 결과
+            hsv_img = cv2.cvtColor(hsv_img, cv2.COLOR_GRAY2BGR)
+            col1 = np.vstack([raw_img, hsv_img])
+            col2 = cv2.resize(self.shape_img, dsize=(0, 0), fx=0.9, fy=1.0) # 타겟 검출 결과
+            show_img = np.hstack([col1, col2])
+            cv2.imshow("controller", show_img)
+        else:
+            raw_img = cv2.resize(self.raw_img, dsize=(0, 0), fx=0.5, fy=0.5)
+            cv2.imshow("controller", raw_img)
 
     def visualize(self):
         ids = list(range(0, 10))
@@ -423,57 +449,101 @@ def main():
         dc.show_window()
         dc.check_state()
 
-        if dc.state == 0:  # 헤딩 돌리기
+        # 헤딩 돌리기
+        if dc.state == 0:  
+            # 정지 종료, 헤딩 돌리기
             if dc.stop_cnt >= dc.stop_time:
-                # 정지 종료, 헤딩 돌리기
                 u_thruster = dc.thruster_rotate
+            # 정지 중
             else:
-                # 아직 멈춰 있어야 함
-                dc.stop_cnt += 1
+                dc.stop_cnt += 1 # 몇 번 루프를 돌 동안 정지
                 rate.sleep()
                 u_thruster = dc.thruster_back
-            error_angle = dc.station_dir - dc.psi
-            error_angle = rearrange_angle(error_angle)
 
+            # 에러각 계산 방식 (1)
+            error_angle = dc.station_dir - dc.psi
+
+            # 에러각 계산 방식 (2): 여기선 사용 X
+
+        # 표지 판단
         elif dc.state == 1:
             dc.mark_check_cnt += 1
             detected = dc.check_target()
+
             if detected:
                 dc.detected_cnt += 1
 
-            if dc.mark_check_cnt >= dc.target_detect_time:  # 다 기다렸는데
-                if dc.detected_cnt >= dc.target_detect_cnt:  # 충분히 많이 검출되면
-                    dc.target = dc.check_target(return_target=True)
-                    dc.target_found = True  # 타겟 찾은 것
-                else:  # 검출 횟수가 적으면
-                    dc.target = []
-                    dc.target_found = False  # 타겟 못 찾은 것
-            else:
-                dc.target_found = False
+            # 지정된 횟수만큼 탐색 실시해봄
+            if dc.mark_check_cnt >= dc.target_detect_time:
+                # 타겟 마크가 충분히 많이 검출됨
+                if dc.detected_cnt >= dc.target_detect_cnt:
+                    dc.target = dc.check_target(return_target=True) # 타겟 정보
+                    dc.target_found = True  # 타겟 발견 플래그
+                # 타겟 마크가 충분히 검출되지 않아 미검출로 판단
+                else:
+                    dc.target = [] # 타겟 정보 초기화(못 찾음)
+                    dc.target_found = False  # 타겟 미발견 플래그
 
+            # 아직 충분히 탐색하기 전
+            else:
+                dc.target_found = False # 타겟 미발견 플래그
+
+            # 에러각 계산 방식 (1)
             error_angle = dc.station_dir - dc.psi
-            error_angle = rearrange_angle(error_angle)
+
+            # 에러각 계산 방식 (2) : 여기선 사용 X
+
             u_thruster = dc.thruster_stop
 
-        elif dc.state == 2:  # 스테이션 진입
+        # 스테이션 진입
+        elif dc.state == 2:  
+            # 타겟 검출 for 도킹 완료 여부 판단 / 중앙 지점 추종
             dc.target = dc.check_target(return_target=True)
+
+            # 도킹 Version1: 각 스테이션을 방문하는 것이 아닌, 중앙 멀리서 보았을 때 한 번에 도킹
+            # if len(dc.target) == 0:
+            #     station_idx = 3
+            # else:
+            #     if dc.target[1] < 215:
+            #         station_idx = 3
+            #     elif dc.target[1] > 420:
+            #         station_idx = 1
+            #     else:
+            #         station_idx = 2
+
+            # 도킹 Version2: 각 스테이션 보고 타겟이 있다면 직진 도킹 - 여기서는 사용 X
+
+            # 에러각 계산 Version1: 타겟 마크의 중앙점이 프레임의 중앙으로 오도록 제어
             if len(dc.target) == 0:
-                error_angle = error_angle = dc.station_dir - dc.psi
+                error_angle = dc.station_dir - dc.psi
                 error_angle = rearrange_angle(error_angle)
             else:
-                error_angle = control.pixel_to_degree(dc.target, dc.pixel_alpha, dc.angle_range)  # 양수면 오른쪽으로 가야 함
+                error_angle = control.pixel_to_degree(
+                    dc.target, dc.pixel_alpha, dc.angle_range
+                )  # 양수면 오른쪽으로 가야 함
+
+            # 에러각 계산 Version2: 방향벡터로의 투영 & 추종점 설정 - 여기서는 사용 X
+
+            # 선속 결정
             u_thruster = dc.thruster_station
 
-        dc.psi_desire = rearrange_angle(dc.psi + error_angle)  # 월드좌표계로 '가야 할 각도'를 계산함
-
+        # 각 모드에서 계산한 error_angle을 바탕으로 월드좌표계로 '가야 할 각도'를 계산함
+        dc.psi_desire = rearrange_angle(dc.psi + error_angle)  
+        
+        # 각 모드에서 계산한 결과로 서보모터 제어값을 결정함
         u_servo = control.degree_to_servo(
-            error_angle=error_angle, angle_alpha=dc.angle_alpha, angle_range=dc.angle_range, servo_range=dc.servo_range
+            error_angle=error_angle,
+            angle_alpha=dc.angle_alpha,
+            angle_range=dc.angle_range,
+            servo_range=dc.servo_range,
         )
+        # u_servo = int(moving_avg_filter(dc.filter_queue, dc.filter_queue_size, u_servo))
 
         dc.servo_pub.publish(u_servo)
         dc.thruster_pub.publish(u_thruster)
 
-        if print_cnt > 10:
+        # 터미널 프린트 주기 설정 및 현 상황 출력
+        if print_cnt > 1:
             dc.print_status(error_angle, u_servo, u_thruster)
             print_cnt = 0
         else:
@@ -489,7 +559,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# TODO 트랙바에 추가할 것
-# 시간 관련
-# 도킹 pixel to angle

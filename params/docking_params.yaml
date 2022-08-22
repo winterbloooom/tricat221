@@ -1,72 +1,94 @@
-# 장애물 회피 및 서보, 쓰러스터 제어
-arrival_range: 1 # m
-angle_range: [-90, 90]
-span_angle : 15 # deg
-ob_dist_range : 5 # m
-ob_angle_range : [-100, 100] # deg
+# 도착 인정 범위 (meters)
+arrival_range: 1
 
-servo_range: [70, 120]
-angle_alpha: 1.5
+# 장애물 탐지 (거리) 범위 (meters)
+ob_dist_range : 5
+
+# 장애물 탐지 (각도) 범위 (deg)
+ob_angle_range : [-100, 100]
+
+# 장애물 좌우에 추가할 안전 각도 (deg)
+span_angle : 15
+
+# 선수각 및 서보모터 이동평균필터 큐 사이즈
 filter_queue_size: 3
 
-thruster_auto: 1800
-thruster_station: 1720
-thruster_rotate: 1600
-thruster_stop: 1550
-thruster_back: 1500
+# 서보모터 회전 범위 (deg)
+angle_range: [-90, 90]
 
+# 서보모터 제어값 범위
+servo_range: [70, 120]
 
-# 선수각 방향 회전
-stop_time: 20 # 0.1(10hz) * stop_time 초만큼 멈춤 # 스테이션 앞 도착 후 이만큼 기다렸다가 헤딩 돌림
-ref_dir_range: 10 # def
-station_dir: -17 #for main #125 # <- east of fountain #-157 for south # deg
+# 서보모터 제어값 결정 상수
+angle_alpha: 1.5
 
+# 쓰러스터 PWM 신호 (선속)
+thruster_auto: 1800 # 자율운항 모드 ~ 도킹 시작 지점
+thruster_station: 1720 # 각 스테이션 간 이동
+thruster_rotate: 1600 # 선수각 회전
+thruster_stop: 1550 # 마크 탐지 시 제자리 정지(혹은 약한 전진)
+thruster_back: 1500 # 스테이션 도착 직후 제자리 정지(혹은 약한 후진)
 
-# 표지 인식
-## 비오는 날 exposure 10
+# 스테이션 도착 후 일시정지 (루프문 횟수)(hz와 시간 유사)
+stop_time: 20
+
+# 선수각 회전 인정 범위 (deg)
+ref_dir_range: 10
+
+# 스테이션 방향 선수각
+station_dir: -17
+
+# 표지 색 범위
 color_range : {
   red: {
-    color1_lower: 0, # 121, #161, #139, #171,
-    color1_upper: 10, #180,
-    color2_lower: 26, #115, #20, #66,
+    color1_lower: 0,
+    color1_upper: 10,
+    color2_lower: 26,
     color2_upper: 255,
-    color3_lower: 0, #161, #0,
+    color3_lower: 0,
     color3_upper: 255
-  }, #fix
+  },
   green: {
-    color1_lower: 43, #62, #58, #25, 
-    color1_upper: 100, #86, #176, #100,
-    color2_lower: 164, #108, #32, #135, 
-    color2_upper: 255, #205, #255, 
-    color3_lower: 0, #161, #15,
-    color3_upper: 250, #255
-  }, # FIX
+    color1_lower: 43, 
+    color1_upper: 100,
+    color2_lower: 164,
+    color2_upper: 255, 
+    color3_lower: 0,
+    color3_upper: 250,
+  },
   blue: {
-    color1_lower: 107, #81, #396, #110, #70, #17,
-    color1_upper: 180, #154, #128, # 153, #120, #118, #120,
-    color2_lower: 136, #172, #124, #, 104, #180, #90, #148,
-    color2_upper: 255, #182, #154, #255, #124, #255,
-    color3_lower: 0, #228, #0,
+    color1_lower: 107,
+    color1_upper: 180,
+    color2_lower: 136,
+    color2_upper: 255,
+    color3_lower: 0,
     color3_upper: 255
-  } #fix
+  }
 }
 
-target_shape: 5 # 3: triangle, 12: cross, 5: circle
-target_color: blue # red, green, blue
+# 목표 모양 (3: triangle, 12: cross, 5: circle)
+target_shape: 12
 
-docking_enterence: [35.0696005, 128.5788919, 49.0]
-station3: [35.0696038, 128.5788473, 49.0]
-station2: [35.0696123, 128.5788811, 49.0]
-station1: [35.0696201, 128.5789139, 49.0]
+# 목표 색깔 (red, green, blue)
+target_color: blue
 
-mark_detect_area: 200 # 최소 이만큼은 되어야 타겟인지 판단 들어감
-target_detect_area: 250 # 최소 이만큼은 되어야 타겟이라고 판단
-target_detect_time: 200 # times
-target_detect_cnt: 50 # times
+# 인식 최소 크기 (최소 이만큼은 되어야 인지 시작, 이보다 작으면 무시)
+mark_detect_area: 200
 
+# 타겟 인정 크기 (최소 이만큼은 되어야 타겟이라고 인정)
+target_detect_area: 1000
+
+# 타겟 판단 대기 시간 (루프 반복 횟수)
+target_detect_time: 300
+
+# 타겟 판단 임곗값 (루프 반복 횟수)(target_detect_time 중 이만큼은 되어야 타겟 발견으로 인정)
+target_detect_cnt: 200
+
+# 실시간 인식 현황 시각화 여부
 draw_contour: True
 
+# 도착 인정 크기 (최소 이만큼은 되어야 도크 완료)
+arrival_target_area: 10000
 
-# 스테이션 진입
-arrival_target_area: 100000 #이만큼 이상 넓이면 도착임
+# 픽셀 단위를 각도 단위로 바꾸는 연산에 사용할 계수
 pixel_alpha: 500

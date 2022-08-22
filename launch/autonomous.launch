@@ -2,7 +2,7 @@
 
 <launch>
 	<!--LiDAR-->
-	<node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
+	<node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode">
 		<param name="serial_port"         type="string" value="/dev/ttyLiDAR"/>  
 		<param name="serial_baudrate"     type="int"    value="256000"/>
 		<param name="frame_id"            type="string" value="laser"/>
@@ -21,21 +21,21 @@
 	</node>
 
 	<!-- Nodes -->
-	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true" output="screen"/>
+	<node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator" respawn="true" />
 	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter" respawn="true"/>
-	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true" output="screen"/>
+	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" respawn="true"/>
 	<node pkg="tricat221" type="autonomous.py" name="autonomous" output="screen"/>
 	<node pkg="tricat221" type="serial_node.py" name="ARDUINO" args="/dev/ttyARDUINO" respawn="true"/>
 
 	<!-- Visualization -->
-	<node pkg="rviz" type="rviz" name="rviz_auto" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" />
+	<node pkg="rviz" type="rviz" name="rviz_auto" args="-d $(find tricat221)/rviz/rviz_conf_auto.rviz" />
 	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/> -->
 	
 	<!-- Record -->
 	<arg name="do_record" default="false" />
 	<node pkg="rosbag" type="record" name="rosbag_record" required="true" if="$(arg do_record)" args="record -a -O $(find tricat221)/data/rosbag/$(arg filename)"  />
 
-	<!--PARAMETER-->
+	<!-- Parameters -->
 	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
 	<rosparam command="load" file="$(find tricat221)/params/autonomous_params.yaml"/>
 	<rosparam command="load" file="$(find tricat221)/params/coordinates.yaml"/>

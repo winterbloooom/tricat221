@@ -20,7 +20,7 @@ import control.control_tools as control
 import datatypes.point_class
 import utils.gnss_converter as gc
 import utils.obstacle_avoidance as oa
-import utils.visualizer as visual
+import autonomous_visualize as av
 from tricat221.msg import ObstacleList
 from utils.tools import *
 
@@ -28,14 +28,14 @@ from utils.tools import *
 class Autonomous:
     def __init__(self):
         # locations, coordinates
-        self.boat_x, self.boat_y = 0, 0
-        self.goal_x, self.goal_y, _ = gc.enu_convert(rospy.get_param("autonomous_goal"))
+        self.boat_x, self.boat_y = 0, 0 # 현재 보트 위치
+        self.goal_x, self.goal_y, _ = gc.enu_convert(rospy.get_param("autonomous_goal")) # 목표점 위치
         self.trajectory = []  # 지금까지 이동한 궤적
-        boundary = rospy.get_param("boundary2")  # TODO
+        boundary = rospy.get_param("boundary1") # 경기장 꼭짓점
         self.boundary = []
         for p in boundary:
             self.boundary.append(list(gc.enu_convert(p)))
-        self.diff = [0, 0]
+        self.diff = [-1.7, -0.4] # 현재 보트 위치 GPS 보정
 
         # directions
         self.heading_queue = []  # 헤딩을 필터링할 이동평균필터 큐
@@ -59,9 +59,9 @@ class Autonomous:
         # control
         self.rotate_angle_range = rospy.get_param("rotate_angle_range")  # 회전할 각도 범위
         self.servo_range = rospy.get_param("servo_range")  # 서보모터 최대/최소값
-        self.servo_middle = (self.servo_range[0] + self.servo_range[1]) / 2
+        self.servo_middle = (self.servo_range[0] + self.servo_range[1]) / 2 # 서보모터 중앙값(전진)
         self.filter_queue = []  # 서보모터값을 필터링할 이동평균필터 큐
-        self.thruster_speed = rospy.get_param("thruster_speed")  # 쓰러스터 고정값
+        self.thruster_speed = rospy.get_param("thruster_speed")  # 쓰러스터 PWM 고정값 (선속)
 
         # other fixed values
         self.filter_queue_size = rospy.get_param("filter_queue_size")  # 이동평균필터 큐사이즈
@@ -107,7 +107,6 @@ class Autonomous:
         Notes:
             * IMU의 예민성으로 인하여 heading 값에 noise가 있음. 따라서 이동평균필터를 적용함.
         """
-
         # self.psi = moving_avg_filter(
         #     self.heading_queue, self.filter_queue_size, msg.data
         # )  # [deg]
@@ -123,8 +122,8 @@ class Autonomous:
             * ENU좌표계로 변환되어 입력을 받는데, ENU좌표계와 x, y축이 반대임
             * 따라서 Point.x, Point.y가 각각 y, x가 됨
         """
-        self.boat_x = msg.x + self.diff[1]
-        self.boat_y = msg.y + self.diff[0]
+        self.boat_x = msg.x + self.diff[0]
+        self.boat_y = msg.y + self.diff[1]
 
     def obstacle_callback(self, msg):
         """lidar_converter에서 받아온 장애물 정보 저장
@@ -221,229 +220,6 @@ class Autonomous:
         print("")
         print("-" * 70)
 
-    def visualize(self):
-        ids = list(range(0, 100))
-
-        # 경기장
-        boundary = visual.linelist_rviz(
-            name="boundary",
-            id=ids.pop(),
-            lines=[
-                self.boundary[0],
-                self.boundary[1],
-                self.boundary[1],
-                self.boundary[2],
-                self.boundary[2],
-                self.boundary[3],
-                self.boundary[3],
-                self.boundary[0],
-            ],
-            color_r=59,
-            color_g=196,
-            color_b=212,
-            scale=0.15,
-        )
-
-        # 목표 지점
-        goal = visual.point_rviz(
-            name="goal",
-            id=ids.pop(),
-            x=self.goal_x,
-            y=self.goal_y,
-            color_r=165,
-            color_g=242,
-            color_b=87,
-            scale=0.2,
-        )
-        goal_txt = visual.text_rviz(
-            name="goal",
-            id=ids.pop(),
-            x=self.goal_x,
-            y=self.goal_y,
-            text="({:>4.2f}, {:>4.2f})".format(self.goal_x, self.goal_y),
-        )
-
-        # goal_range (도착 인정 범위)
-        goal_range = visual.cylinder_rviz(
-            name="waypoints",
-            id=ids.pop(),
-            x=self.goal_x,
-            y=self.goal_y,
-            scale=self.goal_range * 2,
-            color_r=165,
-            color_g=242,
-            color_b=87,
-        )
-
-        # 현재 위치
-        boat_txt = visual.text_rviz(
-            name="boat",
-            id=ids.pop(),
-            text="({:>4.2f}, {:>4.2f})".format(self.boat_x, self.boat_y),
-            x=self.boat_x - 0.3,
-            y=self.boat_y - 0.3,
-        )
-
-        # 배로부터 목표지점까지 이은 선분
-        goal_line = visual.linelist_rviz(
-            name="goal_line",
-            id=ids.pop(),
-            lines=[[self.boat_x, self.boat_y], [self.goal_x, self.goal_y]],
-            color_r=91,
-            color_g=169,
-            color_b=252,
-            scale=0.05,
-        )
-
-        # 배와 함께 이동할 X, Y축
-        axis_x = visual.linelist_rviz(
-            name="axis",
-            id=ids.pop(),
-            lines=[[self.boat_x, self.boat_y], [self.boat_x + 3, self.boat_y]],
-            color_r=255,
-            scale=0.1,
-        )
-        axis_y = visual.linelist_rviz(
-            name="axis",
-            id=ids.pop(),
-            lines=[[self.boat_x, self.boat_y], [self.boat_x, self.boat_y + 3]],
-            color_g=255,
-            scale=0.1,
-        )
-        axis_x_txt = visual.text_rviz(name="axis", id=14, text="X", x=self.boat_x + 3.3, y=self.boat_y)
-        axis_y_txt = visual.text_rviz(name="axis", id=15, text="Y", x=self.boat_x, y=self.boat_y + 3.3)
-
-        # 지나온 경로
-        traj = visual.points_rviz(name="traj", id=ids.pop(), points=self.trajectory, color_g=180, scale=0.05)
-
-        # heading
-        psi_arrow_end_x = 2 * math.cos(math.radians(self.psi)) + self.boat_x
-        psi_arrow_end_y = 2 * math.sin(math.radians(self.psi)) + self.boat_y
-        psi = visual.arrow_rviz(
-            name="psi",
-            id=ids.pop(),
-            x1=self.boat_x,
-            y1=self.boat_y,
-            x2=psi_arrow_end_x,
-            y2=psi_arrow_end_y,
-            color_r=221,
-            color_g=119,
-            color_b=252,
-        )
-        psi_txt = visual.text_rviz(name="psi", id=5, text="psi", x=psi_arrow_end_x, y=psi_arrow_end_y)
-
-        # psi_desire (가고 싶은 각도)
-        desire_arrow_end_x = 3 * math.cos(math.radians(self.psi_desire)) + self.boat_x
-        desire_arrow_end_y = 3 * math.sin(math.radians(self.psi_desire)) + self.boat_y
-        psi_desire = visual.arrow_rviz(
-            name="psi_desire",
-            id=ids.pop(),
-            x1=self.boat_x,
-            y1=self.boat_y,
-            x2=desire_arrow_end_x,
-            y2=desire_arrow_end_y,
-            color_r=59,
-            color_g=139,
-            color_b=245,
-        )
-        psi_desire_txt = visual.text_rviz(
-            name="psi_desire", id=ids.pop(), text="desire", x=desire_arrow_end_x, y=desire_arrow_end_y
-        )
-
-        # danger_angles
-        dangers = []
-        for angle in self.danger_angles:
-            end_point_x = self.ob_dist_range * math.cos(math.radians(self.psi + angle)) + self.boat_x
-            end_point_y = self.ob_dist_range * math.sin(math.radians(self.psi + angle)) + self.boat_y
-            dangers.append([self.boat_x, self.boat_y])
-            dangers.append([end_point_x, end_point_y])
-        danger_angles = visual.linelist_rviz(
-            name="obs", id=ids.pop(), lines=dangers, color_r=217, color_g=217, color_b=43, color_a=100, scale=0.02
-        )
-
-        # inrange obstacles
-        inrange_obs_world = []  # span 미포함
-        for ob in self.inrange_obstacles:
-            begin_x = (
-                self.boat_x
-                + (-ob.begin.x) * math.cos(math.radians(self.psi))
-                - ob.begin.y * math.sin(math.radians(self.psi))
-            )
-            begin_y = (
-                self.boat_y
-                + (-ob.begin.x) * math.sin(math.radians(self.psi))
-                + ob.begin.y * math.cos(math.radians(self.psi))
-            )
-            end_x = (
-                self.boat_x
-                + (-ob.end.x) * math.cos(math.radians(self.psi))
-                - ob.end.y * math.sin(math.radians(self.psi))
-            )
-            end_y = (
-                self.boat_y
-                + (-ob.end.x) * math.sin(math.radians(self.psi))
-                + ob.end.y * math.cos(math.radians(self.psi))
-            )
-            inrange_obs_world.append([begin_x, begin_y])
-            inrange_obs_world.append([end_x, end_y])
-        obstacles = visual.linelist_rviz(
-            name="obs", id=ids.pop(), lines=inrange_obs_world, color_r=237, color_g=234, color_b=74, scale=0.1
-        )
-
-        # angle_range (탐색 범위)
-        min_angle_x = self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[0])) + self.boat_x
-        min_angle_y = self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[0])) + self.boat_y
-        max_angle_x = self.ob_dist_range * math.cos(math.radians(self.psi + self.ob_angle_range[1])) + self.boat_x
-        max_angle_y = self.ob_dist_range * math.sin(math.radians(self.psi + self.ob_angle_range[1])) + self.boat_y
-        angle_range = visual.linelist_rviz(
-            name="angle_range",
-            id=ids.pop(),
-            lines=[
-                [self.boat_x, self.boat_y],
-                [min_angle_x, min_angle_y],
-                [self.boat_x, self.boat_y],
-                [max_angle_x, max_angle_y],
-            ],
-            color_r=160,
-            color_g=90,
-            color_b=227,
-            scale=0.05,
-        )
-
-        # lidar raw data
-        pcd = []
-        if self.show_raw_pcd:
-            for p in self.input_points:
-                x = self.boat_x + (-p.x) * math.cos(math.radians(self.psi)) - p.y * math.sin(math.radians(self.psi))
-                y = self.boat_y + (-p.x) * math.sin(math.radians(self.psi)) + p.y * math.cos(math.radians(self.psi))
-                pcd.append([x, y])
-        pcd = visual.points_rviz(name="pcd", id=ids.pop(), points=pcd, color_r=255, scale=0.08)
-
-        all_markers = visual.marker_array_rviz(
-            [
-                boundary,
-                goal,
-                goal_txt,
-                goal_range,
-                boat_txt,
-                traj,
-                goal_line,
-                axis_x,
-                axis_y,
-                axis_x_txt,
-                axis_y_txt,
-                psi,
-                psi_txt,
-                psi_desire,
-                psi_desire_txt,
-                danger_angles,
-                obstacles,
-                angle_range,
-                pcd,
-            ]
-        )
-        self.visual_rviz_pub.publish(all_markers)
-
 
 def main():
     rospy.init_node("autonomous", anonymous=False)
@@ -505,7 +281,8 @@ def main():
             print("")
             print("{:<9} : {:<6.3f}".format("Run time", rospy.get_time() - start_time))  # 작동 시간
             auto.print_status(error_angle, u_servo)
-            auto.visualize()
+            all_markers = av.visualize(auto)
+            auto.visual_rviz_pub.publish(all_markers)
 
         rate.sleep()
 

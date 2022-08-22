@@ -150,7 +150,7 @@ class Lidar_Converter:
                 이전에 append 되었던 point_set들도 모두 동일한 값으로 바뀜
                 따라서 메모리 확보를 위해 아예 변수 지우고 다시 선언함
         """
-        point_set = Point_Set()
+        point_set = PointSet()
         point_set.append_point(self.input_points[0])  # 중복으로 들어가게 될 것임. 마지막에 제거할 것
         for p in self.input_points:
             if p.dist_btw_points(point_set.end) > self.max_gap_in_set:
@@ -158,7 +158,7 @@ class Lidar_Converter:
                     self.point_sets_list.append(point_set)  # set of point groups
 
                 del point_set  # delete previous group instance
-                point_set = Point_Set()  # new group
+                point_set = PointSet()  # new group
                 point_set.append_point(p)
             else:
                 point_set.append_point(p)
@@ -173,7 +173,7 @@ class Lidar_Converter:
         """Split group(point set) into smaller groups
 
         Args:
-            ps (Point_Set): querying point set(group)
+            ps (PointSet): querying point set(group)
         """
         max_distance = 0  # 그룹의 첫점 ~ 끝점 이은 직선으로부터 가장 멀리 떨어진 점까지의 거리
         split_idx = 0  # max_distance를 가지는 점의 그룹 내 인덱스
@@ -194,9 +194,9 @@ class Lidar_Converter:
             if split_idx < self.point_set_size or (ps.set_size - split_idx) < self.point_set_size:
                 return
 
-            ps1 = Point_Set()
+            ps1 = PointSet()
             ps1.input_point_set(ps.point_set[:split_idx])
-            ps2 = Point_Set()
+            ps2 = PointSet()
             ps2.input_point_set(ps.point_set[split_idx:])
 
             # print("현재 ps의 인덱스", (self.point_sets_list).index(ps))
@@ -243,13 +243,13 @@ class Lidar_Converter:
             "del wall_particle"
                 -> group_points() 함수 참고
         """
-        wall_particle = Point_Set()
+        wall_particle = PointSet()
         wall_particle.append_point(ps.begin)
         for p in ps.point_set:
             if p.dist_btw_points(wall_particle.begin) > self.wall_particle_length:
                 self.obstacles.append(wall_particle)
                 del wall_particle
-                wall_particle = Point_Set()
+                wall_particle = PointSet()
             wall_particle.append_point(p)
         self.obstacles.append(wall_particle)  # last group
 

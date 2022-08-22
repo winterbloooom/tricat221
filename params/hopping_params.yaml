@@ -1,31 +1,43 @@
+######################### 2022 Version #########################
+
+# 도착 인정 범위 (meters)
 goal_range: 1.5
 
-angle_alpha : 1.7
+# 선수각 및 서보모터 이동평균필터 큐 사이즈
+filter_queue_size : 5
+
+# 서보모터 회전 범위 (deg)
 rotate_angle_range : [-180, 180]
+
+# 서보모터 제어값 범위
 servo_range : [70, 120]
 
-# kp_distance : 10
+# 서보모터 제어값 결정 상수
+angle_alpha : 1.7
+
+# 거리-선속 PID 계수
+kp_distance : 10
 ki_distance : 0
 kd_distance : 0
 
+# 쓰러스터 PWM 신호 (선속) (1500 정지 ~ 최대 1900)
 thruster_max : 1800
 thruster_min : 1750
 
+# 계수 조정할 트랙바 사용 여부
 controller : 0
-filter_queue_size : 5
 
+
+######################### 2021 Version #########################
+
+# ENU 변환 원점
 map_dd : {
   map_00_lat : 35.069387336800794, 
   map_00_lon : 128.57896450335267,
   map_00_alt : 49.0
   }
 
-# map_dd : {
-#   map_00_lat : 35.0693801, 
-#   map_00_lon : 128.5789665,
-#   map_00_alt : 49.0
-#   }
-
+# 호핑투어 waypoints
 waypoint_List: {
   waypoints:
   [ 
@@ -38,24 +50,14 @@ waypoint_List: {
   ],
   }
 
-# waypoint_List: {
-#   waypoints:
-#   [ 
-#     [35.0694689, 128.5789118, 49.0], #left bottm
-#     [35.0696062, 128.5788953, 49.0], #mid up
-#     [35.0694586, 128.5789663, 49.0], #right bottom 
-#     [35.0695499, 128.5789314, 49.0], #right up
-#     [35.0693801, 128.5789665, 49.0] # startpoint
-#   ],
-#   }
-
-
+# 각도-서보모터 PID 계수
 kp_servo : 0.4
-ki_servo : 0.0 # max 0.05?
+ki_servo : 0.0
 kd_servo : 0.1
 
+# 거리-선속 PID 계수
 kp_distance : 40
 
+# 쓰러스터 PWM 신호 (선속) (1500 정지 ~ 최대 1900)
 thruster_power : 1850
-
 min_power : 1700

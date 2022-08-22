@@ -1,17 +1,13 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
+"""2021년 i-Tricat211팀 자율운항 코드 수정본"""
+
 import math
 import os
 import sys
-import time
-
 import numpy as np
-import pymap3d as pm
 import rospy
-
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-
 import skfuzzy as fuzz
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import Imu, LaserScan
@@ -19,12 +15,13 @@ from skfuzzy import control as ctrl
 from std_msgs.msg import Float64, UInt16
 from visualization_msgs.msg import MarkerArray
 
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+
 import utils.gnss_converter as gc
 import utils.visualizer as visual
 from utils.tools import *
 
 
-# TODO fuzzy 버전끼리 비교해보기. 이건 1700 수정본
 class Fuzzy:
     def __init__(self):
         self.boat_x, self.boat_y = 0, 0
@@ -138,7 +135,6 @@ class Fuzzy:
         distance["W"] = fuzz.trimf(distance.universe, [2, 3, 4])
         distance["B"] = fuzz.trimf(distance.universe, [3, 4, 4])
 
-        # TODO 선박 정면이 0이고 좌측이 (-), 우측이 (+) ????
         angle["NL"] = fuzz.trapmf(angle.universe, [-70, -40, -30, -20])
         angle["NM"] = fuzz.trapmf(angle.universe, [-40, -30, -20, -10])
         angle["NS"] = fuzz.trimf(angle.universe, [-25, 0, 1])
@@ -242,15 +238,13 @@ class Fuzzy:
         #     # pi = math.degrees(angle_min + angle_increment * index)
         #     # print("idx {} pi {} r {}".format(idx, pi, r))
 
-        # TODO 범위 안에 있는 장애물 개수 다 셀까....
-
         if ranges == [] or min(ranges) == float("inf"):
             return False
 
         closest_distance = min(ranges)  # 가장 가까운 장애물까지 거리
         idx = ranges.index(closest_distance) + start_idx  # 가장 가까운 장애물의 인덱스
         # pi = -math.degrees(angle_min + angle_increment * idx) + 180
-        pi = math.degrees(angle_min + angle_increment * idx)  # TODO 왜...?
+        pi = math.degrees(angle_min + angle_increment * idx)
         # lidar는 후방이 0 -> 왼쪽으로 돌아 전방이 180 -> 후방이 360
         pi = rearrange_angle(pi)
 

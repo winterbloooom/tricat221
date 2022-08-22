@@ -1,5 +1,12 @@
+# 도착 인정 범위 (meters)
 goal_range: 1.5
+
+# 서보모터 제어값 범위
 servo_range: [70, 120]
+
+# 각도-서보모터 PID 계수
 kp_servo: 0.4 #2021
 kd_servo: 0.0 # 2021
+
+# 쓰러스터 PWM 신호 (선속) (1500 정지 ~ 최대 1900)
 thruster: 1620 # 2021

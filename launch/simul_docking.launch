@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <launch>
-    <!-- sensors -->
+    <!-- Camera -->
     <!-- <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
         <param name="video_device" value="/dev/video0" />
         <param name="autoexposure" value="false" />
@@ -15,96 +15,23 @@
         <param name="contrast" value="0" />
         <param name="saturation" value="100" />
     </node> -->
+
+    <!-- Recording -->
+    <node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/data/rosbag/docking.bag -l --topics /imu/mag /ublox_gps/fix /usb_cam/image_raw "/>
     
-    <!--LiDAR-->
-	<!-- <node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
-		<param name="serial_port"         type="string" value="/dev/ttyLiDAR"/>  
-		<param name="serial_baudrate"     type="int"    value="256000"/>
-		<param name="frame_id"            type="string" value="laser"/>
-		<param name="inverted"            type="bool"   value="false"/>
-		<param name="angle_compensate"    type="bool"   value="true"/>
-		<param name="scan_mode"           type="string" value="Stability"/>
-	</node> -->
-
-	<!--GPS-->
-	<!-- <include file="$(find ntrip_ros)/launch/ntrip_ros.launch"></include> -->
-
-	<!--IMU-->
-	<!-- <node pkg="myahrs_driver" type="myahrs_driver" name="myahrs_driver">
-		<param name="port" value="/dev/ttyIMU" />
-		<param name="baud_rate" value="115200" />
-	</node> -->
-
+    <!-- Nodes -->
     <node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator"/>
 	<node pkg="tricat221"  type="gnss_converter.py" name="gnssConverter"/>
 	<node pkg="tricat221" type="lidar_converter.py" name="lidarConverter" output="screen"/>
-
-    <node pkg="rosbag" type="play" name="rosbag_play2" required="true" args="$(find tricat221)/data/rosbag/220819-100351-docking-03(성공).bag -l -r 2 --topics /ublox_gps/fix /imu/mag /usb_cam/image_raw /scan"/>
 	<node pkg="tricat221" type="docking.py" name="Docking" output="screen"  respawn="true"/>
 
-    <!-- visulize -->
+    <!-- Visualization -->
 	<!-- <node name="rqt" pkg="rqt_graph" type="rqt_graph"/>	 -->
-    <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting3(docking).rviz" /> -->
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_setting2.rviz" />
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find tricat221)/rviz/rviz_conf_docking.rviz" />
 
-    <!--PARAMETER-->
+    <!-- Parameters -->
 	<rosparam command="load" file="$(find tricat221)/params/lidar_params.yaml"/>
 	<rosparam command="load" file="$(find tricat221)/params/docking_params.yaml"/>
 	<rosparam command="load" file="$(find tricat221)/params/coordinates.yaml"/>
+
 </launch>
-
-
-<!-- <launch>
-    <node name="$(anon usb_cam)" pkg="usb_cam" type="usb_cam_node" output="screen" >
-      <param name="video_device" value="$(arg n)" />
-      <param name="image_width" value="640" />
-      <param name="image_height" value="480" />
-      <param name="pixel_format" value="yuyv" />
-      <param name="camera_frame_id" value="usb_cam" />
-      <param name="io_method" value="mmap"/>
-      <param name="exposure" value="50"/>
-    </node>
-    <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
-      <remap from="image" to="/usb_cam/image_raw"/>
-      <param name="autosize" value="true" />
-    </node>
-  </launch>
-   -->
-
-   <!-- roslaunch package launchfile n:=value -->
-
-   <!-- <remap from="/camera1/usb_cam/image_raw/" to="/star_cam/image_raw"/> -->
-   <!-- <param name="frame_rate???" value="mmap" /> -->
-
-   <!-- <group ns="camera1">
-        <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
-            <param name="video_device" value="/dev/video0" />
-            <param name="autoexposure" value="false" />
-            <param name="pixel_format" value="yuyv" />
-            <param name="camera_frame_id" value="usb_cam" />
-            <param name="io_method" value="mmap" />
-            
-            <param name="image_width" value="640" />
-            <param name="image_height" value="480" />
-            <param name="exposure" value="150" />
-            <param name="contrast" value="0" />
-            <param name="saturation" value="100" />
-            
-        </node>
-    </group> -->
-    <!-- <group ns="camera2">
-        <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
-            <param name="video_device" value="/dev/video2" />
-            <param name="autoexposure" value="false" />
-            
-            <param name="image_width" value="640" />
-            <param name="image_height" value="480" />
-            <param name="pixel_format" value="yuyv" />
-            <param name="camera_frame_id" value="usb_cam" />
-            <param name="io_method" value="mmap" />
-
-            <param name="exposure" value="150" />
-            <param name="contrast" value="0" />
-            <param name="saturation" value="100" />
-        </node>
-    </group> -->
