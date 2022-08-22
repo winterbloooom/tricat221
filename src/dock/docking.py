@@ -36,9 +36,10 @@ Notes:
 import math
 import os
 import sys
+
+import cv2
 import numpy as np
 import rospy
-import cv2
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import Image
@@ -125,7 +126,7 @@ class Docking:
         self.shape_img = np.zeros((480, 640, 3), dtype=np.uint8)
         self.obstacles = []
         self.mark_area = 0
-        self.distance_to_point = 0 # 특정 지점으로부터 배까지의 거리
+        self.distance_to_point = 0  # 특정 지점으로부터 배까지의 거리
 
         # count
         ## (state 4에서) '이 시간동안(횟수)' 정지(약한 후진)하고 그 뒤에 헤딩 돌릴 것.
@@ -173,7 +174,7 @@ class Docking:
         # 7: 끝. 정지
         self.target = []  # [area, center_col(pixel)]. 딕셔너리로 선언하는 쪽이 더 쉬울 듯
         self.target_found = False
-        self.next_to_visit = 1 # 다음에 방문해야 할 스테이션 번호. state 시작을 1로할거면 1로
+        self.next_to_visit = 1  # 다음에 방문해야 할 스테이션 번호. state 시작을 1로할거면 1로
 
         # controller
         cv2.namedWindow("controller")
@@ -319,10 +320,10 @@ class Docking:
 
     def check_target(self, return_target=False):
         """표지를 인식하고 타겟이면 타겟 정보를 반환
-        
+
         Args:
             return_target (bool): target 정보를 리턴할 것인지(True), Bool 정보를 리턴할 것인지(False)
-            
+
         Returns:
             True/False (bool): 타겟을 찾음(True), 찾지 못함(False)
             target (list): 타겟을 찾았고, [넓이, 중앙지점] 정보를 담고 있음
@@ -345,10 +346,10 @@ class Docking:
 
     def check_docked(self):
         """스테이션에 도크되었는지 확인
-        
+
         도킹 모드(6번)에서 마크를 탐지했을 때, 탐지가 되었다면 마크의 넓이를 기준으로 판단.
         탐지가 되지 않았다면 도크되지 않았다고 판단.
-        
+
         Returns:
             True/False: 도킹 끝(True), 아직 안 끝남(False)
         """
@@ -478,11 +479,11 @@ class Docking:
         self.get_trackbar_pos()
         cv2.moveWindow("controller", 0, 0)
         if self.state in [5, 6]:
-            raw_img = cv2.resize(self.raw_img, dsize=(0, 0), fx=0.5, fy=0.5) # 카메라 데이터 원본
-            hsv_img = cv2.resize(self.hsv_img, dsize=(0, 0), fx=0.5, fy=0.5) # 색 추출 결과
+            raw_img = cv2.resize(self.raw_img, dsize=(0, 0), fx=0.5, fy=0.5)  # 카메라 데이터 원본
+            hsv_img = cv2.resize(self.hsv_img, dsize=(0, 0), fx=0.5, fy=0.5)  # 색 추출 결과
             hsv_img = cv2.cvtColor(hsv_img, cv2.COLOR_GRAY2BGR)
             col1 = np.vstack([raw_img, hsv_img])
-            col2 = cv2.resize(self.shape_img, dsize=(0, 0), fx=0.9, fy=1.0) # 타겟 검출 결과
+            col2 = cv2.resize(self.shape_img, dsize=(0, 0), fx=0.9, fy=1.0)  # 타겟 검출 결과
             show_img = np.hstack([col1, col2])
             cv2.imshow("controller", show_img)
         else:
@@ -503,7 +504,7 @@ def main():
     while not rospy.is_shutdown():
         docking.trajectory.append([docking.boat_x, docking.boat_y])  # 이동 경로 추가
         docking.show_window()
-        change_state = docking.check_state() # 현재 상태 점검 및 변경
+        change_state = docking.check_state()  # 현재 상태 점검 및 변경
 
         # 일부 변수 초기화
         inrange_obstacles = []
@@ -520,7 +521,7 @@ def main():
             docking.thruster_pub.publish(1500)
             print(">>>>>>>>>>>>>> Finished <<<<<<<<<<<<<<")
             return
-        
+
         # 시작점으로 이동하며 장애물 회피
         elif docking.state == 0:
             # 장애물 탐지. 범위 내에 있는 장애물을 필터링하고, 장애물이 있는 각도 리스트를 만듦
@@ -555,7 +556,7 @@ def main():
                 u_thruster = docking.thruster_rotate
             # 정지 중
             else:
-                docking.stop_cnt += 1 # 몇 번 루프를 돌 동안 정지
+                docking.stop_cnt += 1  # 몇 번 루프를 돌 동안 정지
                 rate.sleep()
                 u_thruster = docking.thruster_back
 
@@ -581,26 +582,26 @@ def main():
 
         # 표지 판단
         elif docking.state == 5:
-            docking.mark_check_cnt += 1 # 탐색 횟수 1회 증가
-            detected = docking.check_target() # 타겟이 탐지 되었는가?
+            docking.mark_check_cnt += 1  # 탐색 횟수 1회 증가
+            detected = docking.check_target()  # 타겟이 탐지 되었는가?
 
             if detected:
-                docking.detected_cnt += 1 # 타겟 탐지 횟수 1회 증가
+                docking.detected_cnt += 1  # 타겟 탐지 횟수 1회 증가
 
             # 지정된 횟수만큼 탐색 실시해봄
             if docking.mark_check_cnt >= docking.target_detect_time:
                 # 타겟 마크가 충분히 많이 검출됨
                 if docking.detected_cnt >= docking.target_detect_cnt:
-                    docking.target = docking.check_target(return_target=True) # 타겟 정보
+                    docking.target = docking.check_target(return_target=True)  # 타겟 정보
                     docking.target_found = True  # 타겟 발견 플래그
                 # 타겟 마크가 충분히 검출되지 않아 미검출로 판단
                 else:
-                    docking.target = [] # 타겟 정보 초기화(못 찾음)
+                    docking.target = []  # 타겟 정보 초기화(못 찾음)
                     docking.target_found = False  # 타겟 미발견 플래그
 
             # 아직 충분히 탐색하기 전
             else:
-                docking.target_found = False # 타겟 미발견 플래그
+                docking.target_found = False  # 타겟 미발견 플래그
 
             # 에러각 계산 방식 (1)
             # error_angle = docking.station_dir - docking.psi
@@ -671,8 +672,8 @@ def main():
             u_thruster = docking.thruster_station
 
         # 각 모드에서 계산한 error_angle을 바탕으로 월드좌표계로 '가야 할 각도'를 계산함
-        docking.psi_desire = rearrange_angle(docking.psi + error_angle)  
-        
+        docking.psi_desire = rearrange_angle(docking.psi + error_angle)
+
         # 각 모드에서 계산한 결과로 서보모터 제어값을 결정함
         u_servo = control.degree_to_servo(
             error_angle=error_angle,

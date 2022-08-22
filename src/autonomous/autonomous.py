@@ -11,6 +11,7 @@ import rospy
 
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
+import autonomous_visualize as av
 from geometry_msgs.msg import Point
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float64, UInt16
@@ -20,7 +21,6 @@ import control.control_tools as control
 import datatypes.point_class
 import utils.gnss_converter as gc
 import utils.obstacle_avoidance as oa
-import autonomous_visualize as av
 from tricat221.msg import ObstacleList
 from utils.tools import *
 
@@ -28,14 +28,14 @@ from utils.tools import *
 class Autonomous:
     def __init__(self):
         # locations, coordinates
-        self.boat_x, self.boat_y = 0, 0 # 현재 보트 위치
-        self.goal_x, self.goal_y, _ = gc.enu_convert(rospy.get_param("autonomous_goal")) # 목표점 위치
+        self.boat_x, self.boat_y = 0, 0  # 현재 보트 위치
+        self.goal_x, self.goal_y, _ = gc.enu_convert(rospy.get_param("autonomous_goal"))  # 목표점 위치
         self.trajectory = []  # 지금까지 이동한 궤적
-        boundary = rospy.get_param("boundary1") # 경기장 꼭짓점
+        boundary = rospy.get_param("boundary1")  # 경기장 꼭짓점
         self.boundary = []
         for p in boundary:
             self.boundary.append(list(gc.enu_convert(p)))
-        self.diff = [-1.7, -0.4] # 현재 보트 위치 GPS 보정
+        self.diff = [-1.7, -0.4]  # 현재 보트 위치 GPS 보정
 
         # directions
         self.heading_queue = []  # 헤딩을 필터링할 이동평균필터 큐
@@ -59,7 +59,7 @@ class Autonomous:
         # control
         self.rotate_angle_range = rospy.get_param("rotate_angle_range")  # 회전할 각도 범위
         self.servo_range = rospy.get_param("servo_range")  # 서보모터 최대/최소값
-        self.servo_middle = (self.servo_range[0] + self.servo_range[1]) / 2 # 서보모터 중앙값(전진)
+        self.servo_middle = (self.servo_range[0] + self.servo_range[1]) / 2  # 서보모터 중앙값(전진)
         self.filter_queue = []  # 서보모터값을 필터링할 이동평균필터 큐
         self.thruster_speed = rospy.get_param("thruster_speed")  # 쓰러스터 PWM 고정값 (선속)
 

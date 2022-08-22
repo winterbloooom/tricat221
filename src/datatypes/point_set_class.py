@@ -8,14 +8,14 @@ from math import pow, sqrt
 
 class PointSet:
     def __init__(self):
-        self.point_set = [] # 그룹 내 점의 목록(point_class.py의 Point 클래스)
+        self.point_set = []  # 그룹 내 점의 목록(point_class.py의 Point 클래스)
         self.set_size = 0  # 그룹 내 점의 개수
-        self.begin = None # 그룹의 시작점
-        self.end = None # 그룹의 끝점
+        self.begin = None  # 그룹의 시작점
+        self.end = None  # 그룹의 끝점
 
     def input_point_set(self, ps):
         """특정 PointSet의 각 인스턴스를 설정함
-        
+
         Args:
             ps (PointSet): 등록 대상 PointSet
         """
@@ -26,16 +26,16 @@ class PointSet:
 
     def append_point(self, p):
         """해당 PointSet(그룹)에 한 점을 추가
-        
+
         Args:
             p (Point): 추가할 포인트 개체
         """
         if len(self.point_set) == 0:
-            self.begin = p # 그룹의 첫 점이면 begin으로 설정
+            self.begin = p  # 그룹의 첫 점이면 begin으로 설정
 
-        self.point_set.append(p) # 점 1개 더 등록
-        self.set_size += 1 # 점의 개수 1개 증가
-        self.end = p # 추가된 점은 끝점으로 설정. 
+        self.point_set.append(p)  # 점 1개 더 등록
+        self.set_size += 1  # 점의 개수 1개 증가
+        self.end = p  # 추가된 점은 끝점으로 설정.
         # 위 코드는 self.point_set[-1]로 해도 동일. (self.end)와 p의 아이디(id())가 같음. 같은 포인터
 
     def projection(self, p):
@@ -48,19 +48,19 @@ class PointSet:
         Returns:
             projection (list): 투영점 좌표
         """
-        a = self.end - self.begin # PointSet의 첫 점과 끝 점 이은 벡터
-        b = p - self.begin # 첫 점과 특정 점을 이은 벡터
+        a = self.end - self.begin  # PointSet의 첫 점과 끝 점 이은 벡터
+        b = p - self.begin  # 첫 점과 특정 점을 이은 벡터
 
         if a.dist_squared_from_origin() != 0:
-            projection = self.begin + a * (a.dot(b) / a.dist_squared_from_origin()) # 내적 이용
-        else: # PointSet의 크기가 0 혹은 1인 경우
+            projection = self.begin + a * (a.dot(b) / a.dist_squared_from_origin())  # 내적 이용
+        else:  # PointSet의 크기가 0 혹은 1인 경우
             projection = self.begin
-        
+
         return projection
 
     def dist_to_point(self, p):
         """특정 점과 이 PointSet까지의 거리
-        
+
         특정 점의 이 PointSet의 '첫점 ~ 끝점 이은 선분' 위로 내린 수선의 발까지 거리로 계산함
 
         Args:

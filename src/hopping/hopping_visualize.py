@@ -18,7 +18,7 @@ def visualize(hc):
     Returns:
         all_markers (MarkerArray): Rviz로 Publish할 마커 리스트
     """
-    ids = list(range(0, 100)) # marker id
+    ids = list(range(0, 100))  # marker id
 
     # 현재 보트 위치 좌표
     boat = visual.text_rviz(

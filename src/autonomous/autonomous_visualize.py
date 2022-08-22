@@ -9,6 +9,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 import utils.visualizer as visual
 
+
 def visualize(ac):
     """Rviz visualization
 
@@ -17,7 +18,7 @@ def visualize(ac):
     Returns:
         all_markers (MarkerArray): Rviz로 Publish할 마커 리스트
     """
-    ids = list(range(0, 100)) # marker id
+    ids = list(range(0, 100))  # marker id
 
     # 경기장
     boundary = visual.linelist_rviz(
@@ -160,25 +161,13 @@ def visualize(ac):
     inrange_obs_world = []  # span 미포함
     for ob in ac.inrange_obstacles:
         begin_x = (
-            ac.boat_x
-            + (-ob.begin.x) * math.cos(math.radians(ac.psi))
-            - ob.begin.y * math.sin(math.radians(ac.psi))
+            ac.boat_x + (-ob.begin.x) * math.cos(math.radians(ac.psi)) - ob.begin.y * math.sin(math.radians(ac.psi))
         )
         begin_y = (
-            ac.boat_y
-            + (-ob.begin.x) * math.sin(math.radians(ac.psi))
-            + ob.begin.y * math.cos(math.radians(ac.psi))
+            ac.boat_y + (-ob.begin.x) * math.sin(math.radians(ac.psi)) + ob.begin.y * math.cos(math.radians(ac.psi))
         )
-        end_x = (
-            ac.boat_x
-            + (-ob.end.x) * math.cos(math.radians(ac.psi))
-            - ob.end.y * math.sin(math.radians(ac.psi))
-        )
-        end_y = (
-            ac.boat_y
-            + (-ob.end.x) * math.sin(math.radians(ac.psi))
-            + ob.end.y * math.cos(math.radians(ac.psi))
-        )
+        end_x = ac.boat_x + (-ob.end.x) * math.cos(math.radians(ac.psi)) - ob.end.y * math.sin(math.radians(ac.psi))
+        end_y = ac.boat_y + (-ob.end.x) * math.sin(math.radians(ac.psi)) + ob.end.y * math.cos(math.radians(ac.psi))
         inrange_obs_world.append([begin_x, begin_y])
         inrange_obs_world.append([end_x, end_y])
     obstacles = visual.linelist_rviz(
@@ -237,5 +226,5 @@ def visualize(ac):
             pcd,
         ]
     )
-    
+
     return all_markers

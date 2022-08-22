@@ -15,7 +15,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 def mean_brightness(img):
     """평균 밝기로 화면 밝기 조정
-    
+
     Args:
         img (numpy.ndarray): 입력 이미지
     Returns:
@@ -116,8 +116,8 @@ def detect_target(img, target_shape, mark_detect_area, target_detect_area, draw_
             * 일단 너비가 최대인 것을 따라가도록 설정
     """
     # 기본 변수 선언
-    detected = False # 타겟을 발견했는가
-    max_area = 0 # 가장 넓은 넓이의 도형
+    detected = False  # 타겟을 발견했는가
+    max_area = 0  # 가장 넓은 넓이의 도형
     target = []  # 타겟 정보 [area, center_col, approx]
 
     # 모폴로지 연산
@@ -126,7 +126,7 @@ def detect_target(img, target_shape, mark_detect_area, target_detect_area, draw_
 
     # 시각화 결과 영상 생성
     shape = cv2.cvtColor(morph, cv2.COLOR_GRAY2BGR)  # 시각화할 image
-    shape = cv2.line(shape, (320, 0), (320, 480), (255, 0, 0), 2) # 중앙 세로선
+    shape = cv2.line(shape, (320, 0), (320, 480), (255, 0, 0), 2)  # 중앙 세로선
 
     # 화면 내 모든 도형 검출
     _, contours, _ = cv2.findContours(morph, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
@@ -165,7 +165,7 @@ def detect_target(img, target_shape, mark_detect_area, target_detect_area, draw_
 
         # 타겟 정보 저장 (해당 화면에서 타겟이 검출되었다면)
         if detected:
-            if area > max_area: # 최대 크기라면 정보 갱신
+            if area > max_area:  # 최대 크기라면 정보 갱신
                 target = [area, center_point[1]]
                 max_area = area
             else:

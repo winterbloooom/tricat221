@@ -38,7 +38,7 @@ def degree_to_servo(error_angle, angle_alpha, angle_range, servo_range):
 
 def pixel_to_degree(target, alpha, angle_range):
     """픽셀 단위의 값을 각도 단위로 변환
-    
+
     docking 미션에서 '표지 중앙점 ~ 프레임 중심' 떨어진 픽셀을 선수 회전각으로 변경
 
     Args:
@@ -75,7 +75,7 @@ def calc_station_vec_end(station_dir, stations):
         math.cos(math.radians(station_dir)),
         math.sin(math.radians(station_dir)),
     ]  # 스테이션 방향의 단위벡터
-    station_vec_ends = [[0, 0]]# docking의 waypoints는 도킹 시작 지점도 포함하니까 형상 맞추기 위해 [0, 0] 추가
+    station_vec_ends = [[0, 0]]  # docking의 waypoints는 도킹 시작 지점도 포함하니까 형상 맞추기 위해 [0, 0] 추가
     for station in stations:
         vec = [station[0] + n_vec[0], station[1] + n_vec[1]]
         station_vec_ends.append(vec)  # 각 스테이션으로부터의 벡터 끝점
@@ -98,11 +98,11 @@ def project_boat_to_station_vec(stations, station_vec_ends, station_idx, boat):
     a = [
         station_vec_ends[station_idx][0] - stations[station_idx][0],
         station_vec_ends[station_idx][1] - stations[station_idx][1],
-    ] # 스테이션 앞 지점에서 그은 스테이션 방향 벡터
-    len_a = math.sqrt(a[0] ** 2 + a[1] ** 2) # 벡터 a의 길이
-    b = [boat[0] - stations[station_idx][0], boat[1] - stations[station_idx][1]] # 보트와 스테이션 앞 지점을 이은 벡터
-    scala = (a[0] * b[0] + a[1] * b[1]) / len_a # 벡터 a, b의 내적 계산
-    projection = [stations[station_idx][0] + a[0] * scala, stations[station_idx][1] + a[1] * scala] # 투영점 좌표
+    ]  # 스테이션 앞 지점에서 그은 스테이션 방향 벡터
+    len_a = math.sqrt(a[0] ** 2 + a[1] ** 2)  # 벡터 a의 길이
+    b = [boat[0] - stations[station_idx][0], boat[1] - stations[station_idx][1]]  # 보트와 스테이션 앞 지점을 이은 벡터
+    scala = (a[0] * b[0] + a[1] * b[1]) / len_a  # 벡터 a, b의 내적 계산
+    projection = [stations[station_idx][0] + a[0] * scala, stations[station_idx][1] + a[1] * scala]  # 투영점 좌표
 
     return projection
 
@@ -136,5 +136,5 @@ def follow_station_dir(station_dir, projection, boat, psi, length=1):
         )
         - psi
     )
-    
+
     return error_angle, forward_point
