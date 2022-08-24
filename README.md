@@ -1,115 +1,53 @@
-# tricat221
+# Autonomous Boat: KABOAT2022, Team i-Tricat221
 
-> 링크로 각 소제목 이동하기
+이 레포지토리는 제3회 자율운항보트 경진대회(Korea Autonomous Boat Competition 2022, KABOAT 2022)의 참가팀 인하대학교 i-Tricat 221의 임무 수행을 위한 ROS 패키지 및 소스코드 등을 포함하고 있다.
 
-# To Do
+```
+This project is licensed under the terms of the GNU General Public License v3.0.
+(이 레포지토리는 GNU GPL 라이선스를 따르고 있습니다. 자세한 사항은 LICENSE 파일을 참고해주세요.)
+```
 
-## Documents
+## Contents
+1. [Documentation and Open Data](#documentation-and-open-data) (관련 문서)
+2. [Installation and Usage](#installation-and-usage) (설치 및 사용)
+3. [License](#license) (라이선스)
 
-* 개발 상세 보고서
-    * MarkDown version, LaTeX version
-* 대회 보고서(준비 ~ 회고, 4기를 위한 제언)
-    * LaTeX version, MarkDown version
-    * Blog용 요약본
-* 노션 정리해 팀 일지
-* 노션 정리해 아카이브로 시키기
-* PPT, PDF version 간단 요약 프로젝트 소개
 
-## GitHub
-* 코드 정리 및 다큐멘트 추가
-* 라이선스 파일 추가
-* 라이선스 표기 각 파일마다 추가
-* rosbag, img, mp4 파일 등 추가 및 삭제
-* 아두이노 최종 코드
-* Rviz 모듈 레포지토리
-* 트라이캣 organ 정리
-* old auto 코딩
+## Documentation and Open Data
+### Documents
+📋 [상세 개발 보고서](): 개발 기획 단계부터 알고리즘 설계 및 구현, 테스트 및 대회 적용 등 전반적 사항을 상세하게 기술하고 있음 # TODO <br>
+📝 [대회 제출 보고서](): KABOAT 2022 설계 심사 제출 보고서<br>
+📂 [프로젝트 요약본](): *업데이트 예정입니다.* # TODO <br>
 
-## 공개할 데이터
-> winterbloooom 드라이브에 추가하고 TODO 등에 링크 걸기
-* [경기 영상 전체 재생 목록](https://www.youtube.com/playlist?list=PLBScO6lsHRV1a6kaPttd6ulcyLxNG6T-N)
-* Docker 이미지 및 사용법
-* rosbag: cam rosbag은 동영상으로 따로 저장하고 나머지 토픽은 다시 녹화
+### Open Data
+💽 **rosbag recording**
 
-## 트라이캣 내부용 데이터
-* 사진, 동영상
+| file name | description | `params/coordinates.yaml` | record data | duration | size |
+|---|---|---|---|---|---|
+| 220811-hopping.bag|인하대 분수대 호핑투어 테스트 | C | 2022.08.11. | 64s | 8.2 MB |
+| 220817-hopping.bag|호핑투어 경기 | A | 2022.08.17. | 190s | 21.6 MB |
+| 220818-auto-pre.bag|자율운항 예선 경기 | B | 2022.08.18. | 23.7s | 22.1 MB |
+| 220819-auto-final.bag|자율운항 본선 경기 | A | 2022.08.19. | 27.6s | 26.4 MB |
+| 220819-docking-blue-cross.bag|도킹 경기 | A | 2022.08.19. | 27.9s | 735.6 MB |
+| 220819-docking-green-triangle.bag|도킹 경기 | A | 2022.08.19. | 37.7s | 991.9 MB |
 
-## 개인 소장용 데이터
-* 사진, 동영상
+📷 **video data**
 
-## Devices
-* Nuc 웹브라우저 초기화 + 로그아웃
-* Nuc catkin_ws, 다운로드, 이미지 등 데이터 삭제
-* Nuc bashrc 편집
+| file name | corresponding rosbag file | record data | duration | size |
+|---|---|---|---|---|
+| blue-cross.bag | final-docking.bag | 2022.08.19. | 27.9s | 21.0 MB |
+| green-triangle.bag | 220819-123821-docking-04(25초).bag | 2022.08.19. | 36s | 32.1 MB |
 
-## 블로그에 올릴 글
-* 프로젝트 요약, 상세 개발 보고서, 대회 보고서, 데이터셋 링크 등 링크 모음
-* rviz 모듈 만들기
-* Ros 추가 팁
-    * roslaunch: rviz, rosbag, rqt, args, if, unless, roslaunch rosbag 노드 주석 쓰는 법
-    ```xml
-    <!-- <launch>
-        <node name="$(anon usb_cam)" pkg="usb_cam" type="usb_cam_node" output="screen" >
-        <param name="video_device" value="$(arg n)" />
-        <param name="image_width" value="640" />
-        <param name="image_height" value="480" />
-        <param name="pixel_format" value="yuyv" />
-        <param name="camera_frame_id" value="usb_cam" />
-        <param name="io_method" value="mmap"/>
-        <param name="exposure" value="50"/>
-        </node>
-        <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
-        <remap from="image" to="/usb_cam/image_raw"/>
-        <param name="autosize" value="true" />
-        </node>
-    </launch>
-    -->
+📺 **Competition video clips**
+경기 영상 녹화본 및 시각화 결과를 편집하여 YouTube에 게시하였다. 👉 [전체 재생목록](https://youtube.com/playlist?list=PLBScO6lsHRV1a6kaPttd6ulcyLxNG6T-N)
 
-    <!-- roslaunch package launchfile n:=value -->
+* [호핑투어 오토파일럿](https://youtu.be/VELbh6ZdrzQ) 경기 영상<br>
+* [자율운항 장애물 통과(예선+결선)](https://youtu.be/IKwgBN4L3A0) 경기 영상<br>
+* [자율운항 도킹](https://youtu.be/-ghsQaKhZ-o) 경기 영상<br>
 
-    <!-- <remap from="/camera1/usb_cam/image_raw/" to="/star_cam/image_raw"/> -->
-    <!-- <param name="frame_rate???" value="mmap" /> -->
 
-    <!-- <group ns="camera1">
-            <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
-                <param name="video_device" value="/dev/video0" />
-                <param name="autoexposure" value="false" />
-                <param name="pixel_format" value="yuyv" />
-                <param name="camera_frame_id" value="usb_cam" />
-                <param name="io_method" value="mmap" />
-                
-                <param name="image_width" value="640" />
-                <param name="image_height" value="480" />
-                <param name="exposure" value="150" />
-                <param name="contrast" value="0" />
-                <param name="saturation" value="100" />
-                
-            </node>
-        </group> -->
-        <!-- <group ns="camera2">
-            <node name="usb_cam" pkg="usb_cam" type="usb_cam_node">
-                <param name="video_device" value="/dev/video2" />
-                <param name="autoexposure" value="false" />
-                
-                <param name="image_width" value="640" />
-                <param name="image_height" value="480" />
-                <param name="pixel_format" value="yuyv" />
-                <param name="camera_frame_id" value="usb_cam" />
-                <param name="io_method" value="mmap" />
-
-                <param name="exposure" value="150" />
-                <param name="contrast" value="0" />
-                <param name="saturation" value="100" />
-            </node>
-        </group> -->
-    ```
-    * roslaunch와 shell script
-    * msg wait 해서 노드 기다리기
-
-- - -
-
-# 디렉터리 구조 및 외부 라이브러리 설치
-
+## Installation and Usage
+### Repository 디렉터리 구조
 ```
 ├─ .github/                     (github actions 관련 파일)
 │   └─ workflows            
@@ -150,7 +88,7 @@
 │   └─ rviz_conf_lidar.rviz         (lidar_converter 용)
 │
 ├─ src/                         (소스코드)
-│   ├─ arduino/                     (아두이노 소스코드)
+│   ├─ arduino/                     (아두이노 노드 소스코드)
 │   │
 │   ├─ autonomous/                  (자율운항 소스코드)
 │   │
@@ -183,17 +121,15 @@
 └─ requirements.txt             (추가적으로 설치해야 할 라이브러리)
 ```
 
-## Symbolic Link
-각 센서의 symbolic link(일종의 바로가기)를 만들어 장치의 이름을 고정할 수 있다. 컴퓨터에 `/etc/udev/rules.d/` 경로로 해당 파일을 복사하고 udev 설정을 재로드한뒤, 컴퓨터를 재시작한다.
+### Installation
+해당 프로젝트를 사용하기 위해서는 ROS Melodic(18.04)의 desktop-full를 설치하여 관련 도구들 모두를 설치한다. 또한 본 팀이 사용한 IMU(AHRS), GPS, Camera, LiDAR의 ROS 드라이버는 GitHub에서 쉽게 clone하여 사용할 수 있으며, 소스코드를 압축한 파일을 따로 [드라이브에 탑재](https://drive.google.com/drive/folders/1TF9xHhzc6bc-4HkW3OEvvLpgaKmAWLDm?lfhs=2)해 두었다. GPS 관련 패키지는 세부 설정이 필요하기 때문이다.
 
-```bash
-sudo cp 99-tty.rules /etc/udev/rules.d/99-tty.rules
-sudo service udev reload
-sudo service udev restart
-```
+* [IMU(AHRS) 드라이버](https://github.com/robotpilot/myahrs_driver)
+* [GPS 드라이버](https://github.com/ros-agriculture/ublox_f9p)와 [NTRIP Client 패키지](https://github.com/ros-agriculture/ntrip_ros) 👉 [GPS 드라이버 설치 방법](https://velog.io/@717lumos/GPS-ublox-ZED-F9P-GPS-%EC%82%AC%EC%9A%A9%EB%B2%95)
+* [LiDAR 드라이버](https://github.com/Slamtec/rplidar_ros)
+* [USB 카메라 드라이버](https://github.com/ros-drivers/usb_cam)
 
-## Requirements
-ROS 설치 시 자동 설치되는 라이브러리/도구 외에 따로 설치해야 하는 라이브러리를 나타내었다. 한 번에 설치하기 위하여 패키지 디렉터리 위치로 이동하여 아래의 명령어를 수행한다.
+또한 추가적으로 설치해야 하는 라이브러리를 `requirements.txt`에 나타내었다. 패키지 디렉터리 위치로 이동하여 아래의 명령어를 수행한다.
 
 ```bash
 pip install -r requirements.txt
@@ -205,36 +141,53 @@ pip install -r requirements.txt
 sudo -H pip install --upgrade --ignore-installed pip setuptools
 ```
 
-- - -
+### Usage
+💡자율운항 (autonomous)
+```bash
+# 기본적 실행
+roslaunch tricat221 autonomous.launch
+# rosbag record 사용여부 설정
+roslaunch tricat221 autonomous.launch do_record:=[rosbag_record_여부] filename:=[rosbag_파일_이름]
+# shell script 실행
+./src/autonomous.sh
+```
 
-# 공개 데이터
-## rosbag recording
-| file name | description | `params/coordinates.yaml` | record data | duration | size |
-|---|---|---|---|---|---|
-| 220811-hopping.bag|인하대 분수대 호핑투어 테스트 | C | 2022.08.11. | 64s | 8.2 MB |
-| 220817-hopping.bag|호핑투어 경기 | A | 2022.08.17. | 190s | 21.6 MB |
-| 220818-auto-pre.bag|자율운항 예선 경기 | B | 2022.08.18. | 23.7s | 22.1 MB |
-| 220819-auto-final.bag|자율운항 본선 경기 | A | 2022.08.19. | 27.6s | 26.4 MB |
-| 220819-docking-blue-cross.bag|도킹 경기 | A | 2022.08.19. | 27.9s | 735.6 MB |
-| 220819-docking-green-triangle.bag|도킹 경기 | A | 2022.08.19. | 37.7s | 991.9 MB |
+💡호핑투어 (hopping_tour)
+```bash
+# 기본적 실행
+roslaunch tricat221 hopping_tour.launch
+# rosbag record 사용여부 설정
+roslaunch tricat221 hopping_tour.launch do_record:=[rosbag_record_여부] filename:=[rosbag_파일_이름]
+# shell script 실행
+./src/hopping.sh
+```
 
-## video data
-| file name | corresponding rosbag file | record data | duration | size |
-|---|---|---|---|---|
-| blue-cross.bag | final-docking.bag | 2022.08.19. | 27.9s | 21.0 MB |
-| green-triangle.bag | 220819-123821-docking-04(25초).bag | 2022.08.19. | 36s | 32.1 MB |
+💡도킹 (docking)
+```bash
+# 기본적 실행
+roslaunch tricat221 docking.launch
+# rosbag record 사용여부 설정
+roslaunch tricat221 docking.launch do_record:=[rosbag_record_여부] filename:=[rosbag_파일_이름]
+# shell script 실행
+./src/docking.sh
+```
 
-## ROS packages
-본 팀이 사용한 IMU(AHRS), GPS, Camera, LiDAR의 ROS 드라이버는 GitHub에서 쉽게 clone하여 사용할 수 있으며, 소스코드를 압축한 파일을 따로 탑재해 두었다. GPS 관련 패키지는 세부 설정이 필요하기 때문이다. 👉 [GPS 드라이버 설치 방법](https://velog.io/@717lumos/GPS-ublox-ZED-F9P-GPS-%EC%82%AC%EC%9A%A9%EB%B2%95)
+### Symbolic Link
+각 센서의 symbolic link(일종의 바로가기)를 만들어 장치의 이름을 고정할 수 있다. 컴퓨터에 `/etc/udev/rules.d/` 경로로 해당 파일을 복사하고 udev 설정을 재로드한뒤, 컴퓨터를 재시작한다.
 
-* [IMU(AHRS) 드라이버](https://github.com/robotpilot/myahrs_driver)
-* [GPS 드라이버](https://github.com/ros-agriculture/ublox_f9p)와 [NTRIP Client 패키지](https://github.com/ros-agriculture/ntrip_ros)
-* [LiDAR 드라이버](https://github.com/Slamtec/rplidar_ros)
-* [USB 카메라 드라이버](https://github.com/ros-drivers/usb_cam)
+```bash
+sudo cp 99-tty.rules /etc/udev/rules.d/99-tty.rules
+sudo service udev reload
+sudo service udev restart
+```
 
-## Competition video clips
-경기 영상 녹화본 및 시각화 결과를 편집하여 YouTube에 게시하였다. 👉 [전체 재생목록](https://youtube.com/playlist?list=PLBScO6lsHRV1a6kaPttd6ulcyLxNG6T-N)
+## License
+이 레포지토리는 GNU GPL 라이선스를 따르고 있다. 자세한 사항은 프로젝트 내 LICENSE 파일에 라이선스 내용이 있으며, 각 라이선스의 종류나 사용 방법 등은 아래 링크에서 더 볼 수 있다.
 
-🎬 [호핑투어 오토파일럿](https://youtu.be/VELbh6ZdrzQ) 경기 영상<br>
-🎬 [자율운항 장애물 통과(예선+결선)](https://youtu.be/IKwgBN4L3A0) 경기 영상<br>
-🎬 [자율운항 도킹](https://youtu.be/-ghsQaKhZ-o) 경기 영상<br>
+* [우노, "[GitHub] License 란?"](https://wooono.tistory.com/379)
+* [황은경, "오픈소스를 사용하고, 준비하는 개발자를 위한 가이드"](https://www.slideshare.net/ifkakao/ss-113145564)
+* [codeNamu, "[춘식이의 코드이야기] 대표 오픈소스 라이선스, 한 눈에 보기!"](https://codenamu.org/2014/10/10/popular-opensource-license)
+* [오픈소스SW 라이선스 종합정보시스템, "라이선스 가이드"](https://olis.or.kr/license/licenseGuide.do)
+* [다크 프로그래머, "공개 SW 라이센스 GPL, LGPL, BSD"](https://darkpgmr.tistory.com/89)
+* [Choose an open source license](https://choosealicense.com/)
+* [Open Source Guides, "The Legal Side of Open Source"](https://opensource.guide/legal/)
