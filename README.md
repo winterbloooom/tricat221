@@ -8,14 +8,6 @@
 
 * 개발 상세 보고서
     * MarkDown version, LaTeX version
-    * 각종 팁
-        * alias
-        * shell script
-        * black format & GitHub Actions
-        * 각종 문제 해결 (Ex. IMU 캘리브레이션, 라이다 수평, 
-        * 시뮬링크
-        * roslaunch rosbag 노드 주석 쓰는 법
-* rqt_graph
 * 대회 보고서(준비 ~ 회고, 4기를 위한 제언)
     * LaTeX version, MarkDown version
     * Blog용 요약본
@@ -29,10 +21,6 @@
 * 라이선스 표기 각 파일마다 추가
 * rosbag, img, mp4 파일 등 추가 및 삭제
 * 아두이노 최종 코드
-* 다른 패키지 requirements
-    * GPS는 따로 다운 및 수정 방법 정리해두기
-    * pymap3d 설치 방법 및 유의사항
-    * fuzzy 설치 방법
 * Rviz 모듈 레포지토리
 * 트라이캣 organ 정리
 * old auto 코딩
@@ -120,7 +108,7 @@
 
 - - -
 
-# 디렉터리 구조
+# 디렉터리 구조 및 외부 라이브러리 설치
 
 ```
 ├─ .github/                     (github actions 관련 파일)
@@ -134,7 +122,7 @@
 │   ├─ rviz_record/                 (Rviz Record Video)
 │   ├─ sample_imgs/                 (테스트용 이미지, 각종 실행 결과 캡쳐)
 │   ├─ hopping_coordinates.pdf      (대회 측 제공 호핑투어 및 경기장 좌표)
-│   └─ 99-tty.rules                 (Simul Link file: ~~ 참고) # TODO
+│   └─ 99-tty.rules                 (Symbolic Link 생성 파일)
 │
 ├─ launch/                      (roslaunch files)
 │   ├─ autonomous.launch            (자율운항 장애물 통과 경기용)
@@ -192,7 +180,61 @@
 ├─ CMakeLists.txt               (catkin make file)
 ├─ package.xml                  (ros package file)
 ├─ pyproject.toml               (black formatter 등의 configuration)
-└─ requirements                 () # TODO
+└─ requirements.txt             (추가적으로 설치해야 할 라이브러리)
 ```
 
-## module_test.launch 설명
+## Symbolic Link
+각 센서의 symbolic link(일종의 바로가기)를 만들어 장치의 이름을 고정할 수 있다. 컴퓨터에 `/etc/udev/rules.d/` 경로로 해당 파일을 복사하고 udev 설정을 재로드한뒤, 컴퓨터를 재시작한다.
+
+```bash
+sudo cp 99-tty.rules /etc/udev/rules.d/99-tty.rules
+sudo service udev reload
+sudo service udev restart
+```
+
+## Requirements
+ROS 설치 시 자동 설치되는 라이브러리/도구 외에 따로 설치해야 하는 라이브러리를 나타내었다. 한 번에 설치하기 위하여 패키지 디렉터리 위치로 이동하여 아래의 명령어를 수행한다.
+
+```bash
+pip install -r requirements.txt
+```
+
+개별적 설치를 할 때는 Python 버전을 2.x 인지 확인한 뒤 `pip3` 가 아니라 `pip` 명령어로 설치를 진행해야 ROS에서 실행할 수 있다. pymap3d 라이브러리 설치 시 `egg_info failed` 관련 에러가 나타난다면 아래의 명령어를 입력해 setuptools를 업그레이드한다. 👉 [오류 해결 출처](https://musclebear.tistory.com/131)
+
+```bash
+sudo -H pip install --upgrade --ignore-installed pip setuptools
+```
+
+- - -
+
+# 공개 데이터
+## rosbag recording
+| file name | description | `params/coordinates.yaml` | record data | duration | size |
+|---|---|---|---|---|---|
+| 220811-hopping.bag|인하대 분수대 호핑투어 테스트 | C | 2022.08.11. | 64s | 8.2 MB |
+| 220817-hopping.bag|호핑투어 경기 | A | 2022.08.17. | 190s | 21.6 MB |
+| 220818-auto-pre.bag|자율운항 예선 경기 | B | 2022.08.18. | 23.7s | 22.1 MB |
+| 220819-auto-final.bag|자율운항 본선 경기 | A | 2022.08.19. | 27.6s | 26.4 MB |
+| 220819-docking-blue-cross.bag|도킹 경기 | A | 2022.08.19. | 27.9s | 735.6 MB |
+| 220819-docking-green-triangle.bag|도킹 경기 | A | 2022.08.19. | 37.7s | 991.9 MB |
+
+## video data
+| file name | corresponding rosbag file | record data | duration | size |
+|---|---|---|---|---|
+| blue-cross.bag | final-docking.bag | 2022.08.19. | 27.9s | 21.0 MB |
+| green-triangle.bag | 220819-123821-docking-04(25초).bag | 2022.08.19. | 36s | 32.1 MB |
+
+## ROS packages
+본 팀이 사용한 IMU(AHRS), GPS, Camera, LiDAR의 ROS 드라이버는 GitHub에서 쉽게 clone하여 사용할 수 있으며, 소스코드를 압축한 파일을 따로 탑재해 두었다. GPS 관련 패키지는 세부 설정이 필요하기 때문이다. 👉 [GPS 드라이버 설치 방법](https://velog.io/@717lumos/GPS-ublox-ZED-F9P-GPS-%EC%82%AC%EC%9A%A9%EB%B2%95)
+
+* [IMU(AHRS) 드라이버](https://github.com/robotpilot/myahrs_driver)
+* [GPS 드라이버](https://github.com/ros-agriculture/ublox_f9p)와 [NTRIP Client 패키지](https://github.com/ros-agriculture/ntrip_ros)
+* [LiDAR 드라이버](https://github.com/Slamtec/rplidar_ros)
+* [USB 카메라 드라이버](https://github.com/ros-drivers/usb_cam)
+
+## Competition video clips
+경기 영상 녹화본 및 시각화 결과를 편집하여 YouTube에 게시하였다. 👉 [전체 재생목록](https://youtube.com/playlist?list=PLBScO6lsHRV1a6kaPttd6ulcyLxNG6T-N)
+
+🎬 [호핑투어 오토파일럿](https://youtu.be/VELbh6ZdrzQ) 경기 영상<br>
+🎬 [자율운항 장애물 통과(예선+결선)](https://youtu.be/IKwgBN4L3A0) 경기 영상<br>
+🎬 [자율운항 도킹](https://youtu.be/-ghsQaKhZ-o) 경기 영상<br>

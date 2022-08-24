@@ -17,7 +17,7 @@
     </node> -->
 
     <!-- Recording -->
-    <node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/data/rosbag/docking.bag -l --topics /imu/mag /ublox_gps/fix /usb_cam/image_raw "/>
+    <node pkg="rosbag" type="play" name="rosbag_play" required="true" args="$(find tricat221)/data/rosbag/final-docking.bag -l --topics /imu/mag /ublox_gps/fix /usb_cam/image_raw "/>
     
     <!-- Nodes -->
     <node pkg="tricat221"  type="heading_calculator.py" name="headingCalculator"/>

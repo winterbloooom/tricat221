@@ -1,0 +1,4 @@
+numpy==1.16.6
+opencv-contrib-python==3.4.1.15
+pymap3d==1.8.1
+scikit-fuzzy==0.4.2
