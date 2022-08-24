@@ -35,7 +35,7 @@ class Hopping:
         self.goal_x = self.remained_waypoints[self.waypoint_idx][0]  # 다음 목표 x좌표
         self.goal_y = self.remained_waypoints[self.waypoint_idx][1]  # 다음 목표 y좌표
         self.trajectory = []  # 지금껏 이동한 궤적
-        self.diff = [1.6, -0.5]
+        self.diff = [0, 0]
 
         # limits, ranges
         self.goal_range = rospy.get_param("goal_range")
@@ -112,8 +112,8 @@ class Hopping:
             * ENU좌표계로 변환되어 입력을 받는데, ENU좌표계와 x, y축이 반대임
             * 따라서 Point.x, Point.y가 각각 y, x가 됨
         """
-        self.boat_y = msg.x + self.diff[1]
-        self.boat_x = msg.y + self.diff[0]
+        self.boat_y = msg.y + self.diff[1]
+        self.boat_x = msg.x + self.diff[0]
 
     def calc_distance_to_goal(self):
         """calculate distance from boat to goal"""
@@ -168,7 +168,7 @@ class Hopping:
     def arrival_check(self):
         self.calc_distance_to_goal()  # 목적지까지 거리 다시 계산
         if self.distance_to_goal <= self.goal_range:  # and len(self.remained_waypoints) != 1:
-            for _ in range(10):
+            for _ in range(8):
                 self.thruster_pub.publish(1550)
                 rospy.sleep(0.1)
             return True

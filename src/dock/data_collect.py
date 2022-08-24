@@ -34,7 +34,7 @@ class Data_Collection:
         self.thruster_pub = rospy.Publisher("/thruster", UInt16, queue_size=0)
         self.visual_rviz_pub = rospy.Publisher("/visual_rviz", MarkerArray, queue_size=0)
 
-        self.state = 0
+        self.state = 1
         # 0: 헤딩 맞추는 중
         # 1: 타겟 스캔 중
         # 2: 스테이션 진입 중
@@ -46,6 +46,7 @@ class Data_Collection:
         self.raw_img = np.zeros((480, 640, 3), dtype=np.uint8)  # row, col, channel
         self.hsv_img = np.zeros((480, 640), dtype=np.uint8)
         self.shape_img = np.zeros((480, 640, 3), dtype=np.uint8)
+        self.draw_contour = rospy.get_param("draw_contour")
 
         ### 방향
         self.psi = 0  # 자북과 선수 사이 각
@@ -105,9 +106,9 @@ class Data_Collection:
 
         ### 이미지뷰
         cv2.namedWindow("controller")
-        cv2.createTrackbar("state", "controller", 1, 2, lambda x: x)
-        cv2.createTrackbar("color", "controller", 0, 2, lambda x: x)
-        cv2.createTrackbar("shape", "controller", 0, 2, lambda x: x)
+        # cv2.createTrackbar("state", "controller", 1, 2, lambda x: x)
+        # cv2.createTrackbar("color", "controller", 0, 2, lambda x: x)
+        # cv2.createTrackbar("shape", "controller", 0, 2, lambda x: x)
         cv2.createTrackbar("color1 min", "controller", self.color_range[0][0], 180, lambda x: x)
         cv2.createTrackbar("color1 max", "controller", self.color_range[1][0], 180, lambda x: x)
         cv2.createTrackbar("color2 min", "controller", self.color_range[0][1], 255, lambda x: x)
@@ -125,15 +126,18 @@ class Data_Collection:
         self.psi = msg.data  # [degree]
 
     def cam_callback(self, msg):
+        
         img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         if img.size == (640 * 480 * 3):
+            if msg.header.seq == 1735:
+                rospy.sleep(100000)
             self.raw_img = img
         else:
             pass
 
     def get_trackbar_pos(self):
         """get trackbar poses and set each values"""
-        self.state = cv2.getTrackbarPos("state", "controller")
+        # self.state = cv2.getTrackbarPos("state", "controller")
         self.color_range[0][0] = cv2.getTrackbarPos("color1 min", "controller")
         self.color_range[1][0] = cv2.getTrackbarPos("color1 max", "controller")
         self.color_range[0][1] = cv2.getTrackbarPos("color2 min", "controller")
@@ -143,35 +147,35 @@ class Data_Collection:
         self.mark_detect_area = cv2.getTrackbarPos("mark_detect_area", "controller")
         self.target_detect_area = cv2.getTrackbarPos("target_detect_area", "controller")
         self.arrival_target_area = cv2.getTrackbarPos("arrival_target_area", "controller")
-        shape_pos = cv2.getTrackbarPos("shape", "controller")
-        if shape_pos == 0:
-            self.target_shape = 3
-        elif shape_pos == 1:
-            self.target_shape = 5
-        else:
-            self.target_shape = 12
-        color_pos = cv2.getTrackbarPos("color", "controller")
-        if color_pos == 0:
-            color = "red"
-        elif color_pos == 1:
-            color = "green"
-        else:
-            color = "blue"
-        self.target_color = color
-        self.color_range = np.array(
-            [
-                [
-                    self.all_color_ranges[self.target_color]["color1_lower"],
-                    self.all_color_ranges[self.target_color]["color2_lower"],
-                    self.all_color_ranges[self.target_color]["color3_lower"],
-                ],
-                [
-                    self.all_color_ranges[self.target_color]["color1_upper"],
-                    self.all_color_ranges[self.target_color]["color2_upper"],
-                    self.all_color_ranges[self.target_color]["color3_upper"],
-                ],
-            ]
-        )
+        # shape_pos = cv2.getTrackbarPos("shape", "controller")
+        # if shape_pos == 0:
+        #     self.target_shape = 3
+        # elif shape_pos == 1:
+        #     self.target_shape = 5
+        # else:
+        #     self.target_shape = 12
+        # color_pos = cv2.getTrackbarPos("color", "controller")
+        # if color_pos == 0:
+        #     color = "red"
+        # elif color_pos == 1:
+        #     color = "green"
+        # else:
+        #     color = "blue"
+        # self.target_color = color
+        # self.color_range = np.array(
+        #     [
+        #         [
+        #             self.all_color_ranges[self.target_color]["color1_lower"],
+        #             self.all_color_ranges[self.target_color]["color2_lower"],
+        #             self.all_color_ranges[self.target_color]["color3_lower"],
+        #         ],
+        #         [
+        #             self.all_color_ranges[self.target_color]["color1_upper"],
+        #             self.all_color_ranges[self.target_color]["color2_upper"],
+        #             self.all_color_ranges[self.target_color]["color3_upper"],
+        #         ],
+        #     ]
+        # )
 
     def check_state(self):
         change_state = False
