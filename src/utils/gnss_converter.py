@@ -49,6 +49,7 @@ from sensor_msgs.msg import NavSatFix
 origin = rospy.get_param("origin")
 boat = [0, 0, 0]
 
+
 def gps_fix_callback(msg):
     """Subscribe geodetic coordinate from GPS and convert in ENU coordinate
 
