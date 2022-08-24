@@ -16,7 +16,7 @@ This project is licensed under the terms of the GNU General Public License v3.0.
 ## Documentation and Open Data
 ### Documents
 📋 [상세 개발 보고서](): 개발 기획 단계부터 알고리즘 설계 및 구현, 테스트 및 대회 적용 등 전반적 사항을 상세하게 기술하고 있음 # TODO <br>
-📝 [대회 제출 보고서](): KABOAT 2022 설계 심사 제출 보고서<br>
+📝 [대회 제출 보고서](https://drive.google.com/file/d/1nP1QHVJlDKosmO9re21HN9KshMnNTI5O/view?usp=sharing): KABOAT 2022 설계 심사 제출 보고서<br>
 📂 [프로젝트 요약본](): *업데이트 예정입니다.* # TODO <br>
 
 ### Open Data
@@ -106,7 +106,6 @@ This project is licensed under the terms of the GNU General Public License v3.0.
 │   │   ├─  heading_calculator.py       (IMU 지자기센서 -> 선수각 계산 모듈)
 │   │   ├─  lidar_converter.py          (라이다 데이터 클러스터링 모듈)
 │   │   ├─  obstacle_avoidance.py       (장애물 회피 함수 모음)
-│   │   ├─  servo_test.py               (서보모터 테스트 모듈)
 │   │   ├─  tools.py                    (기타 함수 모음)
 │   │   └─  visualizer.py               (Rviz 시각화 모듈)
 │   │

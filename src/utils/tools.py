@@ -51,7 +51,6 @@ def moving_avg_filter(queue, queue_size, input, use_prev=False):
         use_prev (bool): Don't push input value in queue and just return previous average (default: False)
 
     Note:
-        * The affect of the filter # TODO 사진 올리고 깃헙 링크 첨부
         * Moving Average Filter:
             https://github.com/winterbloooom/kalman-filter/blob/main/scripts/part1-%EC%9E%AC%EA%B7%80%ED%95%84%ED%84%B0.ipynb
     """
