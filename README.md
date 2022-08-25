@@ -124,7 +124,7 @@ This project is licensed under the terms of the GNU General Public License v3.0.
 해당 프로젝트를 사용하기 위해서는 ROS Melodic(18.04)의 desktop-full를 설치하여 관련 도구들 모두를 설치한다. 또한 본 팀이 사용한 IMU(AHRS), GPS, Camera, LiDAR의 ROS 드라이버는 GitHub에서 쉽게 clone하여 사용할 수 있으며, 소스코드를 압축한 파일을 따로 [드라이브에 탑재](https://drive.google.com/drive/folders/1TF9xHhzc6bc-4HkW3OEvvLpgaKmAWLDm?lfhs=2)해 두었다. GPS 관련 패키지는 세부 설정이 필요하기 때문이다.
 
 * [IMU(AHRS) 드라이버](https://github.com/robotpilot/myahrs_driver)
-* [GPS 드라이버](https://github.com/ros-agriculture/ublox_f9p)와 [NTRIP Client 패키지](https://github.com/ros-agriculture/ntrip_ros) 👉 [GPS 드라이버 설치 방법](https://velog.io/@717lumos/GPS-ublox-ZED-F9P-GPS-%EC%82%AC%EC%9A%A9%EB%B2%95)
+* [GPS 드라이버](https://github.com/ros-agriculture/ublox_f9p)와 [NTRIP Client 패키지](https://github.com/ros-agriculture/ntrip_ros) 👉 [GPS 드라이버 설치 방법](https://winterbloooom.github.io/perception/perception-ublox-gps/)
 * [LiDAR 드라이버](https://github.com/Slamtec/rplidar_ros)
 * [USB 카메라 드라이버](https://github.com/ros-drivers/usb_cam)
 
