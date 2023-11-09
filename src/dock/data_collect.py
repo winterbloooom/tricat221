@@ -142,7 +142,6 @@ class Data_Collection:
         self.psi = msg.data  # [degree]
 
     def cam_callback(self, msg):
-
         img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         if img.size == (640 * 480 * 3):
             if msg.header.seq == 1735:

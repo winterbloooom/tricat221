@@ -41,7 +41,6 @@ from rosserial_arduino import SerialClient
 from serial import SerialException
 
 if __name__ == "__main__":
-
     rospy.init_node("serial_node")
     rospy.loginfo("ROS Serial Python Node")
 
