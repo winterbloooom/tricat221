@@ -15,7 +15,7 @@ This project is licensed under the terms of the GNU General Public License v3.0.
 
 ## Documentation and Open Data
 ### Documents
-📋 [상세 개발 보고서]([https://winterbloooom.github.io/autonomous%20vehicle/kaboat2022-dev-report/](https://winterbloooom.github.io/robotics/autonomous%20vehicle/2022/08/25/kaboat2022_dev_report.html)): 개발 기획 단계부터 알고리즘 설계 및 구현, 테스트 및 대회 적용 등 전반적 사항을 상세하게 기술하고 있음<br>
+📋 [상세 개발 보고서](https://winterbloooom.github.io/autonomous%20vehicle/kaboat2022-dev-report/](https://winterbloooom.github.io/robotics/autonomous%20vehicle/2022/08/25/kaboat2022_dev_report.html)): 개발 기획 단계부터 알고리즘 설계 및 구현, 테스트 및 대회 적용 등 전반적 사항을 상세하게 기술하고 있음<br>
 📝 [대회 제출 보고서](https://drive.google.com/file/d/1nP1QHVJlDKosmO9re21HN9KshMnNTI5O/view?usp=sharing): KABOAT 2022 설계 심사 제출 보고서<br>
 
 ### Open Data
